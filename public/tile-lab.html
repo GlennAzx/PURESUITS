@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Slab resolution lab</title>
+<style>
+  /* Everything is scaled 2x, including perspective, so the projected shape is
+     identical to the app but rendered with twice the pixels. */
+  :root { --w: 464px; --h: 640px; --d: 376px; --r: 34.8px; --tilt: -13deg; --P: 2800px; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 20px; background: #0b0c10; color: #d6d3cd;
+         font: 12px/1.5 ui-sans-serif, system-ui, sans-serif; }
+  .row { display: flex; gap: 26px; }
+  .cell { text-align: center; }
+  .cap { margin-top: 8px; font: 11px ui-monospace, monospace; color: #8b929c; }
+  .cap b { color: #f9d976; }
+
+  .rig { position: relative; width: 520px; height: 720px; perspective: var(--P); }
+  .tilt { position: absolute; inset: 0; transform-style: preserve-3d; transform: rotateY(var(--tilt)); }
+  .box { position: absolute; top: 50%; left: 50%; width: var(--w); height: var(--h);
+         margin-left: calc(var(--w)/-2); margin-top: calc(var(--h)/-2); transform-style: preserve-3d; }
+  .face, .slab { position: absolute; inset: 0; border-radius: var(--r); }
+  .face { transform: translateZ(calc(var(--d)/2));
+          background: linear-gradient(160deg,#fff 0%,#fcfcfa 34%,#f4f4ef 68%,#e9e9e1 100%); }
+</style>
+</head>
+<body>
+<div class="row" id="row"></div>
+<script>
+  const COUNTS = [6, 10, 14, 20];
+  const D = 376, WHITE = 0.44;
+  const lerp = (a,b,k) => a + (b-a)*k;
+  function col(t) {
+    if (t <= WHITE) { const k = t/WHITE;
+      return `rgb(${Math.round(lerp(255,233,k))},${Math.round(lerp(255,233,k))},${Math.round(lerp(252,225,k))})`; }
+    const k = (t-WHITE)/(1-WHITE);
+    return `rgb(${Math.round(lerp(42,18,k))},${Math.round(lerp(143,66,k))},${Math.round(lerp(91,42,k))})`;
+  }
+  const row = document.getElementById('row');
+  COUNTS.forEach(n => {
+    const cell = document.createElement('div'); cell.className = 'cell';
+    const rig = document.createElement('div'); rig.className = 'rig';
+    const tilt = document.createElement('div'); tilt.className = 'tilt';
+    const box = document.createElement('div'); box.className = 'box';
+    for (let i = 0; i < n; i++) {
+      const t = i/(n-1);
+      const z = D/2 - 2 - t*(D-4);
+      const s = document.createElement('div'); s.className = 'slab';
+      s.style.transform = `translateZ(${z.toFixed(2)}px)`;
+      s.style.background = col(t);
+      box.appendChild(s);
+    }
+    const f = document.createElement('div'); f.className = 'face';
+    box.appendChild(f);
+    tilt.appendChild(box); rig.appendChild(tilt);
+    cell.appendChild(rig);
+    const cap = document.createElement('div'); cap.className = 'cap';
+    cap.innerHTML = `<b>${n}</b> slabs`;
+    cell.appendChild(cap);
+    row.appendChild(cell);
+  });
+</script>
+</body>
+</html>

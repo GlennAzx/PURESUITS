@@ -1,0 +1,28 @@
+# PURESUIT (清一色) - Where Winds Meet Guild Website
+
+A modern, dynamic guild website built with **Vite + React + Tailwind CSS**, ready for zero-configuration continuous deployment on **Cloudflare Pages via GitHub**.
+
+## Features
+- **Right-Hand Fanned Mahjong Navigation**: tile bar fanning along a radial curve. 2D transforms only.
+- **Cinematic Video Hero**: Ambient background with controls.
+- **Member Tiles**: 77 members on ivory/jade mahjong tiles with a 白板 frame, drawn with 2D transforms. Name and title sit below the tile. No flip.
+- **Sichuan Bloody Battle (血战到底) Mahjong Guide**: Full illustrated guide with scoring rules.
+- **Officer-Editable JSON Data**: Update `src/data/events.json`, `src/data/members.json`, and `src/data/builds.json` via GitHub commits to update the site live.
+- **Recruitment Application Scroll**: Ready for Formspree email forwarding.
+- **No DPS Simulator**: Pure qualitative stance rotations and martial arts synergies.
+
+The site is a single page that swaps sections in React state. There is no client-side router, so Cloudflare needs no rewrite rules.
+
+## Local Development
+```bash
+npm install
+npm run dev
+```
+
+## Cloudflare Pages Deployment
+1. Push this repository to GitHub.
+2. In Cloudflare Dashboard, go to **Workers & Pages** > **Create application** > **Pages** > **Connect to Git**.
+3. Settings:
+   - **Framework preset**: Vite
+   - **Build command**: `npm run build`
+   - **Build output directory**: `dist`

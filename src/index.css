@@ -1,0 +1,572 @@
+@import 'lenis/dist/lenis.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* --- Self-hosted fonts ------------------------------------------------------
+   These faces used to load from Google Fonts. That CDN is unreachable from
+   some networks, so every face sat in the "error" state and the browser
+   silently substituted Georgia, then synthesised weight 800 on the Chinese
+   glyphs. Synthesised bold smears the strokes and is what made the tile
+   lettering look blurred.
+
+   Latin comes from @fontsource, imported in main.jsx. The Chinese glyphs come
+   from these subsets. Each holds only the 39 characters this site uses, so it
+   is 9.6 KB instead of 1.5 MB. The unicode-range keeps them away from Latin.
+
+   If a name introduces a new Chinese character, add it and re-run:
+     python -m fontTools.subset <fontsource .woff2> --text-file=chars.txt \
+       --layout-features='*' --flavor=woff2 --output-file=public/fonts/<out>.woff2
+---------------------------------------------------------------------------- */
+@font-face {
+  font-family: 'Noto Serif SC';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/noto-serif-sc-cjk-500.woff2') format('woff2');
+  unicode-range: U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF;
+}
+
+@font-face {
+  font-family: 'Noto Serif SC';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/noto-serif-sc-cjk-700.woff2') format('woff2');
+  unicode-range: U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF;
+}
+
+@font-face {
+  font-family: 'Noto Serif SC';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url('/fonts/noto-serif-sc-cjk-900.woff2') format('woff2');
+  unicode-range: U+3400-4DBF, U+4E00-9FFF, U+F900-FAFF;
+}
+
+@layer base {
+  :root {
+    /* Emil Kowalski strong easing tokens */
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+    --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+    /* Fixed single light source: upper-left, ~45° azimuth, ~35° elevation.
+       Every engraved lip reads these, so the carve direction never drifts.
+       Values are fractions of --tile-fs. */
+    --engrave-shadow-x: -0.007;
+    --engrave-shadow-y: -0.008;
+    --engrave-rim-x: 0.005;
+    --engrave-rim-y: 0.013;
+
+    /* 白板 frame ink. Traditional sets draw the White Dragon border in black
+       or blue; this matches the engraved lettering so the tile reads as one
+       carved object. */
+    --tile-frame-ink: #1b2733;
+  }
+
+  body {
+    @apply bg-ink-black text-gray-200 antialiased overflow-x-hidden;
+  }
+
+  /* Lenis html overrides */
+  html.lenis, html.lenis body {
+    height: auto;
+  }
+  .lenis.lenis-smooth {
+    scroll-behavior: auto !important;
+  }
+  .lenis.lenis-smooth [data-lenis-prevent] {
+    overscroll-behavior: contain;
+  }
+  .lenis.lenis-stopped {
+    overflow: hidden;
+  }
+}
+
+/* Button press feedback — Emil rule: buttons must feel responsive */
+.btn-press {
+  transition: transform 160ms var(--ease-out);
+}
+.btn-press:active {
+  transform: scale(0.97);
+}
+
+/* Reduced motion — gentler, not zero */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.2s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.2s !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Reduced motion also guarantees visibility. GSAP writes inline opacity on the
+   first frame of a `from()` tween; an !important author rule outranks inline
+   styles, so nothing can be left invisible for these entrance targets. */
+@media (prefers-reduced-motion: reduce) {
+  .hero-badge,
+  .hero-title,
+  .hero-subtitle,
+  .hero-controls,
+  .events-header,
+  .events-carousel,
+  .event-card,
+  .members-header,
+  .leadership-pane,
+  .member-tile-wrap,
+  .mj-header,
+  .mj-section,
+  .builds-header,
+  .build-card,
+  .gallery-header,
+  .gallery-slot,
+  .landing-footer {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* Hover gating — no hover on touch */
+@media (hover: none) {
+  .hover-only {
+    display: none !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Mahjong tile: CSS 3D bevel. Ivory face, engraved glyph, visible thickness.
+   Swap the inner .mj-tile for a GLTF model later; the wrapper stays.
+   --------------------------------------------------------------------------- */
+.mj-tile-wrap {
+  width: var(--tile-w);
+  height: var(--tile-h);
+}
+
+.mj-tile {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 220ms var(--ease-out);
+  will-change: transform;
+}
+
+.mj-tile-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 7px;
+  background: linear-gradient(
+    157deg,
+    #fffdf6 0%,
+    #faf6ea 30%,
+    #f1ebda 62%,
+    #e6ddc8 100%
+  );
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 2px rgba(120, 105, 80, 0.22),
+    inset 1px 0 0 rgba(255, 255, 255, 0.6),
+    inset -1px 0 1px rgba(120, 105, 80, 0.14),
+    0 1px 0 #d6cdb7,
+    0 2px 0 #c6bca4,
+    0 3px 0 #b3a88f,
+    0 6px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* Inner bevel ring — reads as a pressed face inset into the tile body */
+.mj-tile-face::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.6);
+  border-left: 1px solid rgba(255, 255, 255, 0.45);
+  border-right: 1px solid rgba(140, 125, 98, 0.16);
+  border-bottom: 1px solid rgba(140, 125, 98, 0.22);
+  pointer-events: none;
+}
+
+.mj-glyph {
+  font-family: 'Noto Serif SC', 'Cinzel', serif;
+  font-size: var(--tile-fs);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0;
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.22),
+    0 -1px 0 rgba(255, 255, 255, 0.65);
+  user-select: none;
+}
+
+/* Engraved icon. Three cues make it read as carved, not printed:
+   1. a dark sliver above the stroke (upper wall of the groove, in shadow)
+   2. a lit sliver below the stroke (lower wall catching light)
+   3. a desaturated stroke sitting between them. */
+.mj-engraved {
+  display: grid;
+  grid-template-areas: 'stack';
+  place-items: center;
+  line-height: 0;
+  user-select: none;
+}
+
+.mj-engraved-rim,
+.mj-engraved-cut {
+  grid-area: stack;
+  display: grid;
+  place-items: center;
+  line-height: 0;
+}
+
+.mj-engraved-rim {
+  color: rgba(255, 255, 255, 0.98);
+  transform: translateY(calc(var(--tile-fs) * var(--engrave-depth, 0.05)));
+  filter: blur(0.2px);
+}
+
+.mj-engraved-cut {
+  color: inherit;
+  filter:
+    drop-shadow(
+      0 calc(var(--tile-fs) * var(--engrave-shadow, -0.036)) 0 rgba(0, 0, 0, 0.5)
+    )
+    drop-shadow(
+      0 calc(var(--tile-fs) * var(--engrave-lift, 0.02)) 0
+        rgba(255, 255, 255, 0.35)
+    );
+}
+
+.mj-engraved svg {
+  width: calc(var(--tile-fs) * 1);
+  height: calc(var(--tile-fs) * 1);
+}
+
+/* Three stacked copies used on the member tile face:
+   shadow (up-left) → reflection lip (down-right) → the mark itself. */
+.mj-engraved > span {
+  grid-area: stack;
+  display: grid;
+  place-items: center;
+  line-height: 0;
+}
+
+.mj-engrave-shadow {
+  transform: translate(
+    calc(var(--tile-fs) * var(--engrave-shadow-x)),
+    calc(var(--tile-fs) * var(--engrave-shadow-y))
+  );
+  filter: blur(0.8px);
+}
+
+.mj-engrave-rim {
+  transform: translate(
+    calc(var(--tile-fs) * var(--engrave-rim-x)),
+    calc(var(--tile-fs) * var(--engrave-rim-y))
+  );
+  filter: blur(0.15px);
+}
+
+.mj-engrave-cut {
+  position: relative;
+}
+
+/* ---------------------------------------------------------------------------
+   Navigation scrim.
+   A painted gradient, deliberately NOT a backdrop-filter. A full-viewport
+   blur over the playing hero video makes the compositor re-blur the entire
+   screen on every frame of the fade, which is the main cost of opening the
+   pane. This layer is static paint, so the fade runs on the compositor alone.
+   --------------------------------------------------------------------------- */
+.nav-scrim {
+  background: radial-gradient(
+    130% 100% at 100% 50%,
+    rgba(6, 10, 8, 0.88) 0%,
+    rgba(5, 8, 7, 0.68) 42%,
+    rgba(4, 6, 5, 0.44) 100%
+  );
+  will-change: opacity;
+}
+
+/* ---------------------------------------------------------------------------
+   Member card: a mahjong tile drawn flat, in 2D.
+   Geometry is Size-7 reference (36 x 26 x 21 mm) scaled to px:
+     height / width = 1.38, depth / width = 0.81, radius = 7.5% of width.
+
+   Why 2D and not a 3D slab stack:
+   The old version stacked 14 rounded slabs in a 3D rendering context: 126
+   extra nodes and 126 composited 3D layers across 9 tiles, which made
+   scrolling lag. Under an orthographic camera every slab of a tile projects
+   to the SAME affine-transformed rounded rectangle, just shifted along one
+   depth vector. So the whole tile is:
+     1. one 2D matrix on .member-tile-tilt (the face foreshortening), and
+     2. copies of the face outline, shifted along the depth vector.
+
+   Why copies and not a side plane:
+   A flat side plane cannot follow the rounded corner, so a dark notch opens
+   at each corner. A shifted copy carries the same border-radius, so the
+   outline stays continuous. Two copies sit behind the face: white acrylic at
+   mid depth and green backing at full depth. Each copy carries a gradient.
+   Each also carries three hard 0-blur box-shadows that step back toward the
+   layer in front of it. They fill the small wedge that two offset rounded
+   rectangles leave between them, so the top and bottom-left of the wall
+   close cleanly.
+
+   Projection, from rotateY(a) rotateX(b) applied to a point (x, y, z):
+     face   x' = x cos a + y sin a sin b,  y' = y cos b
+     depth  per unit z: (-cos b sin a, sin b), expressed in the face's own
+            coordinates because the copies live inside the same matrix.
+   Rest  a = -13deg, b = 4.5deg -> matrix(0.974, 0, -0.0177, 0.997)
+                                   depth (0.232, 0.079) x d
+   Hover a = -4deg,  b = 2deg   -> matrix(0.9976, 0, -0.0024, 0.9994)
+                                   depth (0.070, 0.035) x d
+   --------------------------------------------------------------------------- */
+.member-tile-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* The nameplate is a sibling of this stage, not a child, so it never enters
+   the transformed subtree and never gets resampled by it. */
+.member-tile-stage {
+  position: relative;
+  width: calc(var(--mt-w) * 1.16);
+  height: calc(var(--mt-h) * 1.17);
+}
+
+/* --mt-ox / --mt-oy: the full depth vector, front face to back face. The face
+   sits at minus half of it and the green back at plus half, so the tile stays
+   centred like the 3D version did when it rotated about its middle. */
+.member-tile-tilt {
+  --mt-ox: calc(var(--mt-d) * 0.232);
+  --mt-oy: calc(var(--mt-d) * 0.079);
+  position: absolute;
+  inset: 0;
+  transform: matrix(0.974, 0, -0.0177, 0.997, 0, 0);
+  transition: transform 340ms var(--ease-out);
+}
+
+/* Hover turns the tile to face the viewer: the near edge stops leading.
+   Changing the depth vector re-runs the translate transitions below. */
+.member-tile-wrap:hover .member-tile-tilt {
+  --mt-ox: calc(var(--mt-d) * 0.07);
+  --mt-oy: calc(var(--mt-d) * 0.035);
+  transform: matrix(0.9976, 0, -0.0024, 0.9994, 0, 0);
+}
+
+/* The extrusion. ::before is the green backing at full depth, ::after is the
+   white acrylic at mid depth. Both sit under the box (z-index 1).
+   box-shadow uses currentColor so the flip can swap the colour without
+   re-running the box-shadow transition. */
+.member-tile-tilt::before,
+.member-tile-tilt::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  left: 50%;
+  width: var(--mt-w);
+  height: var(--mt-h);
+  margin-left: calc(var(--mt-w) / -2);
+  margin-top: calc(var(--mt-h) / -2);
+  border-radius: calc(var(--mt-w) * 0.075);
+  box-shadow:
+    calc(var(--mt-ox) * -0.125) calc(var(--mt-oy) * -0.125) 0 currentColor,
+    calc(var(--mt-ox) * -0.25) calc(var(--mt-oy) * -0.25) 0 currentColor,
+    calc(var(--mt-ox) * -0.375) calc(var(--mt-oy) * -0.375) 0 currentColor;
+  pointer-events: none;
+  transition:
+    translate 340ms var(--ease-out),
+    box-shadow 340ms var(--ease-out);
+}
+
+.member-tile-tilt::before {
+  translate: calc(var(--mt-ox) * 0.5) calc(var(--mt-oy) * 0.5);
+  color: #1d7148;
+  background-image: linear-gradient(180deg, #34996a 0%, #2a8f5b 26%, #1d7148 68%, #145536 100%);
+}
+
+.member-tile-tilt::after {
+  translate: 0 0;
+  color: #f0efe8;
+  background-image: linear-gradient(180deg, #ffffff 0%, #fbfbf7 38%, #f0efe8 76%, #e5e4d9 100%);
+}
+
+/* The tile tilts with a 2D matrix. `translate` and `scale` are separate
+   individual properties so the shift and the tilt keep their own timings. */
+.member-tile-box {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  width: var(--mt-w);
+  height: var(--mt-h);
+  margin-left: calc(var(--mt-w) / -2);
+  margin-top: calc(var(--mt-h) / -2);
+  translate: calc(var(--mt-ox) * -0.5) calc(var(--mt-oy) * -0.5);
+  transition: translate 340ms var(--ease-out);
+}
+
+.mt-face {
+  position: absolute;
+  inset: 0;
+  border-radius: calc(var(--mt-w) * 0.075);
+}
+
+/* Pristine white acrylic face. */
+.mt-front {
+  position: absolute;
+  inset: 0;
+  /* Must carry the radius itself. The parent .mt-face has the radius but does
+     not clip, so without this the face paints as a square rectangle and the
+     corner reads as a hard 90 degree break against the wall. */
+  border-radius: calc(var(--mt-w) * 0.075);
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  overflow: hidden;
+  background: linear-gradient(
+    160deg,
+    #ffffff 0%,
+    #fcfcfa 34%,
+    #f4f4ef 68%,
+    #e9e9e1 100%
+  );
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.85),
+    inset 0 -4px 9px rgba(120, 120, 105, 0.14),
+    inset 3px 0 4px rgba(255, 255, 255, 0.6);
+}
+
+/* Pressed bevel ring, like the inset face of a real tile */
+.mt-front::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border-radius: calc(var(--mt-w) * 0.055);
+  border-top: 1px solid rgba(255, 255, 255, 0.7);
+  border-left: 1px solid rgba(255, 255, 255, 0.55);
+  border-right: 1px solid rgba(120, 120, 100, 0.14);
+  border-bottom: 1px solid rgba(120, 120, 100, 0.2);
+  pointer-events: none;
+}
+
+/* Reduced motion: the global rule stretches every transition to 0.2s. Snap the
+   tile instead so the tilt and the wall shift are instant. */
+@media (prefers-reduced-motion: reduce) {
+  .member-tile-tilt,
+  .member-tile-tilt::before,
+  .member-tile-tilt::after,
+  .member-tile-box {
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+  }
+}
+
+/* 白板 frame, now spanning the whole face.
+   白板 (bai ban) is the White Dragon. The earliest sets left it blank; a
+   rectangular border was added because a plain blank could be mistaken for a
+   spare tile. The double rule is characteristic, and the shape is why some
+   sets call this tile the "mirror" or the "window". Here the window IS the
+   tile face, and the portrait crops to fill it. */
+.member-portrait-window {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  padding: 7px;
+  border: 2px solid var(--tile-frame-ink);
+  border-radius: 1px;
+  background: #ffffff;
+}
+
+/* Inner rule of the double border. Stays above the image. */
+.member-portrait-window::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border: 1px solid var(--tile-frame-ink);
+  border-radius: 1px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.member-portrait-window img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 1px;
+}
+
+/* Blank interior, like a tile before its engraving. */
+.member-portrait-window--empty {
+  display: flex;
+}
+
+.member-portrait-window--empty .mt-glyph {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 1px;
+  background: linear-gradient(160deg, #f7f6f1, #eceae1);
+}
+
+.mt-glyph {
+  font: 700 64px/1 'Noto Serif SC', ui-serif, Georgia, serif;
+  color: rgba(27, 39, 51, 0.16);
+}
+
+.mt-nameplate {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-width: 0;
+}
+
+.member-name {
+  margin: 0;
+  font: 700 24px/1.05 'Noto Serif SC', ui-serif, Georgia, serif;
+  letter-spacing: 0.01em;
+  /* The nameplate now sits below the tile, on the page, not on cream acrylic.
+     It needs page ink, not tile ink. */
+  color: #efe9db;
+  /* Never synthesise bold. If the 700 face is missing, the browser fakes it by
+     drawing the glyph twice with an offset. A clean 400 reads better. */
+  font-synthesis: none;
+}
+
+.member-tile-wrap--leader .member-name {
+  font-size: 28px;
+}
+
+.member-role {
+  margin: 8px 0 0;
+  font: 700 13px/1.2 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #b8912f;
+}
+
+/* Inset shadow over the picture, so it reads as set into the tile rather than
+   pasted on it. An inset shadow on the <img> itself would never show: the
+   image paints over its own box shadow, so the shadow needs its own overlay. */
+.member-portrait-window::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border-radius: 1px;
+  box-shadow: inset 0 3px 7px rgba(60, 45, 25, 0.38);
+  pointer-events: none;
+}
+
+
+

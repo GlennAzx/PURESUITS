@@ -1,0 +1,23 @@
+[
+  {
+    "id": "territory-war",
+    "name": "Sect Territory Siege (势力争夺战)",
+    "date": "2026-10-24T20:00:00+08:00",
+    "category": "PvP",
+    "description": "Weekly 30v30 stronghold conquest battle."
+  },
+  {
+    "id": "world-boss",
+    "name": "Calamity Sovereign Boss (野外首领)",
+    "date": "2026-10-25T21:30:00+08:00",
+    "category": "PvE",
+    "description": "Open-world field boss execution and tier 5 gear drops."
+  },
+  {
+    "id": "mahjong-night",
+    "name": "Bloody Battle Mahjong Social (血战雀庄)",
+    "date": "2026-10-26T22:00:00+08:00",
+    "category": "Social",
+    "description": "In-game tavern Mahjong tables and copper wager night."
+  }
+]

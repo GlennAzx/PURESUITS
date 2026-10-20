@@ -1,0 +1,20 @@
+[
+  {
+    "id": "nameless-burst",
+    "discipline": "Nameless Blade Stance (无名双刃)",
+    "role": "Burst DPS / Mobility",
+    "weapons": "Longsword & Dual Daggers",
+    "rotation": "Engage with Swift Gale Strike -> Cancel recovery into Shadow Step -> Double Flurry -> Sheath Art Finisher",
+    "mysticArts": ["Windcutter Stance", "Void Phantom Step", "Thousand Petal Rain"],
+    "internalPassives": "Focus on Qi regeneration during successful counter-parries and posture break amplification."
+  },
+  {
+    "id": "vanguard-spear",
+    "discipline": "Iron Vanguard (金戈重戟)",
+    "role": "Frontline Bruiser / Posture Break",
+    "weapons": "Heavy Broadsword & Polearm Spear",
+    "rotation": "Mountain Cleave charge -> Vaulting Spear Impale -> Heavy Sweep for area knockdown",
+    "mysticArts": ["Iron Bell Defiance", "Earthshaker Stance", "Roaring Dragon Thrust"],
+    "internalPassives": "Converts incoming parried momentum into temporary hyper-armor posture shields."
+  }
+]

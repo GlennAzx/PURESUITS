@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="PURESUIT — a chill Mahjong guild in Where Winds Meet. Weekly guild events, relaxed tables, no pressure."
+    />
+    <title>PURESUIT | 清一色 - Where Winds Meet Guild</title>
+    <!-- Fonts are self-hosted (see src/main.jsx and src/index.css). The Google
+         Fonts <link> was removed: the CDN is unreachable from some networks,
+         so every face failed to load and the browser substituted Georgia with
+         a synthesised weight, which blurred the tile lettering. -->
+
+    <!-- Fallback styling. Plain CSS in the document head so it renders with no
+         JavaScript and no bundled stylesheet. -->
+    <style>
+      .boot {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 32px 20px;
+        box-sizing: border-box;
+        background:
+          radial-gradient(120% 90% at 20% 15%, #12291e 0%, #0b1410 45%, #0b0c10 100%);
+        color: #d6d3cd;
+        font-family: ui-serif, Georgia, 'Times New Roman', serif;
+        line-height: 1.65;
+      }
+      .boot-card {
+        width: 100%;
+        max-width: 520px;
+      }
+      .boot-eyebrow {
+        font-size: 10px;
+        letter-spacing: 0.42em;
+        text-transform: uppercase;
+        color: rgba(212, 175, 55, 0.7);
+        margin-bottom: 14px;
+      }
+      .boot-title {
+        font-size: 44px;
+        line-height: 1;
+        letter-spacing: 0.08em;
+        color: #f5f0e8;
+        margin: 0 0 16px;
+        font-weight: 900;
+      }
+      .boot-sub {
+        font-size: 14px;
+        color: #9ca3af;
+        margin: 0 0 30px;
+        max-width: 40ch;
+      }
+      .boot-h2 {
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #d4af37;
+        margin: 26px 0 10px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid rgba(212, 175, 55, 0.22);
+        font-weight: 700;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+      }
+      .boot-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        font-size: 13px;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+      }
+      .boot-list li {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 6px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      .boot-list li span { color: #8b929c; white-space: nowrap; }
+      .boot-cta {
+        display: inline-block;
+        margin-top: 30px;
+        padding: 12px 20px;
+        border: 1px solid rgba(212, 175, 55, 0.45);
+        border-radius: 10px;
+        color: #f9d976;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 700;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        letter-spacing: 0.04em;
+      }
+      .boot-cta:hover { border-color: #d4af37; color: #fff; }
+      .boot-note {
+        margin-top: 26px;
+        font-size: 11px;
+        color: #6b7280;
+        font-family: ui-monospace, monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Boot fallback lives inside #root so it covers BOTH cases: JavaScript
+         disabled, and JavaScript enabled but failing before React mounts.
+         React replaces this node on first render. -->
+    <div id="root">
+      <div class="boot">
+        <div class="boot-card">
+          <div class="boot-eyebrow">Where Winds Meet</div>
+          <h1 class="boot-title">PURESUIT</h1>
+          <p class="boot-sub">
+            A chill Mahjong guild. Weekly runs, relaxed tables, no pressure.
+          </p>
+
+          <h2 class="boot-h2">Guild events &middot; UTC+8</h2>
+          <ul class="boot-list">
+            <li><strong>Guild Party</strong> <span>Daily &middot; 21:00</span></li>
+            <li><strong>Breaking Army &amp; Showdown</strong> <span>Wed &amp; Sat &middot; 21:30</span></li>
+            <li><strong>Heroes Realm</strong> <span>Mon 21:00 &middot; Fri 22:00</span></li>
+          </ul>
+
+          <h2 class="boot-h2">Leadership</h2>
+          <ul class="boot-list">
+            <li><strong>淼琰MY</strong> <span>Guild Leader</span></li>
+            <li><strong>Cheliodas</strong> <span>Vice Leader</span></li>
+          </ul>
+
+          <a class="boot-cta" href="https://discord.gg/QrnhSzcYkb" rel="noopener">
+            Join the Discord &mdash; discord.gg/QrnhSzcYkb
+          </a>
+
+          <p class="boot-note">
+            The full site needs JavaScript. The details above are static.
+          </p>
+        </div>
+      </div>
+    </div>
+    <noscript>
+      <style>
+        #root .boot-note::after { content: ' JavaScript is disabled in this browser.'; }
+      </style>
+    </noscript>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
