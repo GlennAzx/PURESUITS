@@ -1,0 +1,10 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "puresuits",
+  "compatibility_date": "2026-10-20",
+  // Workers Builds runs `npm run build`, then `npx wrangler deploy`.
+  // Wrangler uploads whatever this directory holds as static assets.
+  "assets": {
+    "directory": "./dist/"
+  }
+}
