@@ -334,13 +334,16 @@ measurement here so the next session does not repeat the argument.
 
 ## 12. Builds page: radial path menu
 
-The Builds page opens with a ring of ten path nodes, then the build cards.
+The Builds page **is** the ring. Header at the top, then the menu centred in the rest of
+the viewport. The two build cards that used to sit below are gone, at the user's request;
+`src/data/builds.json` is now unread and is kept only as a shape hint for the per-path
+subpages.
 
 | Part | Value |
 |---|---|
 | Data | `src/data/paths.json` — 10 entries, `en`, `short`, `cn`, `attribute`, `weapons`, `icon` |
 | Icons | `public/paths/` — 8 files |
-| Ring | `min(600px, 86vw)`, `aspect-ratio: 1`, nodes at **40%** radius |
+| Ring | `min(600px, 86vw, 58vh)`, `aspect-ratio: 1`, nodes at **40%** radius |
 | Node | `clamp(60px, 15%, 96px)` circle — 90px at the 600px ring; emblem `clamp(30px, 62%, 58px)` — 55px |
 | Hover | node scales to **1.16** with a light overshoot; the emblem grows with it |
 | Drift | **18px** amplitude, `760ms` cubic-bezier(0.23, 1, 0.32, 1) |
@@ -370,6 +373,19 @@ samples: 37° → 138° → 258° → 316° → 324°.
 
 **No `backdrop-filter` on the nodes.** A blur over a moving ring is redone every frame.
 The nav scrim already paid for that lesson.
+
+**The ring is capped by viewport height, and the page height accounts for `main`'s
+`pb-16`.** Two separate traps, both measured:
+
+- Without the `58vh` term in the width, the fixed 600px ring pushed the bottom nodes below
+  the fold on a 1440×800 laptop.
+- `main` in `App.jsx` carries `pb-16` (64px). A page set to `min-h-svh` inside it scrolls
+  by exactly 64px at every viewport size. The Builds page therefore uses
+  `min-h-[calc(100svh-4rem)]`. Measured overflow after the fix: **0** at 1600×1120,
+  1440×800, 1280×720 and 390×844.
+
+Ring and node size across those viewports: 600/90, 464/70, 418/63, 335/60. Minimum node
+gap stays at 22.9px or more.
 
 **Two blank nodes are correct.** `Silkbind Wings` and `Bamboocut Kite` have no emblem yet.
 `icon: null` renders a dashed circle with a faint dot, and the hub still names the path.

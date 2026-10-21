@@ -700,7 +700,10 @@
 
 .radial-paths-ring {
   position: relative;
-  width: min(600px, 86vw);
+  /* Also capped by viewport height. Without the 64vh term the fixed 600px ring
+     overflows a 800px-tall laptop screen and the bottom nodes sit below the
+     fold, because the header eats the top of the viewport. */
+  width: min(600px, 86vw, 58vh);
   aspect-ratio: 1;
   --deal-ms: 780ms;
   /* The project's ease-out-quint. Expo (0.16, 1, 0.3, 1) was tried first: it
