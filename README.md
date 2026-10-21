@@ -16,6 +16,13 @@ and why, and how to verify each rule.
 - **Sichuan Bloody Battle (血战到底) Mahjong Guide** — scoring rules and unvoiding.
 - **Gallery** — six slots, filled from `src/data/gallery.json`.
 - **Real URLs** — `/`, `/members`, `/builds`, `/gallery`, `/mahjong-guide`. Refresh keeps the page, links are shareable, Back/Forward work.
+- **Per-member links** — `/members/<slug>`, e.g. `/members/awooyin`, scrolls that tile into view and rings it.
+
+Every member has their own URL: `/members/<slug>`. Opening one scrolls that tile into
+view and rings it gold for a moment. Each tile is a real `<a>`, so right-click → copy link
+and middle-click both work. The slug comes from the name via `src/lib/memberSlug.js` and
+keeps Unicode letters, so `/members/玄月吟` works as well as `/members/awooyin`. An
+unknown slug lands on `/members` with no scroll and no error.
 
 Editable data lives in `src/data/`: `members.json` (roster and avatars) and `paths.json`
 (the build paths). `events.json` and `builds.json` are no longer read by any component.

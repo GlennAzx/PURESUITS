@@ -444,6 +444,22 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  /* The wrap is an <a> now, one link per member at /members/<slug>. */
+  text-decoration: none;
+  color: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Deep link target: /members/<slug> rings the tile for a moment so the eye
+   lands on it after the scroll. Removed by MembersPage after 2.8s. */
+.member-tile-wrap--focus .mt-face {
+  box-shadow:
+    0 0 0 3px rgb(var(--c-imperial-gold) / 0.85),
+    0 0 30px rgb(var(--c-imperial-gold) / 0.22);
+}
+
+.member-tile-wrap--focus .member-name {
+  color: rgb(var(--c-imperial-gold-bright) / 1);
 }
 
 /* The nameplate is a sibling of this stage, not a child, so it never enters

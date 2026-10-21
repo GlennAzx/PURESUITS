@@ -11,20 +11,18 @@ import MahjongGuidePage from './pages/MahjongGuidePage';
 import BuildsPage from './pages/BuildsPage';
 import GalleryPage from './pages/GalleryPage';
 import { installRevealGuard } from './lib/revealGuard';
+import { setLenis } from './lib/scroll';
 
 // Register GSAP plugins once at top level
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 /**
- * Routing: real URLs, not React state alone.
- *
- * The page id lives in the path — `/`, `/members`, `/builds` — so a refresh
- * keeps the page, links are shareable, and Back/Forward work. State alone made
- * every reload boot at Home.
+ * Routing: the page id lives in the path, and a member can add one more
+ * segment — /members/awooyin — which scrolls that tile into view.
  *
  * `not_found_handling: "single-page-application"` in wrangler.jsonc is what
  * makes this work in production: Workers serves index.html for any unknown
- * path instead of a 404. Remove that and a direct visit to /members 404s.
+ * path. Remove it and /members/awooyin 404s.
  */
 const PAGES = ['home', 'members', 'mahjong-guide', 'builds', 'gallery'];
 
@@ -36,32 +34,49 @@ const TITLES = {
   gallery: 'Gallery | PURESUIT',
 };
 
-const pathFor = (page) => (page === 'home' ? '/' : `/${page}`);
+const pathFor = (page, slug) => {
+  if (page === 'home') return '/';
+  if (page === 'members' && slug) return `/members/${encodeURIComponent(slug)}`;
+  return `/${page}`;
+};
 
-function pageFromPath() {
-  const seg = window.location.pathname.replace(/^\/+|\/+$/g, '');
-  return PAGES.includes(seg) ? seg : 'home';
+function parseRoute() {
+  const segs = window.location.pathname
+    .split('/')
+    .filter(Boolean)
+    .map((s) => {
+      try {
+        return decodeURIComponent(s);
+      } catch {
+        return s;
+      }
+    });
+  const page = PAGES.includes(segs[0]) ? segs[0] : 'home';
+  const slug = page === 'members' && segs[1] ? segs[1] : null;
+  return { page, slug };
 }
 
 export default function App() {
-  const [activePage, setActivePage] = useState(pageFromPath);
+  const [route, setRoute] = useState(parseRoute);
   const mainRef = useRef(null);
   const lenisRef = useRef(null);
+  const activePage = route.page;
 
   // Back / Forward. Without this the URL changes but the view does not.
   useEffect(() => {
-    const onPop = () => setActivePage(pageFromPath());
+    const onPop = () => setRoute(parseRoute());
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
   }, []);
 
   // Navigation: update the view and push a history entry.
-  const navigate = useCallback((page) => {
+  const navigate = useCallback((page, slug = null) => {
     const next = PAGES.includes(page) ? page : 'home';
-    setActivePage(next);
-    const url = pathFor(next);
+    const nextSlug = next === 'members' ? slug : null;
+    setRoute({ page: next, slug: nextSlug });
+    const url = pathFor(next, nextSlug);
     if (window.location.pathname !== url) {
-      window.history.pushState({ page: next }, '', url);
+      window.history.pushState({ page: next, slug: nextSlug }, '', url);
     }
   }, []);
 
@@ -77,6 +92,7 @@ export default function App() {
       smoothWheel: true,
     });
     lenisRef.current = lenis;
+    setLenis(lenis);
 
     // Sync Lenis scroll position to ScrollTrigger
     lenis.on('scroll', ScrollTrigger.update);
@@ -90,16 +106,18 @@ export default function App() {
 
     return () => {
       gsap.ticker.remove(onTick);
+      setLenis(null);
       lenis.destroy();
     };
   }, []);
 
-  // Scroll to top on page change. Do NOT kill all ScrollTriggers here:
-  // useGSAP already reverts each page's own animations on unmount. Killing
-  // globally would also kill the triggers the new page just created, because
-  // this effect runs after the child's useGSAP (layout effect).
+  // Scroll to top on page change — but NOT when a member slug is in the URL.
+  // MembersPage owns that scroll, and jumping to 0 here would fight it.
+  // Do NOT kill all ScrollTriggers here: useGSAP already reverts each page's
+  // own animations on unmount, and killing globally would also kill the
+  // triggers the new page just created.
   useEffect(() => {
-    if (lenisRef.current) {
+    if (!route.slug && lenisRef.current) {
       lenisRef.current.scrollTo(0, { immediate: true });
     }
     // Recalculate positions for the new page's content
@@ -110,14 +128,19 @@ export default function App() {
       cancelAnimationFrame(id);
       removeGuard();
     };
-  }, [activePage]);
+  }, [route]);
 
   const renderPage = () => {
     switch (activePage) {
       case 'home':
         return <HomePage setActivePage={navigate} />;
       case 'members':
-        return <MembersPage />;
+        return (
+          <MembersPage
+            focusSlug={route.slug}
+            onOpenMember={(slug) => navigate('members', slug)}
+          />
+        );
       case 'mahjong-guide':
         return <MahjongGuidePage />;
       case 'builds':

@@ -1,4 +1,5 @@
 import React from 'react';
+import { slugify } from '../lib/memberSlug';
 
 /**
  * Member tile: a mahjong tile drawn with 2D transforms only.
@@ -35,6 +36,7 @@ export default function MemberCard3D({
   avatar: avatarProp,
   variant = 'standard',
   index = 0,
+  onOpen = null,
 }) {
   const name = nameProp ?? member?.name ?? '';
   const role = roleProp ?? member?.role ?? '';
@@ -42,10 +44,27 @@ export default function MemberCard3D({
 
   const { w, h, d } = DIMS[variant] ?? DIMS.standard;
 
+  // Every tile is a real link to /members/<slug>, so right-click "copy link"
+  // and middle-click work. With onOpen the click is intercepted for an SPA
+  // transition; without it the browser navigates and the SPA fallback loads
+  // the right page anyway.
+  const slug = slugify(name);
+  const href = slug ? `/members/${encodeURIComponent(slug)}` : '/members';
+
+  const handleClick = (event) => {
+    if (!onOpen || !slug) return;
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+    event.preventDefault();
+    onOpen(slug);
+  };
+
   return (
-    <div
+    <a
       className={`member-tile-wrap${variant === 'leader' ? ' member-tile-wrap--leader' : ''}`}
       style={{ '--mt-w': `${w}px`, '--mt-h': `${h}px`, '--mt-d': `${d}px` }}
+      href={href}
+      data-slug={slug}
+      onClick={handleClick}
     >
       {/* Everything inside the stage is transformed; everything outside it
           renders as untransformed 2D text. */}
@@ -76,6 +95,6 @@ export default function MemberCard3D({
         <h3 className="member-name">{name}</h3>
         <p className="member-role">{role}</p>
       </div>
-    </div>
+    </a>
   );
 }

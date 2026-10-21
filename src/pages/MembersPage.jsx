@@ -1,8 +1,10 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import MemberCard3D from '../components/MemberCard3D';
 import membersData from '../data/members.json';
+import { memberSlug } from '../lib/memberSlug';
+import { scrollToElement } from '../lib/scroll';
 
 function SectionHeading({ title }) {
   return (
@@ -14,7 +16,7 @@ function SectionHeading({ title }) {
   );
 }
 
-export default function MembersPage() {
+export default function MembersPage({ focusSlug = null, onOpenMember = null }) {
   const pageRef = useRef(null);
 
   const { leadership, commanders, members, total } = useMemo(() => {
@@ -27,6 +29,41 @@ export default function MembersPage() {
       total: membersData.length,
     };
   }, []);
+
+  // Deep link: /members/<slug> scrolls that tile into view and rings it.
+  // Waits two frames so the grid has laid out before measuring, otherwise the
+  // scroll lands short on a cold load.
+  useEffect(() => {
+    if (!focusSlug) return undefined;
+    const want = String(focusSlug).toLowerCase();
+    let raf1 = 0;
+    let raf2 = 0;
+    let clear = 0;
+    let marked = null;
+
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        const el = [...document.querySelectorAll('.member-tile-wrap')].find(
+          (node) => (node.dataset.slug || '').toLowerCase() === want
+        );
+        if (!el) return;
+        marked = el;
+        scrollToElement(el, { offset: -140 });
+        el.classList.add('member-tile-wrap--focus');
+        clear = window.setTimeout(() => el.classList.remove('member-tile-wrap--focus'), 2800);
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(raf1);
+      if (raf2) cancelAnimationFrame(raf2);
+      window.clearTimeout(clear);
+      // The ring is applied outside React, so cleanup must remove it too.
+      // Without this, going Back to /members leaves the last tile ringed
+      // forever: the timeout is cancelled and nothing else clears the class.
+      if (marked) marked.classList.remove('member-tile-wrap--focus');
+    };
+  }, [focusSlug]);
 
   useGSAP(
     () => {
@@ -71,7 +108,7 @@ export default function MembersPage() {
           <SectionHeading title="Leadership" />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-16 justify-items-center">
             {leadership.map((m, i) => (
-              <MemberCard3D key={m.id} member={m} index={i} variant="leader" />
+              <MemberCard3D key={m.id} member={m} index={i} variant="leader" onOpen={onOpenMember} />
             ))}
           </div>
         </div>
@@ -83,7 +120,7 @@ export default function MembersPage() {
           <SectionHeading title="Commanders" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-16 justify-items-center">
             {commanders.map((m, i) => (
-              <MemberCard3D key={m.id} member={m} index={i} />
+              <MemberCard3D key={m.id} member={m} index={i} onOpen={onOpenMember} />
             ))}
           </div>
         </section>
@@ -95,7 +132,7 @@ export default function MembersPage() {
           <SectionHeading title="Members" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-16 justify-items-center">
             {members.map((m, i) => (
-              <MemberCard3D key={m.id} member={m} index={i} />
+              <MemberCard3D key={m.id} member={m} index={i} onOpen={onOpenMember} />
             ))}
           </div>
         </section>
