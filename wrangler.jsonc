@@ -4,7 +4,12 @@
   "compatibility_date": "2026-10-20",
   // Workers Builds runs `npm run build`, then `npx wrangler deploy`.
   // Wrangler uploads whatever this directory holds as static assets.
+  //
+  // not_found_handling is REQUIRED for the routing in src/App.jsx: the page id
+  // lives in the path (/members, /builds), so a direct visit or a refresh on
+  // those URLs must serve index.html. Without this line those URLs 404.
   "assets": {
-    "directory": "./dist/"
+    "directory": "./dist/",
+    "not_found_handling": "single-page-application"
   }
 }

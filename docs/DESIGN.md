@@ -309,7 +309,10 @@ devDependencies so CI does not pull a surprise major.
 - Deploy command: `npx wrangler deploy`
 - Preview command: `npx wrangler preview` — **a real command in Wrangler 4**, listed as
   "Create a Preview deployment of the current Worker [open beta]". Do not replace it.
-- No `_redirects` / rewrite rules. `App.jsx` swaps sections in state; there is no router.
+- No `_redirects`. The page id lives in the path, so `wrangler.jsonc` sets
+  `"not_found_handling": "single-page-application"` — every unknown path serves
+  `index.html` and React reads the path. **Remove that line and a direct visit to
+  `/members` or `/builds` returns 404.**
 
 ---
 

@@ -13,7 +13,7 @@ A modern, dynamic guild website built with **Vite + React + Tailwind CSS**, read
 - **Recruitment Application Scroll**: Ready for Formspree email forwarding.
 - **No DPS Simulator**: Pure qualitative stance rotations and martial arts synergies.
 
-The site is a single page that swaps sections in React state. There is no client-side router, so Cloudflare needs no rewrite rules.
+The site uses real URLs. Each page is a path — `/`, `/members`, `/builds`, `/gallery`, `/mahjong-guide` — so a refresh keeps the page, links are shareable, and Back/Forward work. `App.jsx` reads the path on load and pushes history on navigation. Workers needs `not_found_handling: "single-page-application"` in `wrangler.jsonc` so those paths serve `index.html`.
 
 ## Local Development
 ```bash
