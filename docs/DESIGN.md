@@ -344,12 +344,29 @@ The Builds page opens with a ring of ten path nodes, then the build cards.
 | Node | `clamp(60px, 15%, 96px)` circle — 90px at the 600px ring; emblem `clamp(28px, 48%, 44px)` |
 | Hover | node scales to **1.16** with a light overshoot; the emblem grows with it |
 | Drift | **18px** amplitude, `760ms` cubic-bezier(0.23, 1, 0.32, 1) |
+| Entrance | all nodes stacked at 12 o'clock, then **780ms** out, **55ms** stagger, `rotate` only |
 | Hub | `clamp(132px, 33%, 196px)`, shows attribute / short name / CN / weapon pair |
 
 **The drift writes CSS variables, not React state.** A `pointermove` fires dozens of
 times a second; re-rendering ten nodes each time is waste. One ref, one
 `requestAnimationFrame`, two variables, one compositor-only `transform`. Do not move it
 into state.
+
+**The entrance rides `rotate`, the hover rides `scale`.** Each node sits in a
+`.path-slot` that spins about the ring centre, carrying the node along the circumference
+for free; the node counter-rotates by the same angle so the emblem stays upright the
+whole way. Both use the individual `rotate` property and the hover uses `scale`, so the
+780ms entrance and the 300ms hover never share a duration. Putting both on `transform`
+forces one of them to be wrong.
+
+The phase attribute is `stacked → dealing → settled`. **`settled` exists only to drop the
+per-node `transition-delay`**, so hover answers instantly after the entrance. Skip it and
+hover lags by up to 495ms.
+
+Expo easing `cubic-bezier(0.16, 1, 0.3, 1)` was tried first and rejected: it finished the
+visible travel in about 300ms, so the stagger could not be seen. The project's ease-out
+quint at 780ms keeps motion legible across the run — measured angular spread over 200ms
+samples: 37° → 138° → 258° → 316° → 324°.
 
 **No `backdrop-filter` on the nodes.** A blur over a moving ring is redone every frame.
 The nav scrim already paid for that lesson.

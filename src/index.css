@@ -702,6 +702,11 @@
   position: relative;
   width: min(600px, 86vw);
   aspect-ratio: 1;
+  --deal-ms: 780ms;
+  /* The project's ease-out-quint. Expo (0.16, 1, 0.3, 1) was tried first: it
+     finished the visible travel in about 300ms, so the stagger could not be
+     seen. This keeps motion legible across the whole run. */
+  --deal-ease: cubic-bezier(0.23, 1, 0.32, 1);
   transform: translate3d(var(--drift-x, 0px), var(--drift-y, 0px), 0);
   /* A long ease turns pointer updates into a trailing float rather than a
      rigid follow. Shorten it and the menu feels glued to the cursor. */
@@ -716,22 +721,60 @@
   pointer-events: none;
 }
 
+/* Each node rides a slot that rotates about the ring centre. The node sits at
+   the slot's top edge, so rotating the slot sweeps it along the circumference
+   for free — no per-frame JS, no layout.
+
+   The entrance and the hover run on different properties by design: `rotate`
+   carries the deal, `scale` carries the hover. Sharing `transform` would force
+   one duration on both. */
+.path-slot {
+  position: absolute;
+  inset: 0;
+  rotate: 0deg;
+  pointer-events: none;
+  transition: rotate var(--deal-ms) var(--deal-ease);
+}
+
+.radial-paths-ring[data-phase='dealing'] .path-slot,
+.radial-paths-ring[data-phase='settled'] .path-slot {
+  rotate: var(--slot-angle);
+}
+
+/* Delay only while dealing. Once settled, hover must respond immediately. */
+.radial-paths-ring[data-phase='dealing'] .path-slot,
+.radial-paths-ring[data-phase='dealing'] .path-node {
+  transition-delay: var(--deal-delay);
+}
+
 .path-node {
   position: absolute;
+  left: 50%;
+  top: 10%; /* ring radius is 40%, so the top of the circle is 50% - 40% */
   width: clamp(60px, 15%, 96px);
   aspect-ratio: 1;
-  transform: translate(-50%, -50%) scale(var(--node-scale, 1));
+  translate: -50% -50%;
+  rotate: 0deg;
+  scale: var(--node-scale, 1);
   display: grid;
   place-items: center;
   border-radius: 999px;
   border: 1px solid rgb(var(--c-ivory) / 0.14);
   background: rgb(var(--c-ink-charcoal) / 0.62);
   cursor: pointer;
+  pointer-events: auto;
   transition:
-    transform 300ms cubic-bezier(0.34, 1.4, 0.64, 1),
+    rotate var(--deal-ms) var(--deal-ease),
+    scale 300ms cubic-bezier(0.34, 1.4, 0.64, 1),
     border-color 300ms ease,
     box-shadow 300ms ease,
     background-color 300ms ease;
+}
+
+/* Counter-rotate by the slot's angle so the emblem stays upright on the way out. */
+.radial-paths-ring[data-phase='dealing'] .path-node,
+.radial-paths-ring[data-phase='settled'] .path-node {
+  rotate: var(--counter-angle);
 }
 
 /* The circle grew; the emblem grows less, and is capped in pixels. Scaling the
