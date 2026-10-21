@@ -777,13 +777,15 @@
   rotate: var(--counter-angle);
 }
 
-/* The circle grew; the emblem grows less, and is capped in pixels. Scaling the
-   art 1:1 with the circle only magnifies blur — these are 24-73px originals. */
+/* Emblem ratio raised on request: 62% of the circle, capped at 58px so a very
+   wide ring does not keep growing it. The source art is 24-73px, so this
+   upscales most of them ~1.9x — visibly softer than the 44px cap, and knowingly
+   accepted until the real art arrives. */
 .path-node img {
-  width: clamp(28px, 48%, 44px);
-  height: clamp(28px, 48%, 44px);
+  width: clamp(30px, 62%, 58px);
+  height: clamp(30px, 62%, 58px);
   object-fit: contain;
-  opacity: 0.9;
+  opacity: 0.92;
   transition: opacity 300ms ease;
 }
 

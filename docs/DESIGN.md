@@ -341,7 +341,7 @@ The Builds page opens with a ring of ten path nodes, then the build cards.
 | Data | `src/data/paths.json` — 10 entries, `en`, `short`, `cn`, `attribute`, `weapons`, `icon` |
 | Icons | `public/paths/` — 8 files |
 | Ring | `min(600px, 86vw)`, `aspect-ratio: 1`, nodes at **40%** radius |
-| Node | `clamp(60px, 15%, 96px)` circle — 90px at the 600px ring; emblem `clamp(28px, 48%, 44px)` |
+| Node | `clamp(60px, 15%, 96px)` circle — 90px at the 600px ring; emblem `clamp(30px, 62%, 58px)` — 55px |
 | Hover | node scales to **1.16** with a light overshoot; the emblem grows with it |
 | Drift | **18px** amplitude, `760ms` cubic-bezier(0.23, 1, 0.32, 1) |
 | Entrance | all nodes stacked at 12 o'clock, then **780ms** out, **55ms** stagger, `rotate` only |
@@ -376,8 +376,10 @@ The nav scrim already paid for that lesson.
 Do not substitute a placeholder glyph, and do not hide the node — the node is the content.
 
 **The emblems are temporary.** They are the game's own art, but the largest is 73×105 px
-and most are about 30 px. They are soft on HiDPI and will be replaced. Recorded here so
-nobody "fixes" the softness by enlarging them.
+and most are about 30 px. At 55 px they are upscaled roughly 1.9× and read soft on a
+HiDPI screen. **That is accepted, not a bug** — the user asked for the larger size and
+will replace the art. Do not shrink them back to sharpen, and do not substitute drawn
+placeholders.
 
 Measured on the live page, 1600×1120: ring 600×600, 10 nodes, every node at radius
 240.0–240.1 px, node size **90 px**, hovered node **104 px**, closest gap between node
