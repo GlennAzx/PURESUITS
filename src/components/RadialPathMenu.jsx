@@ -136,7 +136,7 @@ export default function RadialPathMenu() {
             {current ? current.attribute : 'Martial Paths'}
           </span>
           <strong className="radial-hub-name">
-            {current ? current.short : `${total} disciplines`}
+            {current ? current.short : `${total} PATHS`}
           </strong>
           <span className="radial-hub-cn">{current ? current.cn ?? '—' : '武学流派'}</span>
           {current && current.weapons.length > 0 && (
