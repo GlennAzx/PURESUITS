@@ -4,6 +4,14 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- The browser must not restore the previous scroll offset on reload. It
+         runs before the module bundle on purpose: GSAP ScrollTrigger captures
+         history.scrollRestoration at import time and restores that captured
+         value later, so a value set from React is undone. Setting it here means
+         ScrollTrigger captures "manual" and has nothing to undo. -->
+    <script>
+      if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    </script>
     <meta
       name="description"
       content="PURESUIT — a chill Mahjong guild in Where Winds Meet. Weekly guild events, relaxed tables, no pressure."
