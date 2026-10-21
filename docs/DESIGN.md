@@ -341,7 +341,8 @@ The Builds page opens with a ring of ten path nodes, then the build cards.
 | Data | `src/data/paths.json` — 10 entries, `en`, `short`, `cn`, `attribute`, `weapons`, `icon` |
 | Icons | `public/paths/` — 8 files |
 | Ring | `min(600px, 86vw)`, `aspect-ratio: 1`, nodes at **40%** radius |
-| Node | `clamp(52px, 12.4%, 74px)` circle, emblem at 52% of the node |
+| Node | `clamp(60px, 15%, 96px)` circle — 90px at the 600px ring; emblem `clamp(28px, 48%, 44px)` |
+| Hover | node scales to **1.16** with a light overshoot; the emblem grows with it |
 | Drift | **18px** amplitude, `760ms` cubic-bezier(0.23, 1, 0.32, 1) |
 | Hub | `clamp(132px, 33%, 196px)`, shows attribute / short name / CN / weapon pair |
 
@@ -362,8 +363,10 @@ and most are about 30 px. They are soft on HiDPI and will be replaced. Recorded 
 nobody "fixes" the softness by enlarging them.
 
 Measured on the live page, 1600×1120: ring 600×600, 10 nodes, every node at radius
-240.0–240.1 px, node size 74 px, 2 empty nodes. On 390×844: ring 335 px, node 52 px,
-minimum gap between node edges **30.9 px**, hub clearance **42.2 px** — no collision.
+240.0–240.1 px, node size **90 px**, hovered node **104 px**, closest gap between node
+edges 58.3 px at rest and **51.1 px** with a node expanded, hub clearance 97 px. On
+390×844: ring 335 px, node 60 px, minimum gap 22.9 px at rest and **18.1 px** expanded —
+no collision at either size.
 
 **`Silkbind Wings` has no Chinese name and no weapon pair on file.** It ships with
 `cn: null` and `weapons: []`. Do not invent either.
