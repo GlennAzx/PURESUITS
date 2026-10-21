@@ -81,15 +81,16 @@ a choice is made.
 | Palette | Page base | Ink | Accent | Green |
 |---|---|---|---|---|
 | *(default)* original | `#0b0c10` | `#f5f0e8` | `#d4af37` gold | `#2e7d32` |
-| **V1 porcelain** | `#e3ecf4` | `#22303d` | `#e07a3f` | `#5f8f6d` |
-| **V2 mist** | `#e9eff5` | `#1e2c38` | `#cf6b3a` | `#4f7f62` |
-| **V3 dusk** | `#2c4763` | `#eef5fa` | `#f0904f` | `#7fb08a` |
-| **V4 harbour** | `#14263a` | `#dfe9f2` | `#ef8b4a` | `#4e8f63` |
+| **V1 porcelain** | `#e3ecf4` | `#22303d` | `#e07a3f` | `#8ec7a0` |
+| **V2 mist** | `#e9eff5` | `#1e2c38` | `#cf6b3a` | `#88b89a` |
+| **V3 dusk** | `#2c4763` | `#eef5fa` | `#f0904f` | `#97c9aa` |
+| **V4 harbour** | `#14263a` | `#dfe9f2` | `#ef8b4a` | `#74b28d` |
 
-**The member tile is exempt.** Its ivory face and green wall are the physical tile and do
-not change with the palette. Only `--page-ink` and `--role-ink` are read by the nameplate,
-because cream text is invisible on a pale blue page. That exemption is deliberate — a
-pastel tile stops reading as a mahjong tile.
+**The tile face is exempt; the wall is themed.** The ivory face is fixed — a pastel face
+stops reading as a mahjong tile. The wall green follows the palette through `--wall-1` …
+`--wall-4`, and `--wall-3` also supplies `currentColor` for the three box-shadow steps
+that fill the wedge between the face and the wall. Nameplate ink follows `--page-ink` /
+`--role-ink`, because cream text is invisible on a pale page.
 
 Note the token names invert on the light palettes: `ink-black` becomes the pale page and
 `ivory` becomes the dark text. The names are historical; the rendering is correct.
@@ -98,8 +99,8 @@ Note the token names invert on the light palettes: `ink-black` becomes the pale 
 |---|---|
 | Page ink (names) | `var(--page-ink)` — `#efe9db` by default |
 | Tile ink (frame, glyphs) | `#1b2733` — fixed, not themed |
-| Face | `#ffffff → #e9e9e1` — fixed |
-| Back / wall green | `#2a8f5b → #145536` — fixed |
+| Face | `#ffffff → #e9e9e1` — fixed, not themed |
+| Wall green | `var(--wall-1)` … `var(--wall-4)` — themed; `#34996a → #145536` by default |
 | Role label | `var(--role-ink)` — `#b8912f` by default |
 
 Palette is **pristine white face, green back**. Warm ivory was rejected as looking

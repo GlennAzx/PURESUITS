@@ -27,6 +27,11 @@
   --c-imperial-gold-bright: 249 217 118;
   --c-jade-deep: 7 26 18;
   --c-jade-accent: 46 125 50;
+  /* Tile wall green. Fixed before; it follows the palette now. */
+  --wall-1: #34996a;
+  --wall-2: #2a8f5b;
+  --wall-3: #1d7148;
+  --wall-4: #145536;
   --c-cinnabar: 194 59 34;
   --c-ivory: 245 240 232;
   --c-ivory-shadow: 223 215 200;
@@ -41,7 +46,11 @@
   --c-imperial-gold: 224 122 63;
   --c-imperial-gold-bright: 240 153 95;
   --c-jade-deep: 219 232 224;
-  --c-jade-accent: 95 143 109;
+  --c-jade-accent: 142 199 160;
+  --wall-1: #a9d6b6;
+  --wall-2: #8ec7a0;
+  --wall-3: #6fa985;
+  --wall-4: #54876a;
   --c-cinnabar: 194 59 34;
   --c-ivory: 34 48 61;
   --c-ivory-shadow: 107 125 140;
@@ -56,7 +65,11 @@
   --c-imperial-gold: 207 107 58;
   --c-imperial-gold-bright: 232 143 99;
   --c-jade-deep: 223 234 228;
-  --c-jade-accent: 79 127 98;
+  --c-jade-accent: 136 184 154;
+  --wall-1: #a3cdb4;
+  --wall-2: #88b89a;
+  --wall-3: #6a9c7f;
+  --wall-4: #517e66;
   --c-cinnabar: 194 59 34;
   --c-ivory: 30 44 56;
   --c-ivory-shadow: 100 122 138;
@@ -71,7 +84,11 @@
   --c-imperial-gold: 240 144 79;
   --c-imperial-gold-bright: 255 171 115;
   --c-jade-deep: 36 66 83;
-  --c-jade-accent: 127 176 138;
+  --c-jade-accent: 151 201 170;
+  --wall-1: #b3dcc3;
+  --wall-2: #97c9aa;
+  --wall-3: #79ad8e;
+  --wall-4: #5e8f75;
   --c-cinnabar: 226 96 74;
   --c-ivory: 238 245 250;
   --c-ivory-shadow: 185 205 220;
@@ -86,7 +103,11 @@
   --c-imperial-gold: 239 139 74;
   --c-imperial-gold-bright: 255 167 106;
   --c-jade-deep: 16 32 47;
-  --c-jade-accent: 78 143 99;
+  --c-jade-accent: 116 178 141;
+  --wall-1: #8fc7a4;
+  --wall-2: #74b28d;
+  --wall-3: #579378;
+  --wall-4: #407661;
   --c-cinnabar: 226 96 74;
   --c-ivory: 223 233 242;
   --c-ivory-shadow: 147 168 187;
@@ -479,8 +500,10 @@
 
 .member-tile-tilt::before {
   translate: calc(var(--mt-ox) * 0.5) calc(var(--mt-oy) * 0.5);
-  color: #1d7148;
-  background-image: linear-gradient(180deg, #34996a 0%, #2a8f5b 26%, #1d7148 68%, #145536 100%);
+  /* The three box-shadow steps above inherit currentColor, so this one value
+     also paints the wedge between the face and this wall. */
+  color: var(--wall-3);
+  background-image: linear-gradient(180deg, var(--wall-1) 0%, var(--wall-2) 26%, var(--wall-3) 68%, var(--wall-4) 100%);
 }
 
 .member-tile-tilt::after {
