@@ -108,6 +108,13 @@ export default function App() {
 
   // Initialize Lenis smooth scroll + sync with GSAP ScrollTrigger
   useEffect(() => {
+    // Stop the browser restoring the previous scroll offset on reload. Without
+    // this a refresh lands wherever you were, which is what made the members
+    // page come back mid-roster even though the URL had reset to /members.
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+
     const lenis = new Lenis({
       autoRaf: false,
       lerp: 0.1,

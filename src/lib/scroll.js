@@ -21,3 +21,12 @@ export function scrollToElement(el, { offset = -140, duration = 1.1 } = {}) {
   }
   el.scrollIntoView({ block: 'center', behavior: 'smooth' });
 }
+
+export function scrollToTop() {
+  if (lenis) lenis.scrollTo(0, { immediate: true });
+  // Belt and braces. Some browsers restore the previous scroll offset after
+  // load, which can land after Lenis has already jumped. Pushing the window to
+  // 0 as well removes the race. App also sets history.scrollRestoration to
+  // 'manual' so the browser stops trying.
+  window.scrollTo(0, 0);
+}

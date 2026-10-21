@@ -4,7 +4,7 @@ import { useGSAP } from '@gsap/react';
 import MemberCard3D from '../components/MemberCard3D';
 import membersData from '../data/members.json';
 import { memberSlug } from '../lib/memberSlug';
-import { scrollToElement } from '../lib/scroll';
+import { scrollToElement, scrollToTop } from '../lib/scroll';
 
 function SectionHeading({ title }) {
   return (
@@ -75,6 +75,23 @@ export default function MembersPage({
   useEffect(() => {
     if (!focusSlug) setRingSlug(null);
   }, [focusSlug]);
+
+  // First load of the members page always starts at the top. A refresh must not
+  // drop the reader halfway down the roster, whatever the browser tried to
+  // restore.
+  //
+  // Mount-only on purpose. Keying this on focusSource made an outside click —
+  // which flips the source to 'load' — scroll the page back to the top, when
+  // that click is supposed to leave the scroll alone.
+  const didInitialScroll = useRef(false);
+  useEffect(() => {
+    if (didInitialScroll.current) return undefined;
+    didInitialScroll.current = true;
+    if (focusSource === 'click') return undefined;
+    const id = requestAnimationFrame(() => scrollToTop());
+    return () => cancelAnimationFrame(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Clicking anywhere outside the ringed tile ends the focus: the ring goes and
   // the slug leaves the URL. The scroll position does not change.
