@@ -16,7 +16,12 @@ function SectionHeading({ title }) {
   );
 }
 
-export default function MembersPage({ focusSlug = null, onOpenMember = null, onConsumeSlug = null }) {
+export default function MembersPage({
+  focusSlug = null,
+  focusSource = 'load',
+  onOpenMember = null,
+  onClearSlug = null,
+}) {
   const pageRef = useRef(null);
   // Which tile is currently ringed. React owns this, not the DOM: an
   // imperative classList.add is wiped the next time the tile re-renders.
@@ -33,27 +38,28 @@ export default function MembersPage({ focusSlug = null, onOpenMember = null, onC
     };
   }, []);
 
-  // Deep link: /members/<slug> scrolls that tile into view, rings it, then the
-  // slug is consumed so the address bar goes back to /members. Two frames of
-  // delay lets the grid lay out first, otherwise the scroll lands short on a
-  // cold load.
+  // Focus comes from a CLICK on a tile: scroll it into view and ring it. The
+  // ring and the slug then persist — only a refresh or a click outside clears
+  // them.
+  //
+  // Slugs that arrive in the URL are NOT handled here. App drops those and
+  // leaves the page at the top, because a refresh must return to the top of the
+  // page rather than scroll down to a member.
   useEffect(() => {
-    if (!focusSlug) return undefined;
+    if (!focusSlug || focusSource !== 'click') return undefined;
     const want = String(focusSlug).toLowerCase();
     let raf1 = 0;
     let raf2 = 0;
 
+    // Two frames so the grid has laid out before measuring.
     raf1 = requestAnimationFrame(() => {
       raf2 = requestAnimationFrame(() => {
         const el = [...document.querySelectorAll('.member-tile-wrap')].find(
           (node) => (node.dataset.slug || '').toLowerCase() === want
         );
-        if (el) {
-          scrollToElement(el, { offset: -140 });
-          setRingSlug(want);
-        }
-        // Consume either way: an unknown slug should not sit in the URL.
-        if (onConsumeSlug) onConsumeSlug();
+        if (!el) return;
+        scrollToElement(el, { offset: -140 });
+        setRingSlug(want);
       });
     });
 
@@ -61,19 +67,17 @@ export default function MembersPage({ focusSlug = null, onOpenMember = null, onC
       cancelAnimationFrame(raf1);
       if (raf2) cancelAnimationFrame(raf2);
     };
-  }, [focusSlug, onConsumeSlug]);
+  }, [focusSlug, focusSource]);
 
-  // The ring is on its own timer. It must NOT live in the effect above: that
-  // effect re-runs the moment the slug is consumed, and its cleanup would
-  // cancel the timeout, leaving the ring on screen forever.
+  // The slug is the source of truth for the ring. Back/Forward change the URL
+  // without going through the outside-click handler, so without this the ring
+  // can outlive the slug it belongs to.
   useEffect(() => {
-    if (!ringSlug) return undefined;
-    const timer = window.setTimeout(() => setRingSlug(null), 2800);
-    return () => window.clearTimeout(timer);
-  }, [ringSlug]);
+    if (!focusSlug) setRingSlug(null);
+  }, [focusSlug]);
 
-  // Clicking anywhere outside the ringed tile dismisses it at once. The slug is
-  // already gone by then, but the ring should not outstay the click.
+  // Clicking anywhere outside the ringed tile ends the focus: the ring goes and
+  // the slug leaves the URL. The scroll position does not change.
   useEffect(() => {
     if (!ringSlug) return undefined;
     const onDown = (event) => {
@@ -82,10 +86,11 @@ export default function MembersPage({ focusSlug = null, onOpenMember = null, onC
       );
       if (el && el.contains(event.target)) return;
       setRingSlug(null);
+      if (onClearSlug) onClearSlug();
     };
     document.addEventListener('pointerdown', onDown, true);
     return () => document.removeEventListener('pointerdown', onDown, true);
-  }, [ringSlug]);
+  }, [ringSlug, onClearSlug]);
 
   useGSAP(
     () => {

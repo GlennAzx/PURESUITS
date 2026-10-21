@@ -53,7 +53,10 @@ function parseRoute() {
     });
   const page = PAGES.includes(segs[0]) ? segs[0] : 'home';
   const slug = page === 'members' && segs[1] ? segs[1] : null;
-  return { page, slug };
+  // source tells the members page how the slug arrived. 'click' scrolls to the
+  // tile; 'load' means the URL was typed, shared or refreshed, and that must
+  // return to the top of the page instead.
+  return { page, slug, source: 'load' };
 }
 
 export default function App() {
@@ -73,24 +76,31 @@ export default function App() {
   const navigate = useCallback((page, slug = null) => {
     const next = PAGES.includes(page) ? page : 'home';
     const nextSlug = next === 'members' ? slug : null;
-    setRoute({ page: next, slug: nextSlug });
+    setRoute({ page: next, slug: nextSlug, source: nextSlug ? 'click' : 'load' });
     const url = pathFor(next, nextSlug);
     if (window.location.pathname !== url) {
       window.history.pushState({ page: next, slug: nextSlug }, '', url);
     }
   }, []);
 
-  // The member slug is a one-shot cue, not a page. Once the tile has been
-  // scrolled to and ringed, the address bar returns to /members: a refresh
-  // then loads the plain list, and clicking anywhere else leaves no slug
-  // behind. history.replaceState, not pushState — Back should not walk through
-  // member URLs you never chose to visit.
-  const consumeSlug = useCallback(() => {
-    setRoute((r) => (r.slug ? { page: r.page, slug: null } : r));
-    if (/^\/members\/./.test(window.location.pathname)) {
+  // Clicking outside a member drops the slug from the URL but does not move the
+  // page. replaceState, not pushState: an outside click is not a navigation.
+  const clearSlug = useCallback(() => {
+    setRoute((r) => (r.slug ? { page: r.page, slug: null, source: 'load' } : r));
+    if (window.location.pathname !== '/members') {
       window.history.replaceState({ page: 'members', slug: null }, '', '/members');
     }
   }, []);
+
+  // A slug that arrived from the URL — typed, shared, or a refresh — is not a
+  // navigation target. The page stays at the top and the slug is dropped, so a
+  // refresh always lands on the plain list.
+  useEffect(() => {
+    if (route.page === 'members' && route.slug && route.source === 'load') {
+      window.history.replaceState({ page: 'members', slug: null }, '', '/members');
+      setRoute({ page: 'members', slug: null, source: 'load' });
+    }
+  }, [route]);
 
   useEffect(() => {
     document.title = TITLES[activePage] ?? TITLES.home;
@@ -152,8 +162,9 @@ export default function App() {
         return (
           <MembersPage
             focusSlug={route.slug}
+            focusSource={route.source}
             onOpenMember={(slug) => navigate('members', slug)}
-            onConsumeSlug={consumeSlug}
+            onClearSlug={clearSlug}
           />
         );
       case 'mahjong-guide':
