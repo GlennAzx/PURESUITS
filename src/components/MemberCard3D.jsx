@@ -37,6 +37,7 @@ export default function MemberCard3D({
   variant = 'standard',
   index = 0,
   onOpen = null,
+  highlighted = false,
 }) {
   const name = nameProp ?? member?.name ?? '';
   const role = roleProp ?? member?.role ?? '';
@@ -60,7 +61,7 @@ export default function MemberCard3D({
 
   return (
     <a
-      className={`member-tile-wrap${variant === 'leader' ? ' member-tile-wrap--leader' : ''}`}
+      className={`member-tile-wrap${variant === 'leader' ? ' member-tile-wrap--leader' : ''}${highlighted ? ' member-tile-wrap--focus' : ''}`}
       style={{ '--mt-w': `${w}px`, '--mt-h': `${h}px`, '--mt-d': `${d}px` }}
       href={href}
       data-slug={slug}

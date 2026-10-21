@@ -80,6 +80,18 @@ export default function App() {
     }
   }, []);
 
+  // The member slug is a one-shot cue, not a page. Once the tile has been
+  // scrolled to and ringed, the address bar returns to /members: a refresh
+  // then loads the plain list, and clicking anywhere else leaves no slug
+  // behind. history.replaceState, not pushState — Back should not walk through
+  // member URLs you never chose to visit.
+  const consumeSlug = useCallback(() => {
+    setRoute((r) => (r.slug ? { page: r.page, slug: null } : r));
+    if (/^\/members\/./.test(window.location.pathname)) {
+      window.history.replaceState({ page: 'members', slug: null }, '', '/members');
+    }
+  }, []);
+
   useEffect(() => {
     document.title = TITLES[activePage] ?? TITLES.home;
   }, [activePage]);
@@ -111,13 +123,15 @@ export default function App() {
     };
   }, []);
 
-  // Scroll to top on page change — but NOT when a member slug is in the URL.
-  // MembersPage owns that scroll, and jumping to 0 here would fight it.
+  // Scroll to top when the PAGE changes — keyed on activePage, deliberately not
+  // on the whole route. Keying on the route meant that consuming a member slug
+  // changed `route` and yanked the view back to the top, cancelling the very
+  // scroll the deep link had just started.
   // Do NOT kill all ScrollTriggers here: useGSAP already reverts each page's
   // own animations on unmount, and killing globally would also kill the
   // triggers the new page just created.
   useEffect(() => {
-    if (!route.slug && lenisRef.current) {
+    if (lenisRef.current) {
       lenisRef.current.scrollTo(0, { immediate: true });
     }
     // Recalculate positions for the new page's content
@@ -128,7 +142,7 @@ export default function App() {
       cancelAnimationFrame(id);
       removeGuard();
     };
-  }, [route]);
+  }, [activePage]);
 
   const renderPage = () => {
     switch (activePage) {
@@ -139,6 +153,7 @@ export default function App() {
           <MembersPage
             focusSlug={route.slug}
             onOpenMember={(slug) => navigate('members', slug)}
+            onConsumeSlug={consumeSlug}
           />
         );
       case 'mahjong-guide':

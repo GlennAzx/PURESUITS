@@ -24,6 +24,12 @@ and middle-click both work. The slug comes from the name via `src/lib/memberSlug
 keeps Unicode letters, so `/members/玄月吟` works as well as `/members/awooyin`. An
 unknown slug lands on `/members` with no scroll and no error.
 
+**The slug is consumed, not kept.** As soon as the tile has been scrolled to, the address
+bar goes back to `/members` via `history.replaceState`, so a refresh loads the plain list
+and clicking anywhere else never leaves a member URL behind. Consequence to know: the
+member URL works once — copy it from the address bar *before* you share, or build it as
+`/members/<slug>` from the name.
+
 Editable data lives in `src/data/`: `members.json` (roster and avatars) and `paths.json`
 (the build paths). `events.json` and `builds.json` are no longer read by any component.
 

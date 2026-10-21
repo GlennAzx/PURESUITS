@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import MemberCard3D from '../components/MemberCard3D';
@@ -16,8 +16,11 @@ function SectionHeading({ title }) {
   );
 }
 
-export default function MembersPage({ focusSlug = null, onOpenMember = null }) {
+export default function MembersPage({ focusSlug = null, onOpenMember = null, onConsumeSlug = null }) {
   const pageRef = useRef(null);
+  // Which tile is currently ringed. React owns this, not the DOM: an
+  // imperative classList.add is wiped the next time the tile re-renders.
+  const [ringSlug, setRingSlug] = useState(null);
 
   const { leadership, commanders, members, total } = useMemo(() => {
     const byTier = (t) => membersData.filter((m) => m.tier === t);
@@ -30,40 +33,59 @@ export default function MembersPage({ focusSlug = null, onOpenMember = null }) {
     };
   }, []);
 
-  // Deep link: /members/<slug> scrolls that tile into view and rings it.
-  // Waits two frames so the grid has laid out before measuring, otherwise the
-  // scroll lands short on a cold load.
+  // Deep link: /members/<slug> scrolls that tile into view, rings it, then the
+  // slug is consumed so the address bar goes back to /members. Two frames of
+  // delay lets the grid lay out first, otherwise the scroll lands short on a
+  // cold load.
   useEffect(() => {
     if (!focusSlug) return undefined;
     const want = String(focusSlug).toLowerCase();
     let raf1 = 0;
     let raf2 = 0;
-    let clear = 0;
-    let marked = null;
 
     raf1 = requestAnimationFrame(() => {
       raf2 = requestAnimationFrame(() => {
         const el = [...document.querySelectorAll('.member-tile-wrap')].find(
           (node) => (node.dataset.slug || '').toLowerCase() === want
         );
-        if (!el) return;
-        marked = el;
-        scrollToElement(el, { offset: -140 });
-        el.classList.add('member-tile-wrap--focus');
-        clear = window.setTimeout(() => el.classList.remove('member-tile-wrap--focus'), 2800);
+        if (el) {
+          scrollToElement(el, { offset: -140 });
+          setRingSlug(want);
+        }
+        // Consume either way: an unknown slug should not sit in the URL.
+        if (onConsumeSlug) onConsumeSlug();
       });
     });
 
     return () => {
       cancelAnimationFrame(raf1);
       if (raf2) cancelAnimationFrame(raf2);
-      window.clearTimeout(clear);
-      // The ring is applied outside React, so cleanup must remove it too.
-      // Without this, going Back to /members leaves the last tile ringed
-      // forever: the timeout is cancelled and nothing else clears the class.
-      if (marked) marked.classList.remove('member-tile-wrap--focus');
     };
-  }, [focusSlug]);
+  }, [focusSlug, onConsumeSlug]);
+
+  // The ring is on its own timer. It must NOT live in the effect above: that
+  // effect re-runs the moment the slug is consumed, and its cleanup would
+  // cancel the timeout, leaving the ring on screen forever.
+  useEffect(() => {
+    if (!ringSlug) return undefined;
+    const timer = window.setTimeout(() => setRingSlug(null), 2800);
+    return () => window.clearTimeout(timer);
+  }, [ringSlug]);
+
+  // Clicking anywhere outside the ringed tile dismisses it at once. The slug is
+  // already gone by then, but the ring should not outstay the click.
+  useEffect(() => {
+    if (!ringSlug) return undefined;
+    const onDown = (event) => {
+      const el = [...document.querySelectorAll('.member-tile-wrap')].find(
+        (node) => node.dataset.slug === ringSlug
+      );
+      if (el && el.contains(event.target)) return;
+      setRingSlug(null);
+    };
+    document.addEventListener('pointerdown', onDown, true);
+    return () => document.removeEventListener('pointerdown', onDown, true);
+  }, [ringSlug]);
 
   useGSAP(
     () => {
@@ -108,7 +130,7 @@ export default function MembersPage({ focusSlug = null, onOpenMember = null }) {
           <SectionHeading title="Leadership" />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-16 justify-items-center">
             {leadership.map((m, i) => (
-              <MemberCard3D key={m.id} member={m} index={i} variant="leader" onOpen={onOpenMember} />
+              <MemberCard3D key={m.id} member={m} index={i} variant="leader" onOpen={onOpenMember} highlighted={ringSlug === memberSlug(m)} />
             ))}
           </div>
         </div>
@@ -120,7 +142,7 @@ export default function MembersPage({ focusSlug = null, onOpenMember = null }) {
           <SectionHeading title="Commanders" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-16 justify-items-center">
             {commanders.map((m, i) => (
-              <MemberCard3D key={m.id} member={m} index={i} onOpen={onOpenMember} />
+              <MemberCard3D key={m.id} member={m} index={i} onOpen={onOpenMember} highlighted={ringSlug === memberSlug(m)} />
             ))}
           </div>
         </section>
@@ -132,7 +154,7 @@ export default function MembersPage({ focusSlug = null, onOpenMember = null }) {
           <SectionHeading title="Members" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-16 justify-items-center">
             {members.map((m, i) => (
-              <MemberCard3D key={m.id} member={m} index={i} onOpen={onOpenMember} />
+              <MemberCard3D key={m.id} member={m} index={i} onOpen={onOpenMember} highlighted={ringSlug === memberSlug(m)} />
             ))}
           </div>
         </section>
