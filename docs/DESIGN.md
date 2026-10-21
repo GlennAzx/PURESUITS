@@ -449,16 +449,18 @@ settles with its nearest face square to the viewer. `src/components/DiceCursor.j
 | Pips | **6px** on a 28px body — 21% of the face. Ink `#1b2733` with a 1px inset recess; faces 1 and 4 in `--c-cinnabar` |
 | The 1 pip | **11px** — 39% of the face, roughly double a normal pip. Traditional on a mahjong-table die, and it overflows its 8px grid cell on purpose |
 | Light | **uniform** — every face `#efe7d5`, no per-face tint, no inner gradient |
-| Edge | soft: `inset 0 0 0 1px rgba(27,39,51,0.16)` + `inset 0 0 7px rgba(27,39,51,0.13)`, radius **4px** |
+| Edge | warm tan `--dice-edge: 140, 121, 84` — `inset 0 0 0 1px` at `0.34` + `inset 0 0 7px` at `0.2`, radius **4px** |
 | Shadow | `.dice-cursor::before` — blurred rounded rect at `translateZ(-1.2 × half)`, behind the cube, does not rotate |
 | Native cursor | `html.dice-cursor-on * { cursor: none !important }` |
 
-**The edges must be soft, and the shadow carries the contrast.** A hard `1.5px ink at 0.62`
-ring kept the die visible over white tiles but drew a wireframe on every receding face as
-the die turned — the user reported it as *"the dice edges are too strong and can be seen on
-rotation … need to be smoother to show a more rounded edge feel"*. The ring is now a faint
-vignette, the body is a deeper ivory `#efe7d5`, and a blurred shadow sits behind the cube.
-Measured on a blank tile: still clearly readable without the ring.
+**The edges are the die's own colour, only darker.** The edge rule was cool site ink, which
+read as a line drawn on top of the die rather than a fold in it. It is now a warm tan,
+`--dice-edge: 140, 121, 84`, at low alpha over the ivory body — a darker shade of the same
+material, so a seam blends instead of outlining. Do not switch it back to `--c-ink`.
+
+**The edges must be soft, and the shadow carries the contrast.** The ring is a faint
+vignette over a deeper ivory body `#efe7d5`, with a blurred shadow parked behind the cube.
+Measured on a blank tile: still clearly readable without the old hard ring.
 
 **Corner radius is 4px, not 6px.** At 6px each face was cut back so far that the six faces
 stopped meeting along the edges; at 45° the die read as three separate rounded plates with

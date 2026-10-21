@@ -905,6 +905,10 @@
      mahjong die measures. At 26px/4px the pips read as specks. */
   --dice-size: 28px;
   --dice-half: 14px;
+  /* Edge tone, derived from the die body rather than from the site ink. A warm
+     tan at low alpha darkens the ivory into a fold of the same material; the
+     cool ink read as a line drawn on top of the die. */
+  --dice-edge: 140, 121, 84;
 
   position: fixed;
   top: 0;
@@ -963,8 +967,8 @@
      as a rounded material edge, so the only shading is a faint inner vignette.
      Contrast against the page comes from the drop shadow on .dice-cursor. */
   box-shadow:
-    inset 0 0 0 1px rgba(27, 39, 51, 0.16),
-    inset 0 0 7px rgba(27, 39, 51, 0.13);
+    inset 0 0 0 1px rgba(var(--dice-edge), 0.34),
+    inset 0 0 7px rgba(var(--dice-edge), 0.2);
   backface-visibility: hidden;
 }
 
