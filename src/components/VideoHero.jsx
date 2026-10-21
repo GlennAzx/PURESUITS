@@ -7,6 +7,13 @@ import { Play, Pause, Volume2, VolumeX, Link2, X } from 'lucide-react';
 const DEFAULT_SRC = '/hero-bamboo.mp4';
 const DEFAULT_POSTER = '/hero-bamboo-poster.jpg';
 
+// The "custom video URL" control is a build-time preview tool, not a visitor
+// feature. `import.meta.env.DEV` is true under `npm run dev` and false in
+// `vite build`, so the button, the dialog and their strings are absent from the
+// deployed bundle. To change the hero for real, replace public/hero-bamboo.mp4
+// or change DEFAULT_SRC above and commit.
+const SHOW_STUDIO = import.meta.env.DEV;
+
 export default function VideoHero() {
   const sectionRef = useRef(null);
   const videoRef = useRef(null);
@@ -203,16 +210,20 @@ export default function VideoHero() {
         >
           {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
         </button>
-        <span className="w-px h-5 bg-imperial-gold/20 mx-1" />
-        <button
-          type="button"
-          onClick={() => setShowDialog(true)}
-          className="btn-press p-1.5 text-gray-400 hover:text-imperial-gold transition-colors duration-150 ease-out-strong rounded"
-          title="Use a custom video URL"
-          aria-label="Use a custom video URL"
-        >
-          <Link2 size={16} />
-        </button>
+        {SHOW_STUDIO && (
+          <>
+            <span className="w-px h-5 bg-imperial-gold/20 mx-1" />
+            <button
+              type="button"
+              onClick={() => setShowDialog(true)}
+              className="btn-press p-1.5 text-gray-400 hover:text-imperial-gold transition-colors duration-150 ease-out-strong rounded"
+              title="Use a custom video URL"
+              aria-label="Use a custom video URL"
+            >
+              <Link2 size={16} />
+            </button>
+          </>
+        )}
       </div>
 
       {videoFailed && (
@@ -222,7 +233,7 @@ export default function VideoHero() {
       )}
 
       {/* Custom URL dialog */}
-      {showDialog && (
+      {SHOW_STUDIO && showDialog && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-ink-black/80 backdrop-blur-sm px-4">
           <div
             ref={dialogRef}
