@@ -314,6 +314,11 @@ devDependencies so CI does not pull a surprise major.
   `index.html` and React reads the path. **Remove that line and a direct visit to
   `/members` or `/builds` returns 404.**
 
+**`wrangler deploy` does not build.** It uploads whatever is already in `dist/`. Run
+`npm run build` first, every time. Deploying alone ships the previous build and still
+reports success; the only signal is `No updated asset files to upload`. Full process,
+verification commands and the 200-not-404 trap: the repo `README.md`.
+
 ---
 
 ## 11. Governing skills
