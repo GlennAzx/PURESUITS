@@ -432,3 +432,43 @@ python -m fontTools.subset \
 
 **鳶 (U+9CF6, "kite") does not exist in Noto Serif SC.** It is the only character in the
 site that still falls back. Either accept it, write 鸢, or add a Traditional source face.
+
+## 13. Dice cursor (LOCAL ONLY — not deployed, awaiting approval)
+
+A 26px ivory die that follows the pointer and rolls in the direction of travel, then
+settles with its nearest face square to the viewer. `src/components/DiceCursor.jsx` +
+`.dice-cursor` in `src/index.css`. Mounted once in `App.jsx`, above the nav.
+
+| Part | Value |
+|---|---|
+| Body | 26px cube, `perspective: 150px`, six faces at `translateZ(13px)` |
+| Follow | `lerp 0.38` per frame — measured 7–11px behind a pointer moving in 200px steps |
+| Roll | `rotateX += dy * 0.5`, `rotateY -= dx * 0.5` while speed > 0.6px/frame |
+| Settle | after 110ms idle, ease to the nearest multiple of 90° at `0.16`/frame |
+| Faces | opposite faces sum to 7: 1/6, 3/4, 5/2 |
+| Pips | 4px ink `#1b2733`; faces 1 and 4 use `--c-cinnabar`, as on a real die |
+| Light | three tones — `#fffdf7` top, `#f1ebdd` right/bottom, `#dcd3c0` left/back |
+| Outline | `inset 0 0 0 1.5px rgba(27,39,51,0.62)` |
+| Native cursor | `html.dice-cursor-on * { cursor: none !important }` |
+
+**The dark outline is load-bearing.** The die is ivory and the member tiles are white; with
+a 1px 22%-alpha rule the die all but vanished when it crossed a portrait. The outline is
+the same ink as the 白板 tile frame.
+
+**Three tones, not two.** With a 4% brightness gap between faces the tumble read as two
+flat cards side by side. Widening the gap and tightening the perspective from 260px to
+150px made it read as a solid cube.
+
+**Written from one rAF loop, no React state.** Re-rendering at 60fps is how a custom cursor
+ends up lagging. The loop **stops** once the die has settled and restarts on the next
+`pointermove` — an always-on rAF for a decoration is wasted battery.
+
+| Off by default | Why |
+|---|---|
+| `(pointer: coarse)` | No pointer to follow; the die would sit frozen at 0,0 |
+| `(prefers-reduced-motion: reduce)` | It is pure motion |
+
+**Measured locally:** die centre lands exactly on the pointer when settled; lag 7–11px while
+moving; settled rotation `rotateX(179.98deg) rotateY(-720.002deg)`, both exact multiples of
+90°; 6 faces, 21 pips; tile click and nav still work with `pointer-events: none`; no page
+errors on any of the five routes.

@@ -5,6 +5,7 @@ import { useGSAP } from '@gsap/react';
 import Lenis from 'lenis';
 
 import FannedMahjongNav from './components/FannedMahjongNav';
+import DiceCursor from './components/DiceCursor';
 import HomePage from './pages/HomePage';
 import MembersPage from './pages/MembersPage';
 import MahjongGuidePage from './pages/MahjongGuidePage';
@@ -183,6 +184,7 @@ export default function App() {
 
   return (
     <div ref={mainRef} className="min-h-screen bg-ink-black text-gray-200">
+      <DiceCursor />
       <FannedMahjongNav activePage={activePage} setActivePage={navigate} />
       <main className="pb-16">{renderPage()}</main>
     </div>

@@ -893,6 +893,117 @@
   }
 }
 
+/* ─────────────────────────────────────────────────────────────
+   Dice cursor
+   A 26px die that follows the pointer and rolls with it. The real
+   cursor is hidden while it is active (html.dice-cursor-on).
+   Position and spin are written from DiceCursor.jsx's rAF loop.
+   ───────────────────────────────────────────────────────────── */
+
+.dice-cursor {
+  --dice-size: 26px;
+  --dice-half: 13px;
+
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--dice-size);
+  height: var(--dice-size);
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  /* Was 260px: at that strength the tumble barely converged and the cube read
+     as two flat panels. 150px gives a visible foreshortening on a 26px body
+     without warping it. Face-on — the settled state — perspective is moot. */
+  perspective: 150px;
+  transition: opacity 200ms var(--ease-out);
+  will-change: transform;
+}
+
+.dice-cursor__cube {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.dice-face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  padding: 2px;
+  border-radius: 4px;
+  background: #f7f3e9;
+  /* The die must survive sitting on a white member tile, where an ivory face
+     has almost no contrast. The dark rule is the same ink the 白板 tile frame
+     uses, so it reads as part of the set rather than as a UI outline. */
+  box-shadow:
+    inset 0 0 0 1.5px rgba(27, 39, 51, 0.62),
+    inset 0 -2px 3px rgba(27, 39, 51, 0.12);
+  backface-visibility: hidden;
+}
+
+/* Face light: the cube reads as one solid object, not six flat squares.
+   Three tones, not two. With only a 4% gap the tumble read as two cards
+   side by side instead of a cube. */
+.dice-face--top {
+  background: #fffdf7;
+}
+
+.dice-face--right,
+.dice-face--bottom {
+  background: #f1ebdd;
+}
+
+.dice-face--left,
+.dice-face--back {
+  background: #dcd3c0;
+}
+
+.dice-cell {
+  display: grid;
+  place-items: center;
+}
+
+.dice-pip {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #1b2733;
+}
+
+/* The traditional die colours: one and four carry red pips. */
+.dice-face--red .dice-pip {
+  background: rgb(var(--c-cinnabar));
+}
+
+.dice-face--front  { transform: translateZ(var(--dice-half)); }
+.dice-face--back   { transform: rotateY(180deg) translateZ(var(--dice-half)); }
+.dice-face--right  { transform: rotateY(90deg) translateZ(var(--dice-half)); }
+.dice-face--left   { transform: rotateY(-90deg) translateZ(var(--dice-half)); }
+.dice-face--top    { transform: rotateX(90deg) translateZ(var(--dice-half)); }
+.dice-face--bottom { transform: rotateX(-90deg) translateZ(var(--dice-half)); }
+
+/* Hide the real cursor only where the die can actually follow it. */
+html.dice-cursor-on,
+html.dice-cursor-on * {
+  cursor: none !important;
+}
+
+/* Touch and reduced motion get the normal cursor and no die at all. */
+@media (pointer: coarse), (prefers-reduced-motion: reduce) {
+  .dice-cursor {
+    display: none;
+  }
+  html.dice-cursor-on,
+  html.dice-cursor-on * {
+    cursor: auto !important;
+  }
+}
+
 
 
 
