@@ -684,5 +684,149 @@
   pointer-events: none;
 }
 
+/* --- Radial path menu (Builds page) -----------------------------------------
+   Ten nodes on one orbit. The ring drifts with the pointer; nothing else
+   moves. The drift is written to --drift-x / --drift-y by the component, so
+   the transform is the only animated property and it stays on the compositor.
+
+   Nodes use a solid translucent fill, not backdrop-filter. A full-viewport
+   blur is redone every frame and already caused lag on the nav scrim.
+---------------------------------------------------------------------------- */
+.radial-paths {
+  display: grid;
+  place-items: center;
+  padding: clamp(8px, 2vw, 24px) 0 clamp(20px, 4vw, 40px);
+}
+
+.radial-paths-ring {
+  position: relative;
+  width: min(600px, 86vw);
+  aspect-ratio: 1;
+  transform: translate3d(var(--drift-x, 0px), var(--drift-y, 0px), 0);
+  /* A long ease turns pointer updates into a trailing float rather than a
+     rigid follow. Shorten it and the menu feels glued to the cursor. */
+  transition: transform 760ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.radial-orbit {
+  position: absolute;
+  inset: 10%;
+  border-radius: 999px;
+  border: 1px solid rgb(var(--c-ivory) / 0.1);
+  pointer-events: none;
+}
+
+.path-node {
+  position: absolute;
+  width: clamp(52px, 12.4%, 74px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%) scale(var(--node-scale, 1));
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid rgb(var(--c-ivory) / 0.14);
+  background: rgb(var(--c-ink-charcoal) / 0.62);
+  cursor: pointer;
+  transition:
+    transform 260ms cubic-bezier(0.23, 1, 0.32, 1),
+    border-color 260ms ease,
+    box-shadow 260ms ease,
+    background-color 260ms ease;
+}
+
+.path-node img {
+  width: 52%;
+  height: 52%;
+  object-fit: contain;
+  opacity: 0.9;
+  transition: opacity 260ms ease;
+}
+
+.path-node[data-empty] {
+  border-style: dashed;
+  border-color: rgb(var(--c-ivory) / 0.14);
+  background: rgb(var(--c-ink-charcoal) / 0.32);
+}
+
+.path-node-blank {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgb(var(--c-ivory) / 0.22);
+}
+
+.path-node:hover,
+.path-node:focus-visible {
+  --node-scale: 1.07;
+  border-color: rgb(var(--c-imperial-gold) / 0.62);
+  box-shadow: 0 0 0 4px rgb(var(--c-imperial-gold) / 0.07);
+  outline: none;
+}
+
+.path-node:hover img,
+.path-node:focus-visible img {
+  opacity: 1;
+}
+
+.path-node[data-active] {
+  border-color: rgb(var(--c-imperial-gold) / 0.9);
+  box-shadow:
+    0 0 0 4px rgb(var(--c-imperial-gold) / 0.1),
+    inset 0 0 12px rgb(var(--c-imperial-gold) / 0.14);
+}
+
+.radial-hub {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: clamp(132px, 33%, 196px);
+  aspect-ratio: 1;
+  border-radius: 999px;
+  border: 1px solid rgb(var(--c-ivory) / 0.1);
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 5px;
+  padding: 16px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.radial-hub-attribute {
+  font: 700 9px/1 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgb(var(--c-ivory) / 0.42);
+}
+
+.radial-hub-name {
+  font: 700 clamp(15px, 3.4vw, 21px)/1.1 'Noto Serif SC', ui-serif, Georgia, serif;
+  color: var(--page-ink);
+  font-synthesis: none;
+}
+
+.radial-hub-cn {
+  font: 500 clamp(12px, 2.8vw, 15px)/1.2 'Noto Serif SC', ui-serif, Georgia, serif;
+  color: rgb(var(--c-imperial-gold) / 0.92);
+}
+
+.radial-hub-weapons {
+  margin-top: 3px;
+  max-width: 156px;
+  font: 500 10px/1.45 ui-sans-serif, system-ui, sans-serif;
+  color: rgb(var(--c-ivory) / 0.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .radial-paths-ring {
+    transition: none;
+  }
+  .path-node {
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+  }
+}
+
+
 
 

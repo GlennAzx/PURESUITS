@@ -3,6 +3,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
 import buildsData from '../data/builds.json';
+import RadialPathMenu from '../components/RadialPathMenu';
 
 export default function BuildsPage() {
   const pageRef = useRef(null);
@@ -49,9 +50,11 @@ export default function BuildsPage() {
           Martial Path Compendium
         </h2>
         <p className="text-sm text-gray-400">
-          Discipline rotations, weapons, and stance synergies
+          Ten disciplines. Pick a path to see its weapon pair.
         </p>
       </div>
+
+      <RadialPathMenu />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {buildsData.map((build) => (

@@ -1,0 +1,102 @@
+[
+  {
+    "id": "bellstrike-splendor",
+    "en": "Bellstrike Splendor",
+    "short": "Splendor",
+    "cn": "鳴金·虹",
+    "attribute": "Bellstrike",
+    "weapons": ["Nameless Sword", "Nameless Spear"],
+    "icon": "/paths/bellstrike-splendor.png",
+    "iconNative": "31x33"
+  },
+  {
+    "id": "bellstrike-umbra",
+    "en": "Bellstrike Umbra",
+    "short": "Umbra",
+    "cn": "鳴金·影",
+    "attribute": "Bellstrike",
+    "weapons": ["Strategic Sword", "Heavenquaker Spear"],
+    "icon": "/paths/bellstrike-umbra.png",
+    "iconNative": "29x33"
+  },
+  {
+    "id": "silkbind-jade",
+    "en": "Silkbind Jade",
+    "short": "Jade",
+    "cn": "牽絲·玉",
+    "attribute": "Silkbind",
+    "weapons": ["Vernal Umbrella", "Inkwell Fan"],
+    "icon": "/paths/silkbind-jade.png",
+    "iconNative": "24x33"
+  },
+  {
+    "id": "silkbind-deluge",
+    "en": "Silkbind Deluge",
+    "short": "Deluge",
+    "cn": "牽絲·霖",
+    "attribute": "Silkbind",
+    "weapons": ["Panacea Fan", "Soulshade Umbrella"],
+    "icon": "/paths/silkbind-deluge.png",
+    "iconNative": "25x36"
+  },
+  {
+    "id": "silkbind-wings",
+    "en": "Silkbind Wings",
+    "short": "Wings",
+    "cn": null,
+    "attribute": "Silkbind",
+    "weapons": [],
+    "icon": null,
+    "iconNative": null
+  },
+  {
+    "id": "bamboocut-wind",
+    "en": "Bamboocut Wind",
+    "short": "Wind",
+    "cn": "破竹·風",
+    "attribute": "Bamboocut",
+    "weapons": ["Infernal Twinblades", "Mortal Rope Dart"],
+    "icon": "/paths/bamboocut-wind.png",
+    "iconNative": "27x35"
+  },
+  {
+    "id": "bamboocut-dust",
+    "en": "Bamboocut Dust",
+    "short": "Dust",
+    "cn": "破竹·塵",
+    "attribute": "Bamboocut",
+    "weapons": ["Everspring Umbrella", "Unfettered Rope Dart"],
+    "icon": "/paths/bamboocut-dust.webp",
+    "iconNative": "47x61"
+  },
+  {
+    "id": "bamboocut-kite",
+    "en": "Bamboocut Kite",
+    "short": "Kite",
+    "cn": "破竹·鳶",
+    "attribute": "Bamboocut",
+    "weapons": ["Heavenwill Gauntlets", "Skygrasp Rope Dart"],
+    "icon": null,
+    "iconNative": null
+  },
+  {
+    "id": "stonesplit-might",
+    "en": "Stonesplit Might",
+    "short": "Might",
+    "cn": "裂石·威",
+    "attribute": "Stonesplit",
+    "weapons": ["Stormbreaker Spear", "Thundercry Blade"],
+    "icon": "/paths/stonesplit-might.png",
+    "iconNative": "25x36"
+  },
+  {
+    "id": "stonesplit-strength",
+    "en": "Stonesplit Strength",
+    "short": "Strength",
+    "cn": "裂石·力",
+    "attribute": "Stonesplit",
+    "weapons": ["Snowparting Blade", "Phalanxbane Blade"],
+    "icon": "/paths/stonesplit-strength.webp",
+    "iconNative": "73x105"
+  }
+]

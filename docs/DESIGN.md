@@ -329,3 +329,60 @@ This file is the project-local summary. The deeper technique lives in the Hermes
 
 When a rule in this file and a skill disagree, **the measurement wins**. Record the
 measurement here so the next session does not repeat the argument.
+
+---
+
+## 12. Builds page: radial path menu
+
+The Builds page opens with a ring of ten path nodes, then the build cards.
+
+| Part | Value |
+|---|---|
+| Data | `src/data/paths.json` — 10 entries, `en`, `short`, `cn`, `attribute`, `weapons`, `icon` |
+| Icons | `public/paths/` — 8 files |
+| Ring | `min(600px, 86vw)`, `aspect-ratio: 1`, nodes at **40%** radius |
+| Node | `clamp(52px, 12.4%, 74px)` circle, emblem at 52% of the node |
+| Drift | **18px** amplitude, `760ms` cubic-bezier(0.23, 1, 0.32, 1) |
+| Hub | `clamp(132px, 33%, 196px)`, shows attribute / short name / CN / weapon pair |
+
+**The drift writes CSS variables, not React state.** A `pointermove` fires dozens of
+times a second; re-rendering ten nodes each time is waste. One ref, one
+`requestAnimationFrame`, two variables, one compositor-only `transform`. Do not move it
+into state.
+
+**No `backdrop-filter` on the nodes.** A blur over a moving ring is redone every frame.
+The nav scrim already paid for that lesson.
+
+**Two blank nodes are correct.** `Silkbind Wings` and `Bamboocut Kite` have no emblem yet.
+`icon: null` renders a dashed circle with a faint dot, and the hub still names the path.
+Do not substitute a placeholder glyph, and do not hide the node — the node is the content.
+
+**The emblems are temporary.** They are the game's own art, but the largest is 73×105 px
+and most are about 30 px. They are soft on HiDPI and will be replaced. Recorded here so
+nobody "fixes" the softness by enlarging them.
+
+Measured on the live page, 1600×1120: ring 600×600, 10 nodes, every node at radius
+240.0–240.1 px, node size 74 px, 2 empty nodes. On 390×844: ring 335 px, node 52 px,
+minimum gap between node edges **30.9 px**, hub clearance **42.2 px** — no collision.
+
+**`Silkbind Wings` has no Chinese name and no weapon pair on file.** It ships with
+`cn: null` and `weapons: []`. Do not invent either.
+
+### The CJK subset was rebuilt for this
+
+The shipped subset held 49 glyphs — missing 15 of 17 path characters and 28 of 29 roster
+characters, so the Chinese was silently falling back to a system face in the hub and on
+the member tiles.
+
+It now holds **95 characters per weight**, about **19 kB** each, built from every CJK
+character in `src/` plus `index.html`. Rebuild with:
+
+```bash
+python -m fontTools.subset \
+  node_modules/@fontsource/noto-serif-sc/files/noto-serif-sc-chinese-simplified-700-normal.woff2 \
+  --text-file=chars.txt --layout-features='*' --flavor=woff2 \
+  --output-file=public/fonts/noto-serif-sc-cjk-700.woff2
+```
+
+**鳶 (U+9CF6, "kite") does not exist in Noto Serif SC.** It is the only character in the
+site that still falls back. Either accept it, write 鸢, or add a Traditional source face.
