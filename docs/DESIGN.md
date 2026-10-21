@@ -447,7 +447,7 @@ settles with its nearest face square to the viewer. `src/components/DiceCursor.j
 | Settle | after 110ms idle, ease to the nearest multiple of 90° at `0.16`/frame |
 | Faces | opposite faces sum to 7: 1/6, 3/4, 5/2 |
 | Pips | 4px ink `#1b2733`; faces 1 and 4 use `--c-cinnabar`, as on a real die |
-| Light | three tones — `#fffdf7` top, `#f1ebdd` right/bottom, `#dcd3c0` left/back |
+| Light | **uniform** — every face `#f7f3e9`, one outline, no per-face tint, no inner gradient |
 | Outline | `inset 0 0 0 1.5px rgba(27,39,51,0.62)` |
 | Native cursor | `html.dice-cursor-on * { cursor: none !important }` |
 
@@ -455,9 +455,11 @@ settles with its nearest face square to the viewer. `src/components/DiceCursor.j
 a 1px 22%-alpha rule the die all but vanished when it crossed a portrait. The outline is
 the same ink as the 白板 tile frame.
 
-**Three tones, not two.** With a 4% brightness gap between faces the tumble read as two
-flat cards side by side. Widening the gap and tightening the perspective from 260px to
-150px made it read as a solid cube.
+**All six faces are lit identically.** An earlier build shaded them in three tones to make
+the tumble read as a solid cube; the user rejected it — *"the dice should be equally lit on
+all sides (some sides are clearly darker atm)"*. Every face is now `#f7f3e9` with the same
+`inset` rule and no inner gradient. The outline and the 150px perspective carry the 3D read
+instead. Do not reintroduce per-face tints.
 
 **Written from one rAF loop, no React state.** Re-rendering at 60fps is how a custom cursor
 ends up lagging. The loop **stops** once the die has settled and restarts on the next

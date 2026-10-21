@@ -939,28 +939,11 @@
   background: #f7f3e9;
   /* The die must survive sitting on a white member tile, where an ivory face
      has almost no contrast. The dark rule is the same ink the 白板 tile frame
-     uses, so it reads as part of the set rather than as a UI outline. */
-  box-shadow:
-    inset 0 0 0 1.5px rgba(27, 39, 51, 0.62),
-    inset 0 -2px 3px rgba(27, 39, 51, 0.12);
+     uses, so it reads as part of the set rather than as a UI outline.
+     This is the ONLY shading: every face is lit identically. No per-face tint,
+     no inner gradient — the outline alone separates the faces. */
+  box-shadow: inset 0 0 0 1.5px rgba(27, 39, 51, 0.62);
   backface-visibility: hidden;
-}
-
-/* Face light: the cube reads as one solid object, not six flat squares.
-   Three tones, not two. With only a 4% gap the tumble read as two cards
-   side by side instead of a cube. */
-.dice-face--top {
-  background: #fffdf7;
-}
-
-.dice-face--right,
-.dice-face--bottom {
-  background: #f1ebdd;
-}
-
-.dice-face--left,
-.dice-face--back {
-  background: #dcd3c0;
 }
 
 .dice-cell {
