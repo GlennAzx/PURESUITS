@@ -4,15 +4,18 @@ export default {
   theme: {
     extend: {
       colors: {
-        'ink-black': '#0b0c10',
-        'ink-charcoal': '#14181f',
-        'imperial-gold': '#d4af37',
-        'imperial-gold-bright': '#f9d976',
-        'jade-deep': '#071a12',
-        'jade-accent': '#2e7d32',
-        'cinnabar': '#c23b22',
-        'ivory': '#f5f0e8',
-        'ivory-shadow': '#dfd7c8',
+        // Channel form so opacity modifiers keep working (46 usages, e.g.
+        // imperial-gold/30). The values live in src/index.css as --c-* so a
+        // palette swaps every colour without touching a component.
+        'ink-black': 'rgb(var(--c-ink-black) / <alpha-value>)',
+        'ink-charcoal': 'rgb(var(--c-ink-charcoal) / <alpha-value>)',
+        'imperial-gold': 'rgb(var(--c-imperial-gold) / <alpha-value>)',
+        'imperial-gold-bright': 'rgb(var(--c-imperial-gold-bright) / <alpha-value>)',
+        'jade-deep': 'rgb(var(--c-jade-deep) / <alpha-value>)',
+        'jade-accent': 'rgb(var(--c-jade-accent) / <alpha-value>)',
+        'cinnabar': 'rgb(var(--c-cinnabar) / <alpha-value>)',
+        'ivory': 'rgb(var(--c-ivory) / <alpha-value>)',
+        'ivory-shadow': 'rgb(var(--c-ivory-shadow) / <alpha-value>)',
       },
       fontFamily: {
         serif: ['"Noto Serif SC"', '"Cinzel"', 'serif'],

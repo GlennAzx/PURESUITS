@@ -4,6 +4,97 @@
 @tailwind components;
 @tailwind utilities;
 
+/* --- Palette templates ------------------------------------------------------
+   Every colour the page chrome uses comes from these channels. Tailwind reads
+   them through `rgb(var(--c-*) / <alpha-value>)` in tailwind.config.js, so the
+   opacity modifiers (imperial-gold/30 and 45 others) keep working.
+
+   The default `:root` block is the original warm gold-on-ink palette. Nothing
+   is themed until a `data-palette` attribute is set on <html>:
+
+     document.documentElement.dataset.palette = 'porcelain'
+
+   The member tile does NOT use these. Its ivory face and green wall are the
+   physical tile and stay constant across palettes. Only --page-ink and
+   --role-ink are read by the tile's nameplate, because a cream name is
+   invisible on a pale blue page.
+---------------------------------------------------------------------------- */
+:root {
+  /* ORIGINAL — ink black + imperial gold */
+  --c-ink-black: 11 12 16;
+  --c-ink-charcoal: 20 24 31;
+  --c-imperial-gold: 212 175 55;
+  --c-imperial-gold-bright: 249 217 118;
+  --c-jade-deep: 7 26 18;
+  --c-jade-accent: 46 125 50;
+  --c-cinnabar: 194 59 34;
+  --c-ivory: 245 240 232;
+  --c-ivory-shadow: 223 215 200;
+  --page-ink: #efe9db;
+  --role-ink: #b8912f;
+}
+
+/* V1 PORCELAIN — pale blue page, dark navy ink, orange accent, sage green */
+:root[data-palette='porcelain'] {
+  --c-ink-black: 227 236 244;
+  --c-ink-charcoal: 242 247 251;
+  --c-imperial-gold: 224 122 63;
+  --c-imperial-gold-bright: 240 153 95;
+  --c-jade-deep: 219 232 224;
+  --c-jade-accent: 95 143 109;
+  --c-cinnabar: 194 59 34;
+  --c-ivory: 34 48 61;
+  --c-ivory-shadow: 107 125 140;
+  --page-ink: #22303d;
+  --role-ink: #c2632b;
+}
+
+/* V2 MIST — cooler and lower chroma, the quietest of the four */
+:root[data-palette='mist'] {
+  --c-ink-black: 233 239 245;
+  --c-ink-charcoal: 247 250 252;
+  --c-imperial-gold: 207 107 58;
+  --c-imperial-gold-bright: 232 143 99;
+  --c-jade-deep: 223 234 228;
+  --c-jade-accent: 79 127 98;
+  --c-cinnabar: 194 59 34;
+  --c-ivory: 30 44 56;
+  --c-ivory-shadow: 100 122 138;
+  --page-ink: #1e2c38;
+  --role-ink: #b45c33;
+}
+
+/* V3 DUSK — mid blue page, pale ink, orange accent */
+:root[data-palette='dusk'] {
+  --c-ink-black: 44 71 99;
+  --c-ink-charcoal: 58 90 121;
+  --c-imperial-gold: 240 144 79;
+  --c-imperial-gold-bright: 255 171 115;
+  --c-jade-deep: 36 66 83;
+  --c-jade-accent: 127 176 138;
+  --c-cinnabar: 226 96 74;
+  --c-ivory: 238 245 250;
+  --c-ivory-shadow: 185 205 220;
+  --page-ink: #eef5fa;
+  --role-ink: #f0a86a;
+}
+
+/* V4 HARBOUR — deep blue page, the closest in weight to the current build */
+:root[data-palette='harbour'] {
+  --c-ink-black: 20 38 58;
+  --c-ink-charcoal: 29 50 71;
+  --c-imperial-gold: 239 139 74;
+  --c-imperial-gold-bright: 255 167 106;
+  --c-jade-deep: 16 32 47;
+  --c-jade-accent: 78 143 99;
+  --c-cinnabar: 226 96 74;
+  --c-ivory: 223 233 242;
+  --c-ivory-shadow: 147 168 187;
+  --page-ink: #dfe9f2;
+  --role-ink: #f0a06a;
+}
+
+
 /* --- Self-hosted fonts ------------------------------------------------------
    These faces used to load from Google Fonts. That CDN is unreachable from
    some networks, so every face sat in the "error" state and the browser
@@ -538,7 +629,7 @@
   letter-spacing: 0.01em;
   /* The nameplate now sits below the tile, on the page, not on cream acrylic.
      It needs page ink, not tile ink. */
-  color: #efe9db;
+  color: var(--page-ink);
   /* Never synthesise bold. If the 700 face is missing, the browser fakes it by
      drawing the glyph twice with an offset. A clean 400 reads better. */
   font-synthesis: none;
@@ -553,7 +644,7 @@
   font: 700 13px/1.2 ui-sans-serif, system-ui, sans-serif;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #b8912f;
+  color: var(--role-ink);
 }
 
 /* Inset shadow over the picture, so it reads as set into the tile rather than

@@ -63,13 +63,44 @@ viewer more. **UNVERIFIED by an actual hover**; it is the worker's value.
 
 ## 3. Colour
 
+**The palette is a template, not a constant.** Each colour the page chrome uses is a
+CSS channel variable, read by Tailwind as `rgb(var(--c-*) / <alpha-value>)`. That form
+matters: 46 utilities use an opacity modifier (`imperial-gold/30` and so on), and a plain
+`var(--colour)` would break every one of them.
+
+Palettes live in `src/index.css` and swap with one attribute — no rebuild, no component
+change:
+
+```js
+document.documentElement.dataset.palette = 'porcelain';  // or mist | dusk | harbour
+```
+
+With no attribute set, `:root` holds the original palette, so the site is unchanged until
+a choice is made.
+
+| Palette | Page base | Ink | Accent | Green |
+|---|---|---|---|---|
+| *(default)* original | `#0b0c10` | `#f5f0e8` | `#d4af37` gold | `#2e7d32` |
+| **V1 porcelain** | `#e3ecf4` | `#22303d` | `#e07a3f` | `#5f8f6d` |
+| **V2 mist** | `#e9eff5` | `#1e2c38` | `#cf6b3a` | `#4f7f62` |
+| **V3 dusk** | `#2c4763` | `#eef5fa` | `#f0904f` | `#7fb08a` |
+| **V4 harbour** | `#14263a` | `#dfe9f2` | `#ef8b4a` | `#4e8f63` |
+
+**The member tile is exempt.** Its ivory face and green wall are the physical tile and do
+not change with the palette. Only `--page-ink` and `--role-ink` are read by the nameplate,
+because cream text is invisible on a pale blue page. That exemption is deliberate — a
+pastel tile stops reading as a mahjong tile.
+
+Note the token names invert on the light palettes: `ink-black` becomes the pale page and
+`ivory` becomes the dark text. The names are historical; the rendering is correct.
+
 | Role | Value |
 |---|---|
-| Page ink (names) | `#efe9db` |
-| Tile ink (frame, glyphs) | `#1b2733` |
-| Face | `#ffffff → #e9e9e1` |
-| Back / wall green | `#2a8f5b → #145536` |
-| Role label gold | `#b8912f` |
+| Page ink (names) | `var(--page-ink)` — `#efe9db` by default |
+| Tile ink (frame, glyphs) | `#1b2733` — fixed, not themed |
+| Face | `#ffffff → #e9e9e1` — fixed |
+| Back / wall green | `#2a8f5b → #145536` — fixed |
+| Role label | `var(--role-ink)` — `#b8912f` by default |
 
 Palette is **pristine white face, green back**. Warm ivory was rejected as looking
 stained.
