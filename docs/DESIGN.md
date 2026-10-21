@@ -448,19 +448,26 @@ settles with its nearest face square to the viewer. `src/components/DiceCursor.j
 | Faces | opposite faces sum to 7: 1/6, 3/4, 5/2 |
 | Pips | **6px** on a 28px body — 21% of the face. Ink `#1b2733` with a 1px inset recess; faces 1 and 4 in `--c-cinnabar` |
 | The 1 pip | **11px** — 39% of the face, roughly double a normal pip. Traditional on a mahjong-table die, and it overflows its 8px grid cell on purpose |
-| Light | **uniform** — every face `#f7f3e9`, one outline, no per-face tint, no inner gradient |
-| Outline | `inset 0 0 0 1.5px rgba(27,39,51,0.62)` |
+| Light | **uniform** — every face `#efe7d5`, no per-face tint, no inner gradient |
+| Edge | soft: `inset 0 0 0 1px rgba(27,39,51,0.16)` + `inset 0 0 7px rgba(27,39,51,0.13)`, radius **4px** |
+| Shadow | `.dice-cursor::before` — blurred rounded rect at `translateZ(-1.2 × half)`, behind the cube, does not rotate |
 | Native cursor | `html.dice-cursor-on * { cursor: none !important }` |
 
-**The dark outline is load-bearing.** The die is ivory and the member tiles are white; with
-a 1px 22%-alpha rule the die all but vanished when it crossed a portrait. The outline is
-the same ink as the 白板 tile frame.
+**The edges must be soft, and the shadow carries the contrast.** A hard `1.5px ink at 0.62`
+ring kept the die visible over white tiles but drew a wireframe on every receding face as
+the die turned — the user reported it as *"the dice edges are too strong and can be seen on
+rotation … need to be smoother to show a more rounded edge feel"*. The ring is now a faint
+vignette, the body is a deeper ivory `#efe7d5`, and a blurred shadow sits behind the cube.
+Measured on a blank tile: still clearly readable without the ring.
 
-**All six faces are lit identically.** An earlier build shaded them in three tones to make
-the tumble read as a solid cube; the user rejected it — *"the dice should be equally lit on
-all sides (some sides are clearly darker atm)"*. Every face is now `#f7f3e9` with the same
-`inset` rule and no inner gradient. The outline and the 150px perspective carry the 3D read
-instead. Do not reintroduce per-face tints.
+**Corner radius is 4px, not 6px.** At 6px each face was cut back so far that the six faces
+stopped meeting along the edges; at 45° the die read as three separate rounded plates with
+notches between them. 4px still reads soft and closes the corners.
+
+**All six faces are lit identically.** An earlier build shaded them in three tones; the user
+rejected it — *"the dice should be equally lit on all sides (some sides are clearly darker
+atm)"*. Do not reintroduce per-face tints. A 6-plane cube cannot have a true rounded *edge* —
+only rounded face corners — so softness comes from the vignette and the shadow, not geometry.
 
 **Written from one rAF loop, no React state.** Re-rendering at 60fps is how a custom cursor
 ends up lagging. The loop **stops** once the die has settled and restarts on the next
