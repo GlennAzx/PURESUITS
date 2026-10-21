@@ -2,6 +2,8 @@
 
 A modern, dynamic guild website built with **Vite + React + Tailwind CSS**, ready for zero-configuration continuous deployment on **Cloudflare Pages via GitHub**.
 
+**Read [docs/DESIGN.md](docs/DESIGN.md) before changing the tiles, the type or the roster.** It records the rules that were decided with the guild, the alternatives that were rejected and why, and how to verify each rule.
+
 ## Features
 - **Right-Hand Fanned Mahjong Navigation**: tile bar fanning along a radial curve. 2D transforms only.
 - **Cinematic Video Hero**: Ambient background with controls.
