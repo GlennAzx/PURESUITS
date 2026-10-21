@@ -901,8 +901,10 @@
    ───────────────────────────────────────────────────────────── */
 
 .dice-cursor {
-  --dice-size: 26px;
-  --dice-half: 13px;
+  /* 28px body with 6px pips: a pip is ~21% of the face, which is what a real
+     mahjong die measures. At 26px/4px the pips read as specks. */
+  --dice-size: 28px;
+  --dice-half: 14px;
 
   position: fixed;
   top: 0;
@@ -952,10 +954,12 @@
 }
 
 .dice-pip {
-  width: 4px;
-  height: 4px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: #1b2733;
+  /* Shallow recess, the way a drilled pip catches light at its upper rim. */
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.45);
 }
 
 /* The traditional die colours: one and four carry red pips. */

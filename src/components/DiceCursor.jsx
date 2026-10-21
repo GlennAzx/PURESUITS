@@ -38,7 +38,10 @@ export default function DiceCursor() {
     const calm = window.matchMedia('(prefers-reduced-motion: reduce)');
     if (!fine.matches || calm.matches) return undefined;
 
-    const size = 26;
+    // Size comes from the stylesheet, so --dice-size stays the single source of
+    // truth. A hardcoded copy here silently offsets the die from the pointer
+    // the moment the CSS size changes.
+    const size = wrap.offsetWidth || 28;
     const half = size / 2;
 
     let px = -100;

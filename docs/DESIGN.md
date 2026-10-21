@@ -441,12 +441,12 @@ settles with its nearest face square to the viewer. `src/components/DiceCursor.j
 
 | Part | Value |
 |---|---|
-| Body | 26px cube, `perspective: 150px`, six faces at `translateZ(13px)` |
+| Body | 28px cube, `perspective: 150px`, six faces at `translateZ(14px)` |
 | Follow | `lerp 0.38` per frame — measured 7–11px behind a pointer moving in 200px steps |
 | Roll | `rotateX += dy * 0.5`, `rotateY -= dx * 0.5` while speed > 0.6px/frame |
 | Settle | after 110ms idle, ease to the nearest multiple of 90° at `0.16`/frame |
 | Faces | opposite faces sum to 7: 1/6, 3/4, 5/2 |
-| Pips | 4px ink `#1b2733`; faces 1 and 4 use `--c-cinnabar`, as on a real die |
+| Pips | **6px** on a 28px body — 21% of the face, the proportion a real mahjong die carries. Ink `#1b2733` with a 1px inset recess; faces 1 and 4 in `--c-cinnabar` |
 | Light | **uniform** — every face `#f7f3e9`, one outline, no per-face tint, no inner gradient |
 | Outline | `inset 0 0 0 1.5px rgba(27,39,51,0.62)` |
 | Native cursor | `html.dice-cursor-on * { cursor: none !important }` |
