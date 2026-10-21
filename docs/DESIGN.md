@@ -75,16 +75,17 @@ change:
 document.documentElement.dataset.palette = 'porcelain';  // or mist | dusk | harbour
 ```
 
-With no attribute set, `:root` holds the original palette, so the site is unchanged until
-a choice is made.
+With no attribute set, `:root` holds **Harbour**, the default chosen by the guild on
+2026-10-20 from four candidates. The others stay switchable, including `ink`, which
+restores the retired gold-on-black look.
 
-| Palette | Page base | Ink | Accent | Green |
+| Palette | Page base | Ink | Accent | Green wall |
 |---|---|---|---|---|
-| *(default)* original | `#0b0c10` | `#f5f0e8` | `#d4af37` gold | `#2e7d32` |
-| **V1 porcelain** | `#e3ecf4` | `#22303d` | `#e07a3f` | `#8ec7a0` |
-| **V2 mist** | `#e9eff5` | `#1e2c38` | `#cf6b3a` | `#88b89a` |
-| **V3 dusk** | `#2c4763` | `#eef5fa` | `#f0904f` | `#97c9aa` |
-| **V4 harbour** | `#14263a` | `#dfe9f2` | `#ef8b4a` | `#74b28d` |
+| **(default) harbour** | `#14263a` | `#dfe9f2` | `#ef8b4a` | `#74b28d` |
+| mist | `#e9eff5` | `#1e2c38` | `#cf6b3a` | `#88b89a` |
+| porcelain | `#e3ecf4` | `#22303d` | `#e07a3f` | `#8ec7a0` |
+| dusk | `#2c4763` | `#eef5fa` | `#f0904f` | `#97c9aa` |
+| ink *(retired)* | `#0b0c10` | `#f5f0e8` | `#d4af37` | `#2a8f5b` |
 
 **The tile face is exempt; the wall is themed.** The ivory face is fixed — a pastel face
 stops reading as a mahjong tile. The wall green follows the palette through `--wall-1` …
@@ -97,11 +98,15 @@ Note the token names invert on the light palettes: `ink-black` becomes the pale 
 
 | Role | Value |
 |---|---|
-| Page ink (names) | `var(--page-ink)` — `#efe9db` by default |
+| Page ink (names) | `var(--page-ink)` — `#dfe9f2` by default |
 | Tile ink (frame, glyphs) | `#1b2733` — fixed, not themed |
 | Face | `#ffffff → #e9e9e1` — fixed, not themed |
-| Wall green | `var(--wall-1)` … `var(--wall-4)` — themed; `#34996a → #145536` by default |
-| Role label | `var(--role-ink)` — `#b8912f` by default |
+| Wall green | `var(--wall-1)` … `var(--wall-4)` — themed; `#8fc7a4 → #407661` by default |
+| Role label | `var(--role-ink)` — `#f0a06a` by default |
+
+**The no-JS boot fallback in `index.html` cannot read these variables.** Its `<style>`
+block in `<head>` copies the Harbour colours by hand. Change the palette again and that
+block must change too, or a JavaScript-disabled visitor sees the old look.
 
 Palette is **pristine white face, green back**. Warm ivory was rejected as looking
 stained.

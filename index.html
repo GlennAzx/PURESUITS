@@ -15,7 +15,9 @@
          a synthesised weight, which blurred the tile lettering. -->
 
     <!-- Fallback styling. Plain CSS in the document head so it renders with no
-         JavaScript and no bundled stylesheet. -->
+         JavaScript and no bundled stylesheet. It cannot read the palette
+         variables in src/index.css, so the HARBOUR values are copied by hand.
+         If the palette changes again, change these too. -->
     <style>
       .boot {
         min-height: 100vh;
@@ -25,8 +27,8 @@
         padding: 32px 20px;
         box-sizing: border-box;
         background:
-          radial-gradient(120% 90% at 20% 15%, #12291e 0%, #0b1410 45%, #0b0c10 100%);
-        color: #d6d3cd;
+          radial-gradient(120% 90% at 20% 15%, #24405a 0%, #1a2f45 45%, #14263a 100%);
+        color: #dfe9f2;
         font-family: ui-serif, Georgia, 'Times New Roman', serif;
         line-height: 1.65;
       }
@@ -38,20 +40,20 @@
         font-size: 10px;
         letter-spacing: 0.42em;
         text-transform: uppercase;
-        color: rgba(212, 175, 55, 0.7);
+        color: rgba(239, 139, 74, 0.75);
         margin-bottom: 14px;
       }
       .boot-title {
         font-size: 44px;
         line-height: 1;
         letter-spacing: 0.08em;
-        color: #f5f0e8;
+        color: #dfe9f2;
         margin: 0 0 16px;
         font-weight: 900;
       }
       .boot-sub {
         font-size: 14px;
-        color: #9ca3af;
+        color: #93a8bb;
         margin: 0 0 30px;
         max-width: 40ch;
       }
@@ -59,10 +61,10 @@
         font-size: 11px;
         letter-spacing: 0.18em;
         text-transform: uppercase;
-        color: #d4af37;
+        color: #ef8b4a;
         margin: 26px 0 10px;
         padding-bottom: 6px;
-        border-bottom: 1px solid rgba(212, 175, 55, 0.22);
+        border-bottom: 1px solid rgba(239, 139, 74, 0.24);
         font-weight: 700;
         font-family: ui-sans-serif, system-ui, sans-serif;
       }
@@ -78,27 +80,27 @@
         justify-content: space-between;
         gap: 16px;
         padding: 6px 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        border-bottom: 1px solid rgba(223, 233, 242, 0.08);
       }
-      .boot-list li span { color: #8b929c; white-space: nowrap; }
+      .boot-list li span { color: #8ea3b6; white-space: nowrap; }
       .boot-cta {
         display: inline-block;
         margin-top: 30px;
         padding: 12px 20px;
-        border: 1px solid rgba(212, 175, 55, 0.45);
+        border: 1px solid rgba(239, 139, 74, 0.45);
         border-radius: 10px;
-        color: #f9d976;
+        color: #ffa76a;
         text-decoration: none;
         font-size: 13px;
         font-weight: 700;
         font-family: ui-sans-serif, system-ui, sans-serif;
         letter-spacing: 0.04em;
       }
-      .boot-cta:hover { border-color: #d4af37; color: #fff; }
+      .boot-cta:hover { border-color: #ef8b4a; color: #fff; }
       .boot-note {
         margin-top: 26px;
         font-size: 11px;
-        color: #6b7280;
+        color: #7d90a2;
         font-family: ui-monospace, monospace;
       }
     </style>

@@ -20,23 +20,24 @@
    invisible on a pale blue page.
 ---------------------------------------------------------------------------- */
 :root {
-  /* ORIGINAL — ink black + imperial gold */
-  --c-ink-black: 11 12 16;
-  --c-ink-charcoal: 20 24 31;
-  --c-imperial-gold: 212 175 55;
-  --c-imperial-gold-bright: 249 217 118;
-  --c-jade-deep: 7 26 18;
-  --c-jade-accent: 46 125 50;
+  /* DEFAULT — HARBOUR: deep blue page, pale ink, orange accent, light green wall.
+     Chosen by the user on 2026-10-20 from four candidates. */
+  --c-ink-black: 20 38 58;
+  --c-ink-charcoal: 29 50 71;
+  --c-imperial-gold: 239 139 74;
+  --c-imperial-gold-bright: 255 167 106;
+  --c-jade-deep: 16 32 47;
+  --c-jade-accent: 116 178 141;
   /* Tile wall green. Fixed before; it follows the palette now. */
-  --wall-1: #34996a;
-  --wall-2: #2a8f5b;
-  --wall-3: #1d7148;
-  --wall-4: #145536;
-  --c-cinnabar: 194 59 34;
-  --c-ivory: 245 240 232;
-  --c-ivory-shadow: 223 215 200;
-  --page-ink: #efe9db;
-  --role-ink: #b8912f;
+  --wall-1: #8fc7a4;
+  --wall-2: #74b28d;
+  --wall-3: #579378;
+  --wall-4: #407661;
+  --c-cinnabar: 226 96 74;
+  --c-ivory: 223 233 242;
+  --c-ivory-shadow: 147 168 187;
+  --page-ink: #dfe9f2;
+  --role-ink: #f0a06a;
 }
 
 /* V1 PORCELAIN — pale blue page, dark navy ink, orange accent, sage green */
@@ -96,23 +97,24 @@
   --role-ink: #f0a86a;
 }
 
-/* V4 HARBOUR — deep blue page, the closest in weight to the current build */
-:root[data-palette='harbour'] {
-  --c-ink-black: 20 38 58;
-  --c-ink-charcoal: 29 50 71;
-  --c-imperial-gold: 239 139 74;
-  --c-imperial-gold-bright: 255 167 106;
-  --c-jade-deep: 16 32 47;
-  --c-jade-accent: 116 178 141;
-  --wall-1: #8fc7a4;
-  --wall-2: #74b28d;
-  --wall-3: #579378;
-  --wall-4: #407661;
-  --c-cinnabar: 226 96 74;
-  --c-ivory: 223 233 242;
-  --c-ivory-shadow: 147 168 187;
-  --page-ink: #dfe9f2;
-  --role-ink: #f0a06a;
+/* RETIRED — the original ink black + imperial gold. Kept so the older look can
+   be restored with one attribute: data-palette="ink". */
+:root[data-palette='ink'] {
+  --c-ink-black: 11 12 16;
+  --c-ink-charcoal: 20 24 31;
+  --c-imperial-gold: 212 175 55;
+  --c-imperial-gold-bright: 249 217 118;
+  --c-jade-deep: 7 26 18;
+  --c-jade-accent: 46 125 50;
+  --wall-1: #34996a;
+  --wall-2: #2a8f5b;
+  --wall-3: #1d7148;
+  --wall-4: #145536;
+  --c-cinnabar: 194 59 34;
+  --c-ivory: 245 240 232;
+  --c-ivory-shadow: 223 215 200;
+  --page-ink: #efe9db;
+  --role-ink: #b8912f;
 }
 
 
