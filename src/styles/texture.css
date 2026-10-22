@@ -1,0 +1,171 @@
+/* ─────────────────────────────────────────────────────────────
+   Page textures
+   Every texture is pure CSS — gradients only, no image files, so
+   they cost zero bytes of network and scale to any screen.
+
+   Applied by setting an attribute on <html>:
+       document.documentElement.dataset.texture = 'mat'
+
+   They paint into body::before, which is fixed, behind everything
+   (z-index -1) and pointer-events: none. The page keeps its own
+   background colour; the texture only sits on top of it.
+   ───────────────────────────────────────────────────────────── */
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: transparent;
+  /* Each texture overrides these three. */
+  background-image: none;
+  background-size: auto;
+  background-position: 0 0;
+}
+
+/* ── A. MAT — the felt of a mahjong table ──────────────────────
+   Two fine diagonal weaves at 90° to each other, plus a slow
+   vignette. This is the quietest option: at 4px the weave reads as
+   a material, not as stripes. */
+:root[data-texture="mat"] body::before {
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.016) 0 1px,
+      transparent 1px 4px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      rgba(0, 0, 0, 0.035) 0 1px,
+      transparent 1px 4px
+    ),
+    radial-gradient(
+      ellipse 120% 80% at 50% 0%,
+      rgba(255, 255, 255, 0.035),
+      transparent 70%
+    );
+  background-size: 4px 4px, 4px 4px, 100% 100%;
+}
+
+/* ── B. GRID — the tile wall, seen from above ──────────────────
+   A mahjong wall is a line of tile backs. This is that grid at low
+   contrast: 64x44 cells, the proportion of a real tile face, with a
+   lighter rule on the top and left of each cell so the cells read as
+   raised rather than drawn. */
+:root[data-texture="grid"] body::before {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px),
+    linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+    radial-gradient(
+      ellipse 100% 70% at 50% 10%,
+      rgba(255, 255, 255, 0.03),
+      transparent 72%
+    );
+  background-size:
+    64px 44px,
+    64px 44px,
+    64px 44px,
+    64px 44px,
+    100% 100%;
+  background-position: 0 0, 0 0, 0 1px, 1px 0, 0 0;
+}
+
+/* ── C. SILK — wuxia brocade ───────────────────────────────────
+   Overlapping diagonal lattice at two scales, the way a damask
+   repeats. Warmer than the others: the lattice carries a trace of
+   the accent orange, so it reads as woven cloth rather than graph
+   paper. */
+:root[data-texture="silk"] body::before {
+  background-image:
+    repeating-linear-gradient(
+      30deg,
+      rgb(var(--c-imperial-gold) / 0.022) 0 1px,
+      transparent 1px 14px
+    ),
+    repeating-linear-gradient(
+      -30deg,
+      rgb(var(--c-imperial-gold) / 0.022) 0 1px,
+      transparent 1px 14px
+    ),
+    repeating-linear-gradient(
+      30deg,
+      rgba(255, 255, 255, 0.014) 0 1px,
+      transparent 1px 42px
+    ),
+    repeating-linear-gradient(
+      -30deg,
+      rgba(255, 255, 255, 0.014) 0 1px,
+      transparent 1px 42px
+    ),
+    radial-gradient(
+      ellipse 110% 75% at 50% 0%,
+      rgba(255, 255, 255, 0.04),
+      transparent 70%
+    );
+}
+
+/* ── D. SMOKE — ink wash, no pattern at all ────────────────────
+   Four soft radial clouds at different scales. There is no repeat,
+   so nothing tiles and nothing reads as a texture — it simply stops
+   the background being one flat colour. The calmest option. */
+:root[data-texture="smoke"] body::before {
+  background-image:
+    radial-gradient(
+      ellipse 50% 40% at 15% 12%,
+      rgb(var(--c-jade-accent) / 0.05),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 45% 35% at 85% 28%,
+      rgb(var(--c-imperial-gold) / 0.04),
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 60% 45% at 50% 85%,
+      rgba(255, 255, 255, 0.03),
+      transparent 65%
+    ),
+    radial-gradient(
+      ellipse 100% 60% at 50% 0%,
+      rgba(255, 255, 255, 0.04),
+      transparent 70%
+    );
+}
+
+/* ── E. COIN — the gambling motif ──────────────────────────────
+   A lattice of square-holed coins, the Chinese cash coin, on a
+   68px repeat. Built from one radial ring plus a small square, so
+   the "coin" is a ring with a hole rather than a drawn circle.
+   The busiest option; still under 4% contrast. */
+:root[data-texture="coin"] body::before {
+  background-image:
+    radial-gradient(
+      circle at 50% 50%,
+      transparent 6px,
+      rgb(var(--c-imperial-gold) / 0.05) 6px 7.5px,
+      transparent 8px
+    ),
+    linear-gradient(
+      rgb(var(--c-imperial-gold) / 0.04) 2px,
+      transparent 2px
+    ),
+    radial-gradient(
+      ellipse 110% 75% at 50% 0%,
+      rgba(255, 255, 255, 0.035),
+      transparent 70%
+    );
+  background-size: 68px 68px, 68px 68px, 100% 100%;
+  background-position: 0 0, 33px 33px, 0 0;
+}
+
+/* Textures are decoration. Anyone who asked for less motion still
+   gets them — they do not move — but a high-contrast preference
+   means the page must not carry a competing pattern. */
+@media (prefers-contrast: more) {
+  body::before {
+    background-image: none;
+  }
+}

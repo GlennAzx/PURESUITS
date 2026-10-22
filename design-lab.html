@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en" data-texture="mat" data-cursor="still">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PURESUIT — design lab</title>
+    <style>
+      /* Dev-only lab. Not linked from the app, not part of the build.
+         The palette tokens below are copied from src/index.css :root so this
+         page can run standalone without importing the app's CSS. */
+      :root {
+        --c-ink-black: 20 38 58;
+        --c-ink-charcoal: 29 50 71;
+        --c-imperial-gold: 239 139 74;
+        --c-jade-accent: 116 178 141;
+        --c-cinnabar: 226 96 74;
+        --c-ivory: 223 233 242;
+        --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+        --page-ink: #dfe9f2;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background: rgb(var(--c-ink-black));
+        color: var(--page-ink);
+        font: 15px/1.6 "Segoe UI", system-ui, sans-serif;
+        min-height: 100vh;
+      }
+
+      .wrap { max-width: 1140px; margin: 0 auto; padding: 44px 30px 90px; }
+
+      h1 { font-size: 26px; margin: 0 0 6px; font-weight: 600; letter-spacing: 0.01em; }
+      .sub { color: rgb(var(--c-ivory) / 0.6); margin: 0 0 34px; max-width: 70ch; }
+
+      h2 {
+        font-size: 12px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: rgb(var(--c-imperial-gold));
+        margin: 46px 0 14px;
+        padding-bottom: 9px;
+        border-bottom: 1px solid rgb(var(--c-ivory) / 0.13);
+      }
+
+      .opts { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 18px; }
+
+      button.opt {
+        font: inherit;
+        font-size: 13px;
+        padding: 8px 15px;
+        border-radius: 7px;
+        border: 1px solid rgb(var(--c-ivory) / 0.2);
+        background: rgb(var(--c-ink-charcoal));
+        color: var(--page-ink);
+        cursor: pointer;
+        transition: border-color 160ms, background 160ms, color 160ms;
+      }
+      button.opt:hover { border-color: rgb(var(--c-imperial-gold) / 0.7); }
+      button.opt[aria-pressed="true"] {
+        border-color: rgb(var(--c-imperial-gold));
+        background: rgb(var(--c-imperial-gold) / 0.17);
+        color: rgb(var(--c-imperial-gold));
+      }
+
+      .note {
+        font-size: 13px;
+        color: rgb(var(--c-ivory) / 0.6);
+        background: rgb(var(--c-ink-charcoal) / 0.75);
+        border-left: 2px solid rgb(var(--c-imperial-gold) / 0.6);
+        padding: 11px 15px;
+        border-radius: 0 7px 7px 0;
+        margin: 0 0 20px;
+        min-height: 44px;
+      }
+
+      /* Sample content, so a texture is judged behind real page furniture
+         rather than against bare background. */
+      .demo {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 16px;
+        margin-bottom: 10px;
+      }
+      .card {
+        background: rgb(var(--c-ink-charcoal) / 0.72);
+        border: 1px solid rgb(var(--c-ivory) / 0.1);
+        border-radius: 11px;
+        padding: 17px 19px;
+      }
+      .card h3 { margin: 0 0 5px; font-size: 15px; font-weight: 600; }
+      .card p { margin: 0; font-size: 13px; color: rgb(var(--c-ivory) / 0.58); }
+      .card .pill {
+        display: inline-block;
+        margin-top: 11px;
+        font-size: 10px;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: rgb(var(--c-imperial-gold));
+        border: 1px solid rgb(var(--c-imperial-gold) / 0.4);
+        border-radius: 99px;
+        padding: 3px 10px;
+      }
+      .tilerow { display: flex; gap: 11px; flex-wrap: wrap; margin-top: 4px; }
+      .tile {
+        width: 56px;
+        height: 78px;
+        border-radius: 5px;
+        background: linear-gradient(180deg, #ffffff, #e9e7dc);
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+        display: grid;
+        place-items: center;
+        color: #1b2733;
+        font-size: 21px;
+        font-weight: 600;
+      }
+
+      /* Cursor field — the die follows the pointer only inside this box, so the
+         lab's own scrollbar and buttons stay usable. */
+      .field {
+        position: relative;
+        height: 190px;
+        border-radius: 10px;
+        border: 1px dashed rgb(var(--c-ivory) / 0.22);
+        overflow: hidden;
+        display: grid;
+        place-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+      .field .fieldhint { color: rgb(var(--c-ivory) / 0.45); font-size: 13px; }
+      .field a.bait {
+        color: rgb(var(--c-imperial-gold));
+        border: 1px solid rgb(var(--c-imperial-gold) / 0.45);
+        border-radius: 7px;
+        padding: 9px 17px;
+        text-decoration: none;
+        font-size: 14px;
+      }
+      .field.live { cursor: none; }
+      :root[data-cursor="none"] .field.live,
+      :root[data-cursor="rollhot"] .field.live:not(.hot) { cursor: auto; }
+
+      .dice-cursor {
+        --dice-frames: 24;
+        --dice-cell: 50px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: var(--dice-cell);
+        height: var(--dice-cell);
+        margin: calc(var(--dice-cell) / -2) 0 0 calc(var(--dice-cell) / -2);
+        background-image: url("/dice/tumble.webp");
+        background-repeat: no-repeat;
+        background-size: calc(var(--dice-frames) * var(--dice-cell)) var(--dice-cell);
+        animation: dice-play 1s steps(24) infinite;
+        animation-play-state: paused;
+        pointer-events: none;
+        opacity: 0;
+        filter: drop-shadow(0 2px 3px rgba(8, 16, 26, 0.55));
+        transition: opacity 200ms var(--ease-out);
+        will-change: transform;
+      }
+      @keyframes dice-play {
+        to { background-position: calc(var(--dice-frames) * var(--dice-cell) * -1) 0; }
+      }
+
+      /* Loader preview runs inside a framed box, not over the whole page. */
+      .stage {
+        position: relative;
+        height: 260px;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 1px solid rgb(var(--c-ivory) / 0.12);
+      }
+      .stage .loader { position: absolute; }
+
+      .foot {
+        margin-top: 54px;
+        padding-top: 18px;
+        border-top: 1px solid rgb(var(--c-ivory) / 0.13);
+        color: rgb(var(--c-ivory) / 0.55);
+        font-size: 13px;
+      }
+      .foot code { color: var(--page-ink); }
+      .pick {
+        margin-top: 26px;
+        padding: 15px 18px;
+        border-radius: 9px;
+        background: rgb(var(--c-imperial-gold) / 0.11);
+        border: 1px solid rgb(var(--c-imperial-gold) / 0.35);
+        font-size: 14px;
+      }
+      .pick b { color: rgb(var(--c-imperial-gold)); }
+    </style>
+    <link rel="stylesheet" href="/src/styles/texture.css" />
+    <link rel="stylesheet" href="/src/styles/cursor-variants.css" />
+    <link rel="stylesheet" href="/src/styles/loader.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>PURESUIT — design lab</h1>
+      <p class="sub">
+        Three systems, switchable live. Everything here is CSS only: no image
+        files, no new dependencies. Pick one from each row and tell me the
+        letters.
+      </p>
+
+      <h2>1 — Background texture</h2>
+      <div class="opts" id="texOpts"></div>
+      <p class="note" id="texNote"></p>
+      <div class="demo">
+        <div class="card">
+          <h3>Guild Raid</h3>
+          <p>Thursday, 21:00 server time. Sign-up closes at 20:30.</p>
+          <span class="pill">Upcoming</span>
+        </div>
+        <div class="card">
+          <h3>77 Members</h3>
+          <p>Three officers, one guild leader, and a long bench.</p>
+          <span class="pill">Roster</span>
+        </div>
+        <div class="card">
+          <h3>Builds</h3>
+          <p>Ten paths, each with a recommended stat spread.</p>
+          <span class="pill">Guides</span>
+        </div>
+      </div>
+      <div class="tilerow">
+        <div class="tile">東</div>
+        <div class="tile">南</div>
+        <div class="tile">西</div>
+        <div class="tile">北</div>
+        <div class="tile">中</div>
+      </div>
+
+      <h2>2 — Cursor</h2>
+      <div class="opts" id="curOpts"></div>
+      <p class="note" id="curNote"></p>
+      <div class="field live" id="field">
+        <span class="fieldhint">move the pointer in this box</span>
+        <a class="bait" href="#" onclick="return false">a link, to test the hover state</a>
+        <div class="dice-cursor" id="die"></div>
+      </div>
+
+      <h2>3 — Loading screen</h2>
+      <div class="opts" id="ldrOpts"></div>
+      <p class="note" id="ldrNote"></p>
+      <div class="stage" id="stage"></div>
+
+      <div class="pick">
+        Current pick — texture <b id="pickTex">mat</b>, cursor
+        <b id="pickCur">still</b>, loader <b id="pickLdr">roll</b>.
+      </div>
+
+      <p class="foot">
+        Variants live in <code>src/styles/texture.css</code>,
+        <code>cursor-variants.css</code> and <code>loader.css</code>. Each is
+        selected by an attribute on <code>&lt;html&gt;</code>, so the chosen one
+        becomes the default and the rest stay switchable.
+      </p>
+    </div>
+
+    <script>
+      const TEX = [
+        ['none', 'None — flat colour, as the site is now.'],
+        ['mat', 'Mat — mahjong felt. A 4px diagonal weave. The quietest pattern; reads as material, not stripes.'],
+        ['grid', 'Grid — the tile wall from above. 64x44 cells, the proportion of a real tile face.'],
+        ['silk', 'Silk — wuxia brocade. A diagonal lattice at two scales, carrying a trace of the accent orange.'],
+        ['smoke', 'Smoke — ink wash. No repeat at all, so nothing tiles; it only stops the background being flat.'],
+        ['coin', 'Coin — square-holed cash coins on a 68px lattice. The busiest option, still under 4% contrast.'],
+      ];
+      const CUR = [
+        ['tumble', 'Tumble — the current die, rolling while the pointer moves. Included for comparison.'],
+        ['still', 'Still — the same die, frozen on one face. Mahjong identity, no motion. Scales down on click.'],
+        ['dot', 'Dot — a small ring, no die. Nearly invisible until it crosses a link, then it swells and fills.'],
+        ['halo', 'Halo — a still die inside a ring that opens over links. Identity plus a job.'],
+        ['rollhot', 'Roll on hover — native arrow everywhere; the die appears and rolls only over something clickable.'],
+        ['none', 'None — the normal arrow. Worth a real look: the page may be busy enough already.'],
+      ];
+      const LDR = [
+        ['roll', 'Roll — one die tumbling. Reuses the sprite that already ships.'],
+        ['pair', 'Pair — two dice at different rates, the way a mahjong deal is thrown.'],
+        ['wall', 'Wall — thirteen tiles rising in a wave. A full hand. No die, and least like a spinner.'],
+        ['cast', 'Cast — one throw that slows and settles on a face. Best for a short wait.'],
+      ];
+
+      const root = document.documentElement;
+
+      function build(listId, noteId, pickId, items, attr, onPick) {
+        const box = document.getElementById(listId);
+        const note = document.getElementById(noteId);
+        const pick = document.getElementById(pickId);
+        items.forEach(([key, text]) => {
+          const b = document.createElement('button');
+          b.className = 'opt';
+          b.type = 'button';
+          b.textContent = key;
+          b.setAttribute('aria-pressed', 'false');
+          b.onclick = () => {
+            root.dataset[attr] = key;
+            [...box.children].forEach((c) => c.setAttribute('aria-pressed', 'false'));
+            b.setAttribute('aria-pressed', 'true');
+            note.textContent = text;
+            pick.textContent = key;
+            if (onPick) onPick(key);
+          };
+          box.appendChild(b);
+        });
+        return box;
+      }
+
+      // ---- texture
+      const texBox = build('texOpts', 'texNote', 'pickTex', TEX, 'texture');
+      texBox.children[1].click();
+
+      // ---- cursor
+      const field = document.getElementById('field');
+      const die = document.getElementById('die');
+      let idle = 0;
+      const curBox = build('curOpts', 'curNote', 'pickCur', CUR, 'cursor');
+      curBox.children[1].click();
+
+      field.addEventListener('pointermove', (e) => {
+        const r = field.getBoundingClientRect();
+        die.style.transform = `translate3d(${e.clientX - r.left}px, ${e.clientY - r.top}px, 0)`;
+        die.style.opacity = '1';
+        die.style.animationPlayState = 'running';
+        clearTimeout(idle);
+        idle = setTimeout(() => { die.style.animationPlayState = 'paused'; }, 140);
+      });
+      field.addEventListener('pointerleave', () => { die.style.opacity = '0'; });
+
+      // hover + press state, which three cursor variants react to
+      field.querySelector('.bait').addEventListener('pointerenter', () => root.classList.add('is-hot'));
+      field.querySelector('.bait').addEventListener('pointerleave', () => root.classList.remove('is-hot'));
+      field.addEventListener('pointerdown', () => root.classList.add('is-pressing'));
+      window.addEventListener('pointerup', () => root.classList.remove('is-pressing'));
+
+      // ---- loader
+      const stage = document.getElementById('stage');
+      function renderLoader(kind) {
+        const body = {
+          roll: '<div class="loader__die"></div>',
+          pair: '<div class="loader__pair"><div class="loader__die"></div><div class="loader__die"></div></div>',
+          wall: '<div class="loader__wall">' +
+                Array.from({ length: 13 }, (_, i) =>
+                  `<div class="loader__tile" style="animation-delay:${(i * 0.075).toFixed(3)}s"></div>`
+                ).join('') + '</div>',
+          cast: '<div class="loader__cast"></div>',
+        }[kind];
+        stage.innerHTML =
+          `<div class="loader"><div class="loader__inner">${body}` +
+          `<div class="loader__label">Shuffling the wall</div>` +
+          `<div class="loader__bar"><div class="loader__fill"></div></div>` +
+          `</div></div>`;
+        // run the bar so the preview behaves like a real load
+        const fill = stage.querySelector('.loader__fill');
+        let v = 0;
+        const t = setInterval(() => {
+          v = Math.min(100, v + 9 + Math.random() * 16);
+          fill.style.width = v + '%';
+          if (v >= 100) { clearInterval(t); setTimeout(() => renderLoader(kind), 700); }
+        }, 260);
+        stage._timer && clearInterval(stage._timer);
+        stage._timer = t;
+      }
+      build('ldrOpts', 'ldrNote', 'pickLdr', LDR, 'loader', renderLoader);
+      document.getElementById('ldrOpts').children[0].click();
+    </script>
+  </body>
+</html>

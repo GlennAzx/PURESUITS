@@ -1,0 +1,132 @@
+/* ─────────────────────────────────────────────────────────────
+   Cursor variants
+   The 24-frame tumbling die reads as attention-grabbing: it is the
+   brightest moving thing on the page and it never stops asking to be
+   looked at. These are quieter replacements.
+
+   Applied by setting an attribute on <html>:
+       document.documentElement.dataset.cursor = 'dot'
+
+   'tumble' is the existing sprite and lives in index.css. Every
+   variant here reuses the same .dice-cursor element, so switching is
+   one attribute and no new markup.
+   ───────────────────────────────────────────────────────────── */
+
+/* ── A. STILL — a die that does not roll ───────────────────────
+   One frozen face from the sprite. It has the mahjong identity with
+   none of the motion. The only movement is a small scale on click.
+   This is the quietest way to keep the die. */
+:root[data-cursor="still"] .dice-cursor {
+  animation: none !important;
+  /* Frame 0 of the sheet: the 1 face, square to the viewer. */
+  background-position: 0 0 !important;
+  transition:
+    opacity 200ms var(--ease-out),
+    scale 140ms var(--ease-out);
+}
+
+:root[data-cursor="still"].is-pressing .dice-cursor {
+  scale: 0.86;
+}
+
+/* ── B. DOT — a small ring, no die at all ──────────────────────
+   The classic custom cursor: a ring that is nearly invisible until it
+   crosses something interactive, then it fills. It is decoration that
+   does a job — it marks what is clickable, which the die never did. */
+:root[data-cursor="dot"] .dice-cursor {
+  --dice-cell: 26px;
+  animation: none !important;
+  background-image: none !important;
+  filter: none !important;
+  border: 1.5px solid rgb(var(--c-imperial-gold) / 0.75);
+  border-radius: 50%;
+  background-color: rgb(var(--c-imperial-gold) / 0.1);
+  transition:
+    opacity 200ms var(--ease-out),
+    width 180ms var(--ease-out),
+    height 180ms var(--ease-out),
+    margin 180ms var(--ease-out),
+    background-color 180ms var(--ease-out);
+}
+
+/* Over a link or a tile the ring swells and fills. */
+:root[data-cursor="dot"].is-hot .dice-cursor {
+  --dice-cell: 42px;
+  background-color: rgb(var(--c-imperial-gold) / 0.2);
+  border-color: rgb(var(--c-imperial-gold) / 0.95);
+}
+
+:root[data-cursor="dot"].is-pressing .dice-cursor {
+  --dice-cell: 20px;
+  background-color: rgb(var(--c-imperial-gold) / 0.4);
+}
+
+/* ── C. HALO — the die, still, inside a ring ───────────────────
+   Keeps the mahjong die but parks it in a ring that reacts to
+   interactive elements. The die itself never rolls; the ring does the
+   signalling. A middle option: identity plus function. */
+:root[data-cursor="halo"] .dice-cursor {
+  /* Drive the cell, not background-size. The sprite's frame width is
+     calc(frames * cell), so overriding only background-size left the 34px
+     frame inside a 50px box and the NEXT frame bled in at the right edge. */
+  --dice-cell: 34px;
+  animation: none !important;
+  background-position: 0 0 !important;
+  transition:
+    opacity 200ms var(--ease-out),
+    scale 160ms var(--ease-out);
+}
+
+:root[data-cursor="halo"] .dice-cursor::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
+  border: 1.5px solid rgb(var(--c-imperial-gold) / 0);
+  transition:
+    inset 200ms var(--ease-out),
+    border-color 200ms var(--ease-out);
+}
+
+:root[data-cursor="halo"].is-hot .dice-cursor::after {
+  inset: -7px;
+  border-color: rgb(var(--c-imperial-gold) / 0.8);
+}
+
+:root[data-cursor="halo"].is-pressing .dice-cursor {
+  scale: 0.88;
+}
+
+/* ── D. ROLL-ON-HOT — rolls only where it matters ──────────────
+   The native cursor is kept everywhere. The die only appears, and
+   only rolls, while the pointer is over something clickable. Away
+   from a link there is no custom cursor at all, so reading the page
+   is never interrupted. The least intrusive of the five. */
+:root[data-cursor="rollhot"] .dice-cursor {
+  opacity: 0 !important;
+  animation-play-state: paused !important;
+  transition: opacity 160ms var(--ease-out);
+}
+
+:root[data-cursor="rollhot"].is-hot .dice-cursor {
+  opacity: 1 !important;
+  animation-play-state: running !important;
+}
+
+/* The native cursor stays visible unless the die is actually shown. */
+:root[data-cursor="rollhot"].dice-cursor-on:not(.is-hot),
+:root[data-cursor="rollhot"].dice-cursor-on:not(.is-hot) * {
+  cursor: auto !important;
+}
+
+/* ── NONE — no custom cursor ───────────────────────────────────
+   Worth keeping as a real option. The site is busy enough that the
+   normal arrow may simply be correct. */
+:root[data-cursor="none"] .dice-cursor {
+  display: none;
+}
+
+:root[data-cursor="none"].dice-cursor-on,
+:root[data-cursor="none"].dice-cursor-on * {
+  cursor: auto !important;
+}

@@ -1,0 +1,164 @@
+/* ─────────────────────────────────────────────────────────────
+   Loader / buffer screen
+   Four variants, all driven by one attribute:
+       document.documentElement.dataset.loader = 'roll'
+
+   The die sprite does the work in three of them, which is the point
+   — it moves the tumble OFF the cursor (where it nags) and INTO the
+   loader (where motion is the job).
+
+   The overlay covers the page, fades out, then removes itself.
+   ───────────────────────────────────────────────────────────── */
+
+.loader {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  background: rgb(var(--c-ink-black));
+  transition: opacity 520ms var(--ease-out);
+}
+
+.loader[data-state="out"] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loader__inner {
+  display: grid;
+  justify-items: center;
+  gap: 22px;
+}
+
+.loader__label {
+  font-size: 11px;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: rgb(var(--c-ivory) / 0.55);
+}
+
+/* The progress rule. Width is written from JS as a percentage. */
+.loader__bar {
+  width: 190px;
+  height: 2px;
+  background: rgb(var(--c-ivory) / 0.14);
+  overflow: hidden;
+}
+
+.loader__fill {
+  height: 100%;
+  width: 0%;
+  background: rgb(var(--c-imperial-gold));
+  transition: width 260ms var(--ease-out);
+}
+
+/* ── A. ROLL — one die, tumbling ───────────────────────────────
+   The sprite at 3x, rolling continuously. Direct, cheap, and it
+   reuses the asset that already ships. */
+.loader__die {
+  width: 96px;
+  height: 96px;
+  background-image: url("/dice/tumble.webp");
+  background-repeat: no-repeat;
+  background-size: calc(24 * 96px) 96px;
+  animation: loader-roll 0.9s steps(24) infinite;
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.45));
+}
+
+@keyframes loader-roll {
+  to {
+    background-position: calc(24 * -96px) 0;
+  }
+}
+
+/* ── B. PAIR — two dice, as they are thrown in mahjong ─────────
+   A real mahjong deal starts by throwing two dice. The second runs
+   at a different rate and a negative delay, so they never mirror
+   each other. */
+.loader__pair {
+  display: flex;
+  gap: 18px;
+}
+
+.loader__pair .loader__die {
+  width: 72px;
+  height: 72px;
+  background-size: calc(24 * 72px) 72px;
+}
+
+@keyframes loader-roll-sm {
+  to {
+    background-position: calc(24 * -72px) 0;
+  }
+}
+
+.loader__pair .loader__die {
+  animation: loader-roll-sm 0.78s steps(24) infinite;
+}
+
+.loader__pair .loader__die:nth-child(2) {
+  animation-duration: 1.06s;
+  animation-delay: -0.4s;
+}
+
+/* ── C. WALL — tiles standing up in sequence ───────────────────
+   No die at all. Thirteen tiles — a mahjong hand — rise in a wave.
+   The quietest loader, and the one that looks least like a spinner. */
+.loader__wall {
+  display: flex;
+  gap: 5px;
+  align-items: flex-end;
+  height: 54px;
+}
+
+.loader__tile {
+  width: 13px;
+  height: 20px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #f4f1e6, #ddd8c6);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  animation: loader-stand 1.25s ease-in-out infinite;
+}
+
+@keyframes loader-stand {
+  0%,
+  65%,
+  100% {
+    height: 20px;
+    opacity: 0.45;
+  }
+  25% {
+    height: 46px;
+    opacity: 1;
+  }
+}
+
+/* ── D. CAST — one throw, then it settles ─────────────────────
+   The die rolls, slows, and stops on a face, then the page arrives.
+   It reads as an actual throw rather than a loop. Best when the wait
+   is short; a long wait leaves a static die on screen. */
+.loader__cast {
+  width: 96px;
+  height: 96px;
+  background-image: url("/dice/tumble.webp");
+  background-repeat: no-repeat;
+  background-size: calc(24 * 96px) 96px;
+  animation: loader-roll 1.4s steps(24) 1 forwards;
+  animation-timing-function: steps(24);
+  filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.45));
+}
+
+/* Anyone who asked for less motion gets the bar only, no tumbling. */
+@media (prefers-reduced-motion: reduce) {
+  .loader__die,
+  .loader__cast {
+    animation: none;
+    background-position: 0 0;
+  }
+  .loader__tile {
+    animation: none;
+    height: 30px;
+    opacity: 0.8;
+  }
+}
