@@ -20,12 +20,27 @@ The bucket exists and the hero streams from it.
 | | |
 |---|---|
 | Bucket | `puresuit-media` |
-| Public URL | `https://pub-95eee456ccff4c3aa601b64361760eb0.r2.dev` |
-| Verified | `video/mp4`, `Cache-Control: public, max-age=31536000, immutable`, HTTP 206 on range requests |
+| Public URL | `https://media.puresuit.net` (custom domain) |
+| Verified | `video/mp4`, `Cache-Control: public, max-age=31536000, immutable`, HTTP 206 on range requests, valid TLS |
 
-**The r2.dev URL is rate-limited and not meant for production.** Connect a custom domain
-(`media.puresuit.net`) in the dashboard before the site goes live, then change
-`VITE_MEDIA_BASE` in `.env.local` and in the Workers build environment.
+The r2.dev development URL is rate-limited and is no longer used. The custom domain replaced it.
+
+### VITE_MEDIA_BASE must be a BUILD variable, not a runtime variable
+
+Cloudflare has two separate variable sections, and only one works here:
+
+| Dashboard location | Applies | Correct for this? |
+|---|---|---|
+| Settings > Build > Variables and secrets | during `npm run build` | **yes** |
+| Settings > Variables and secrets | at Worker runtime | no |
+
+Vite reads `VITE_MEDIA_BASE` while building and writes the value into the JS bundle. A runtime
+variable arrives too late to affect it. This site is static assets with no Worker code, so a
+runtime variable has no effect at all.
+
+Set it in **both** places it is needed:
+- `.env.local` for local builds
+- Workers **Build** variables, so a rebuild from git produces a working bundle
 
 ## One-time setup
 
