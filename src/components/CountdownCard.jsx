@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   nextOccurrence,
   activeOccurrence,
@@ -8,15 +8,18 @@ import {
 import { formatTime, zoneLabel, downloadICS } from '../lib/calendar';
 import useTimeMode from '../lib/useTimeMode';
 
-export default function CountdownCard({ event }) {
-  const [now, setNow] = useState(() => Date.now());
+/**
+ * Compact countdown card used inside the carousel.
+ *
+ * @param {object} props
+ * @param {object} props.event - Event record from src/data/schedule.js.
+ * @param {number} [props.now] - Shared clock from the page. Falls back to a
+ *   local read so the component still works if rendered on its own; the page
+ *   passes one so every card ticks on the same beat.
+ */
+export default function CountdownCard({ event, now = Date.now() }) {
   // Time zone preference is shared across every card and persisted.
   const [timeMode] = useTimeMode();
-
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, []);
 
   const ongoingStart = activeOccurrence(event, now);
   const isOngoing = ongoingStart !== null;

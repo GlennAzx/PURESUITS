@@ -7,8 +7,9 @@ const SGT_OFFSET_MS = 8 * 60 * 60 * 1000;
 // but not for Guild Party or Heroes Realm. These are placeholders.
 // ---------------------------------------------------------------------------
 const GUILD_PARTY = { h: 21, m: 0 };     // 9:00pm daily
-const HEROES_REALM = { h: 21, m: 0 };    // ASSUMPTION: Monday run
-const HEROES_REALM_FRIDAY = { h: 22, m: 0 }; // second run, after Guild Party
+const HEROES_REALM = { h: 21, m: 30 };    // ASSUMPTION: Monday run
+const HEROES_REALM_FRIDAY = { h: 21, m: 30 }; // second run, after Guild Party
+const GUILD_VS_GUILD = { h: 21, m: 30 }; //Guild vs Guild
 
 // Weekday numbers: 0=Sun 1=Mon 2=Tue 3=Wed 4=Thu 5=Fri 6=Sat
 // durationMinutes: how long an event stays "ongoing" after it starts.
@@ -31,9 +32,9 @@ export const EVENTS = [
     cadence: 'weekly',
     weekdays: [3, 6],
     time: { h: 21, m: 30 },
-    durationMinutes: 45,
+    durationMinutes: 120,
     description:
-      'Server-wide organised PvP. Two runs every week, Wednesday and Saturday at 9:30pm.',
+      'Boss clears and Guild Arena PvPs. Two runs every week, Wednesday and Saturday at 9:30pm.',
   },
   {
     id: 'heroes-realm',
@@ -47,6 +48,28 @@ export const EVENTS = [
     durationMinutes: 90,
     description:
       'Weekly Heroes Realm clear on Monday, with a second run on Friday straight after Guild Party.',
+  },
+  {
+    id: 'guild-vs-guild',
+    name: 'Guild vs Guild League',
+    category: 'PvP',
+    cadence: 'weekly',
+    weekdays: [6, 0],
+    time: { h: 20, m: 30 },
+    durationMinutes: 30,
+    description:
+      'Guild vs Guild - League Ranking.',
+  },
+  {
+    id: 'guild-vs-guild',
+    name: 'Guild vs Guild',
+    category: 'PvP',
+    cadence: 'weekly',
+    weekdays: [6, 0],
+    time: { h: 21, m: 30 },
+    durationMinutes: 120,
+    description:
+      'Guild vs Guild - 4 runs total weekly.',
   },
 ];
 

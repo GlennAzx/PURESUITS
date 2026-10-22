@@ -1,11 +1,13 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
 import { ArrowUpRight } from 'lucide-react';
 import VideoHero from '../components/VideoHero';
 import EventCarousel from '../components/EventCarousel';
+import OngoingEventCard from '../components/OngoingEventCard';
 import { EVENTS, activeOccurrence } from '../data/schedule';
+import useNow from '../lib/useNow';
 import useTimeMode, { setTimeMode } from '../lib/useTimeMode';
 
 const DISCORD_URL = 'https://discord.gg/QrnhSzcYkb';
@@ -25,32 +27,36 @@ function DiscordIcon({ size = 22 }) {
 }
 
 /** Shows only while at least one event is inside its run window. */
-function OngoingBanner() {
-  const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  const ongoing = EVENTS.filter((e) => activeOccurrence(e, now) !== null);
-  if (ongoing.length === 0) return null;
+/**
+ * The stationary row of large cards for events running right now.
+ *
+ * Kept out of the carousel on purpose: a running event is the most actionable
+ * thing on the page, and a card that slides away every 4.5 seconds is a poor
+ * place to put it. One running event gets the full width; two or more share a
+ * two-column grid.
+ */
+function OngoingSection({ events, now }) {
+  if (events.length === 0) return null;
 
   return (
-    <div className="mb-6 flex flex-wrap items-center gap-2.5 rounded-lg border border-jade-accent/35 bg-jade-deep/60 px-4 py-2.5">
-      <span className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-jade-accent">
-        <span className="w-1.5 h-1.5 rounded-full bg-jade-accent animate-pulse" />
-        Ongoing now
-      </span>
-      <span className="w-px h-4 bg-jade-accent/30" />
-      {ongoing.map((e) => (
-        <span
-          key={e.id}
-          className="text-[11px] text-gray-300 border border-jade-accent/25 rounded px-2 py-0.5"
-        >
-          {e.name}
+    <div className="ongoing-section mb-7">
+      <div className="mb-3 flex items-center gap-2.5">
+        <span className="inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-jade-accent">
+          <span className="w-1.5 h-1.5 rounded-full bg-jade-accent animate-pulse" />
+          Happening now
         </span>
-      ))}
+        <span className="h-px flex-1 bg-gradient-to-r from-jade-accent/35 to-transparent" />
+      </div>
+
+      <div
+        className={`grid gap-4 ${
+          events.length > 1 ? 'md:grid-cols-2' : 'grid-cols-1'
+        }`}
+      >
+        {events.map((event, i) => (
+          <OngoingEventCard key={`${event.id}-${i}`} event={event} now={now} />
+        ))}
+      </div>
     </div>
   );
 }
@@ -58,6 +64,13 @@ function OngoingBanner() {
 export default function HomePage() {
   const eventsRef = useRef(null);
   const [timeMode] = useTimeMode();
+  // One clock for the whole section, so every card flips on the same tick.
+  const now = useNow();
+
+  // An event belongs in exactly one place: the stationary row while it runs,
+  // the carousel otherwise. Splitting here keeps that rule in a single spot.
+  const ongoing = EVENTS.filter((e) => activeOccurrence(e, now) !== null);
+  const upcoming = EVENTS.filter((e) => activeOccurrence(e, now) === null);
 
   useGSAP(
     () => {
@@ -98,8 +111,22 @@ export default function HomePage() {
         },
       });
     },
-    { scope: eventsRef }
+    // An EMPTY dependency array is required, not optional. useGSAP re-runs its
+    // callback on every render when no dependencies are given, and this page
+    // now re-renders once a second from the shared clock. Without this the
+    // reveal tweens were rebuilt every tick: each new gsap.from() reset the
+    // element to opacity 0, so the carousel and header never became visible.
+    { scope: eventsRef, dependencies: [] }
   );
+
+  // The ongoing row mounts and unmounts as events start and end, which changes
+  // the height of everything below it. ScrollTrigger caches each trigger's
+  // start and end position when the trigger is created, so after a layout
+  // change those cached positions are stale and the reveals below the change
+  // either fire early or never fire.
+  useEffect(() => {
+    ScrollTrigger.refresh();
+  }, [ongoing.length, upcoming.length]);
 
   return (
     <div>
@@ -150,11 +177,21 @@ export default function HomePage() {
           </div>
         </div>
 
-        <OngoingBanner />
+        <OngoingSection events={ongoing} now={now} />
 
-        <div className="events-carousel">
-          <EventCarousel events={EVENTS} />
-        </div>
+        {upcoming.length > 0 && (
+          <div className="events-carousel">
+            {ongoing.length > 0 && (
+              <div className="mb-3 flex items-center gap-2.5">
+                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500">
+                  Coming up
+                </span>
+                <span className="h-px flex-1 bg-gradient-to-r from-imperial-gold/20 to-transparent" />
+              </div>
+            )}
+            <EventCarousel events={upcoming} now={now} />
+          </div>
+        )}
       </section>
 
       <footer className="landing-footer border-t border-imperial-gold/15">
