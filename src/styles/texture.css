@@ -91,27 +91,36 @@ body::before,
    repeats. Warmer than the others: the lattice carries a trace of
    the accent orange, so it reads as woven cloth rather than graph
    paper. */
+:root {
+  /* Silk strength. One dial: raise it if the weave is too faint, lower it if
+     the page starts to read as graph paper. 0.022 measured a max channel delta
+     of 18 against a flat background; 0 is invisible. The 14px lattice is the
+     main weave, 42px is the loose cross-weave over it. */
+  --silk-a: 0.022;
+  --silk-a2: 0.014;
+}
+
 :root[data-texture="silk"] body::before,
 :root[data-texture="silk"] .page-shell::before {
   background-image:
     repeating-linear-gradient(
       30deg,
-      rgb(var(--c-imperial-gold) / 0.022) 0 1px,
+      rgb(var(--c-imperial-gold) / var(--silk-a)) 0 1px,
       transparent 1px 14px
     ),
     repeating-linear-gradient(
       -30deg,
-      rgb(var(--c-imperial-gold) / 0.022) 0 1px,
+      rgb(var(--c-imperial-gold) / var(--silk-a)) 0 1px,
       transparent 1px 14px
     ),
     repeating-linear-gradient(
       30deg,
-      rgba(255, 255, 255, 0.014) 0 1px,
+      rgba(255, 255, 255, var(--silk-a2)) 0 1px,
       transparent 1px 42px
     ),
     repeating-linear-gradient(
       -30deg,
-      rgba(255, 255, 255, 0.014) 0 1px,
+      rgba(255, 255, 255, var(--silk-a2)) 0 1px,
       transparent 1px 42px
     ),
     radial-gradient(
