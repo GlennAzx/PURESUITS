@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PURESUIT — transition lab</title>
+    <style>
+      /* Dev-only lab. Not linked from the app, not part of the build.
+         Tests the sprite transition at three speeds against a mock page. */
+      :root {
+        --page: #14263a;
+        --ink: #eef5fa;
+        --muted: #a9c0d4;
+        --card: #1d3247;
+        --line: #2f4b66;
+        --accent: #ef8b4a;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; padding: 34px 30px 70px;
+        background: var(--page); color: var(--ink);
+        font: 15px/1.6 "Segoe UI", system-ui, sans-serif;
+      }
+      h1 { font-size: 24px; margin: 0 0 6px; font-weight: 600; }
+      .sub { color: var(--muted); margin: 0 0 26px; max-width: 76ch; }
+
+      .row { display: grid; grid-template-columns: 210px 1fr; gap: 20px; align-items: start; margin-bottom: 22px; }
+      .meta h2 { margin: 0 0 4px; font-size: 15px; font-weight: 600; }
+      .meta p { margin: 0; font-size: 12.5px; color: var(--muted); }
+
+      /* The mock screen the sweep runs over. */
+      .screen {
+        position: relative;
+        height: 300px;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        overflow: hidden;
+        background: var(--page);
+        contain: strict;
+      }
+      .mock {
+        position: absolute; inset: 0; padding: 22px 26px;
+        display: grid; gap: 12px; align-content: start;
+      }
+      .mock h3 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: 0.02em; }
+      .mock .pill { font-size: 11px; color: var(--accent); border: 1px solid rgba(239,139,74,.4); border-radius: 99px; padding: 2px 10px; width: max-content; }
+      .cards { display: flex; gap: 10px; margin-top: 6px; }
+      .c { flex: 1; height: 84px; border-radius: 8px; background: var(--card); border: 1px solid var(--line); }
+      .c:nth-child(2) { background: #243e57; }
+      .c:nth-child(3) { background: #2a475f; }
+
+      /* The panel: sprite + feathered ends, sweeping right to left. */
+      .pgt {
+        position: absolute;
+        top: 0;
+        left: -25%;
+        width: 150%;
+        height: 100%;
+        pointer-events: none;
+        transform: translate3d(100%, 0, 0);
+        will-change: transform;
+        background-image: url("/transition/tiles-v2-q66.webp");
+        background-repeat: no-repeat;
+        background-position: 0 0;
+      }
+
+      .btn {
+        font: inherit; font-size: 13px; padding: 7px 14px; border-radius: 7px;
+        border: 1px solid var(--line); background: var(--card); color: var(--ink);
+        cursor: pointer; margin-top: 10px;
+      }
+      .btn:hover { border-color: rgba(239,139,74,.7); }
+
+      .foot { margin-top: 30px; color: var(--muted); font-size: 13px; max-width: 80ch; }
+      code { color: var(--ink); }
+    </style>
+  </head>
+  <body>
+    <h1>Transition lab — sprite, whole tiles, blue gaps</h1>
+    <p class="sub">
+      The same sprite sheet at three speeds. Each screen swaps its content (watch the title and
+      the counters) at the moment the tiles cover it. Press Play on any row.
+    </p>
+
+    <div class="row" data-cover="220">
+      <div class="meta">
+        <h2>Fast</h2>
+        <p>220 + 220 ms</p>
+        <button class="btn">Play</button>
+      </div>
+      <div class="screen"><div class="mock"></div><div class="pgt"></div></div>
+    </div>
+
+    <div class="row" data-cover="320">
+      <div class="meta">
+        <h2>Normal</h2>
+        <p>320 + 320 ms</p>
+        <button class="btn">Play</button>
+      </div>
+      <div class="screen"><div class="mock"></div><div class="pgt"></div></div>
+    </div>
+
+    <div class="row" data-cover="430">
+      <div class="meta">
+        <h2>Slow</h2>
+        <p>430 + 430 ms</p>
+        <button class="btn">Play</button>
+      </div>
+      <div class="screen"><div class="mock"></div><div class="pgt"></div></div>
+    </div>
+
+    <p class="foot">
+      Sprite: <code>public/transition/tiles-v2-q66.webp</code> — 8 frames, 1560×860, 516 KB.
+      Whole tiles only (nothing is cut at the frame edge), gaps show the baked blue field, and
+      the panel drifts in one uniform move. The soft feathered ends are what stop a hard vertical
+      border.
+    </p>
+
+    <script>
+      const FRAMES = 8;
+      const MOCK_SETS = [
+        { title: 'Upcoming Events', pill: '3 runs this week', cards: ['Raid', 'PvP', 'Social'] },
+        { title: 'The Roster', pill: '77 members', cards: ['Leader', 'Officer', 'Member'] },
+      ];
+
+      document.querySelectorAll('.row').forEach((row) => {
+        const screen = row.querySelector('.screen');
+        const mock = row.querySelector('.mock');
+        const pgt = row.querySelector('.pgt');
+        const cover = Number(row.dataset.cover);
+        let step = 0;
+        let busy = false;
+
+        mock.innerHTML = `<h3>${MOCK_SETS[0].title}</h3>
+          <div class="pill">${MOCK_SETS[0].pill}</div>
+          <div class="cards">${MOCK_SETS[0].cards.map((c) => `<div class="c"></div>`).join('')}</div>`;
+
+        const run = async () => {
+          if (busy) return;
+          busy = true;
+          const w = screen.clientWidth;
+          const frame = w * 1.5;
+          pgt.style.backgroundSize = `${frame * FRAMES}px 100%`;
+          pgt.style.visibility = 'visible';
+          pgt.style.transform = 'translate3d(100%,0,0)';
+
+          const shuffle = pgt.animate(
+            [{ backgroundPositionX: '0px' }, { backgroundPositionX: `-${frame * FRAMES}px` }],
+            { duration: cover * 2, easing: `steps(${FRAMES}, end)`, fill: 'forwards' }
+          );
+
+          await pgt.animate(
+            [{ transform: 'translate3d(100%,0,0)' }, { transform: 'translate3d(0,0,0)' }],
+            { duration: cover, easing: 'cubic-bezier(.76,0,.24,1)', fill: 'forwards' }
+          ).finished;
+
+          // content swaps here, under the tiles
+          step = 1 - step;
+          const s = MOCK_SETS[step];
+          mock.innerHTML = `<h3>${s.title}</h3><div class="pill">${s.pill}</div>
+            <div class="cards">${s.cards.map((c) => `<div class="c"></div>`).join('')}</div>`;
+
+          await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+          await pgt.animate(
+            [{ transform: 'translate3d(0,0,0)' }, { transform: 'translate3d(-100%,0,0)' }],
+            { duration: cover, easing: 'cubic-bezier(.76,0,.24,1)', fill: 'forwards' }
+          ).finished;
+
+          shuffle.cancel();
+          pgt.getAnimations().forEach((a) => a.cancel());
+          pgt.style.visibility = 'hidden';
+          pgt.style.transform = 'translate3d(100%,0,0)';
+          busy = false;
+        };
+
+        row.querySelector('.btn').addEventListener('click', run);
+      });
+    </script>
+  </body>
+</html>

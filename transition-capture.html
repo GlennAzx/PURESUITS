@@ -2,34 +2,27 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>transition capture</title>
+    <title>transition capture v2</title>
     <style>
-      /* Capture-only. Renders the tile field on a transparent page so frames can
-         be shot and stitched into one sprite. Dev-only; not part of the build.
-
-         Two layers:
-           .b  static base course — guarantees the centre is fully opaque
-           .t  churn layer        — orbits its own pose per frame on top
-         Both are thinned toward the left and right edges, so the silhouette is
-         ragged rather than a straight vertical cut. */
+      /* Capture-only. Whole tiles only: any tile whose rotated bounds would
+         cross the frame is dropped, so nothing is cut off at the sprite edge.
+         Gaps are allowed — the app paints a blue field behind the sprite. */
       html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
       #stage { position: relative; width: 100vw; height: 100vh; }
 
-      .b, .t {
+      .t {
         position: absolute;
         border-radius: 5px;
         display: grid;
         place-items: center;
-        border: 1px solid rgba(90, 40, 32, 0.28);
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.5), inset 0 -3px 0 rgba(0, 0, 0, 0.18);
+        border: 1px solid rgba(40, 30, 20, 0.28);
+        background: linear-gradient(180deg, #fffdf6 0%, #f4f1e4 68%, #e6e1cf 100%);
+      }
+      .t--back {
         background: linear-gradient(180deg, #f8e0d9 0%, #ecc7bd 62%, #d3a79d 100%);
+        border-color: rgba(90, 40, 32, 0.3);
       }
-      .b { box-shadow: 0 4px 8px rgba(0, 0, 0, 0.35); }
-      .t {
-        box-shadow: 0 6px 11px rgba(0, 0, 0, 0.5), inset 0 -3px 0 rgba(0, 0, 0, 0.18);
-        border-color: rgba(40, 30, 20, 0.25);
-      }
-      .t--face { background: linear-gradient(180deg, #fffdf6 0%, #f4f1e4 68%, #e6e1cf 100%); }
-
       .g { font-family: "Noto Serif SC", "Microsoft YaHei", serif; font-weight: 700; line-height: 1; }
       .g--wind { color: #22384f; }
       .g--red { color: #b02a1c; }
@@ -45,8 +38,6 @@
     <script>
       const W = window.innerWidth;
       const H = window.innerHeight;
-      const CELL = Math.max(72, Math.min(132, Math.round(W / 12)));
-      const CH = Math.round(CELL * 1.34);
       const WINDS = ['東', '南', '西', '北'];
 
       function seeded(a) {
@@ -57,86 +48,70 @@
           return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
         };
       }
-      const rnd = seeded(77123);
+      const rnd = seeded(44821);
 
-      // Ragged ends: keep probability falls to zero at the panel edge, so the
-      // boundary is a scatter of individual tiles. 0 at the very edge, 1 by
-      // EDGE px in.
-      const EDGE = 150; // must stay inside the panel overhang, see transition.css
-      const keepAt = (x) => {
-        const d = Math.min(x, W - x);
-        return d <= 0 ? 0 : d >= EDGE ? 1 : d / EDGE;
-      };
+      const BASE = 86;        // nominal tile width
+      const AMP = 5;          // churn amplitude, kept small so the drift stays uniform
+      const PAD = 120;        // keeps a whole rotated tile inside the frame
 
-      const cols = Math.ceil(W / CELL) + 2;
-      const rows = Math.ceil(H / CH) + 2;
+      // Messier than a grid: scattered cluster centres instead of cells.
+      const centres = Array.from({ length: 26 }, () => ({
+        x: PAD + rnd() * (W - PAD * 2),
+        y: PAD + rnd() * (H - PAD * 2),
+      }));
 
-      // ---- base course: one tile per cell, unrotated, no jitter
-      const base = [];
-      for (let r = -1; r < rows; r++) {
-        for (let c = -1; c < cols; c++) {
-          const cx = c * CELL + CELL / 2;
-          if (rnd() > keepAt(cx)) continue;
-          const w = Math.round(CELL * 1.24);
-          base.push({ x: c * CELL, y: r * CH, w, h: Math.round(w * 1.34) });
-        }
-      }
+      const tiles = [];
+      for (let i = 0; i < 230; i += 1) {
+        const c = centres[Math.floor(rnd() * centres.length)];
+        const w = Math.round(BASE * (0.72 + rnd() * 0.9)); // 0.72x .. 1.62x
+        const h = Math.round(w * 1.34);
+        const x = c.x + (rnd() - 0.5) * 240;
+        const y = c.y + (rnd() - 0.5) * 190;
 
-      // ---- churn layer: variety, rotation, per-frame wobble
-      const churn = [];
-      for (let r = -1; r < rows; r++) {
-        for (let c = -1; c < cols; c++) {
-          const cx = c * CELL + CELL / 2;
-          if (rnd() > keepAt(cx) * 0.98) continue;
-          churn.push({
-            x: c * CELL + (rnd() - 0.5) * 8,
-            y: r * CH + (rnd() - 0.5) * 8,
-            w: Math.round(CELL * 1.24 * (1 + rnd() * 0.35)),
-            rot: (rnd() - 0.5) * 34,
-            ph: rnd() * Math.PI * 2,
-            amp: 3 + rnd() * 9,
-            spin: (rnd() - 0.5) * 7,
-            back: rnd() < 0.5,
-            face: Math.floor(rnd() * 5),
-            glyph: WINDS[Math.floor(rnd() * 4)],
-            pips: 1 + Math.floor(rnd() * 6),
-          });
-        }
+        // Whole tiles only: the rotated bounds must fit inside the frame.
+        const reach = Math.ceil((Math.hypot(w, h) / 2) + AMP + 2);
+        if (x - reach < 0 || y - reach < 0 || x + reach > W || y + reach > H) continue;
+
+        tiles.push({
+          x, y, w, h,
+          rot: (rnd() - 0.5) * 76,   // up to +/-38 degrees
+          ph: rnd() * Math.PI * 2,
+          spin: (rnd() - 0.5) * 5,
+          back: rnd() < 0.5,
+          face: Math.floor(rnd() * 5),
+          glyph: WINDS[Math.floor(rnd() * 4)],
+          pips: 1 + Math.floor(rnd() * 6),
+        });
       }
 
       const stage = document.getElementById('stage');
-      stage.innerHTML =
-        base.map((t) =>
-          `<i class="b" style="left:${t.x}px;top:${t.y}px;width:${t.w}px;height:${t.h}px"></i>`
-        ).join('') +
-        churn.map((t, i) => {
-          const h = Math.round(t.w * 1.34);
-          let inner = '';
-          if (!t.back) {
-            if (t.face === 0) inner = `<span class="g g--wind" style="font-size:${t.w * 0.5}px">${t.glyph}</span>`;
-            else if (t.face === 1) inner = `<span class="g g--red" style="font-size:${t.w * 0.54}px">中</span>`;
-            else if (t.face === 2) inner = `<span class="g g--green" style="font-size:${t.w * 0.54}px">發</span>`;
-            else if (t.face === 3) inner = `<span class="frame"></span>`;
-            else inner = `<span class="pips" style="gap:4px">${'<i style="width:10px;height:10px"></i>'.repeat(t.pips)}</span>`;
-          }
-          return `<i class="t ${t.back ? '' : 't--face'}" data-i="${i}"
-            style="left:${t.x}px;top:${t.y}px;width:${t.w}px;height:${h}px;transform:rotate(${t.rot}deg)">${inner}</i>`;
-        }).join('');
+      stage.innerHTML = tiles.map((t, i) => {
+        let inner = '';
+        if (!t.back) {
+          if (t.face === 0) inner = `<span class="g g--wind" style="font-size:${t.w * 0.5}px">${t.glyph}</span>`;
+          else if (t.face === 1) inner = `<span class="g g--red" style="font-size:${t.w * 0.54}px">中</span>`;
+          else if (t.face === 2) inner = `<span class="g g--green" style="font-size:${t.w * 0.54}px">發</span>`;
+          else if (t.face === 3) inner = `<span class="frame"></span>`;
+          else inner = `<span class="pips" style="gap:4px">${'<i style="width:10px;height:10px"></i>'.repeat(t.pips)}</span>`;
+        }
+        return `<i class="t ${t.back ? 't--back' : ''}" data-i="${i}"
+          style="left:${t.x - t.w / 2}px;top:${t.y - t.h / 2}px;width:${t.w}px;height:${t.h}px;transform:rotate(${t.rot}deg)">${inner}</i>`;
+      }).join('');
 
       const els = [...stage.querySelectorAll('.t')];
+      window.__count = tiles.length;
 
-      // Phase drives the churn: every tile orbits its own base pose, so the mass
-      // moves against itself the way a shuffle does.
+      // Small orbit per tile: the mass moves against itself, but only a little,
+      // so the overall drift stays uniform across the screen.
       window.setPhase = (p) => {
         const a = p * Math.PI * 2;
-        churn.forEach((t, i) => {
-          const dx = Math.cos(a + t.ph) * t.amp;
-          const dy = Math.sin(a + t.ph * 1.3) * t.amp * 0.7;
+        tiles.forEach((t, i) => {
+          const dx = Math.cos(a + t.ph) * AMP;
+          const dy = Math.sin(a + t.ph * 1.3) * AMP * 0.8;
           const rot = t.rot + Math.sin(a + t.ph) * t.spin;
           els[i].style.transform = `translate(${dx.toFixed(2)}px, ${dy.toFixed(2)}px) rotate(${rot.toFixed(2)}deg)`;
         });
       };
-
       window.setPhase(0);
     </script>
   </body>
