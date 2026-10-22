@@ -10,13 +10,15 @@
       html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
       #stage { position: relative; width: 100vw; height: 100vh; }
 
+      /* Flat on the felt. A 1px contact shadow only — anything larger reads as
+         a tile lifting off the table, which is not what a wash looks like. */
       .t {
         position: absolute;
-        border-radius: 5px;
+        border-radius: 4px;
         display: grid;
         place-items: center;
-        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.5), inset 0 -3px 0 rgba(0, 0, 0, 0.18);
-        border: 1px solid rgba(40, 30, 20, 0.28);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(40, 30, 20, 0.26);
         background: linear-gradient(180deg, #fffdf6 0%, #f4f1e4 68%, #e6e1cf 100%);
       }
       /* Backs are green, the way the plain side of a mahjong tile reads: the
@@ -52,38 +54,53 @@
       }
       const rnd = seeded(44821);
 
-      const BASE = 86;        // nominal tile width
-      const AMP = 5;          // churn amplitude, kept small so the drift stays uniform
-      const PAD = 120;        // keeps a whole rotated tile inside the frame
+      // A wash is tiles lying FLAT and touching, slid around in circles. They
+      // never stack and never overlap. So this is a lattice, not a scatter:
+      // every tile owns a cell, the cell is 1.3x the tile, and the tilt is
+      // capped so a rotated tile still fits inside its own cell.
+      const TILT = 10;              // degrees. Larger breaks the cell fit.
+      const SLIDE = 5;              // px of circular slide inside the cell
+      const PAD = 46;
+      // Derive the cell from the frame so the lattice fills it, and keep the
+      // cell at the tile's own aspect so the gaps stay even.
+      const cols = Math.round((W - PAD * 2) / 104);
+      const cw = (W - PAD * 2) / cols;
+      const ch = cw * 1.34;
+      const rows = Math.round((H - PAD * 2) / ch);
+      const tw = Math.round(cw / 1.26);
+      const th = Math.round(ch / 1.26);
 
-      // Messier than a grid: scattered cluster centres instead of cells.
-      const centres = Array.from({ length: 26 }, () => ({
-        x: PAD + rnd() * (W - PAD * 2),
-        y: PAD + rnd() * (H - PAD * 2),
-      }));
+      // Each row is shifted sideways by a random amount. That alone kills the
+      // column alignment: tiles still never overlap, but the field stops
+      // reading as a spreadsheet.
+      const rowShift = Array.from({ length: rows }, () => (rnd() - 0.5) * cw * 0.8);
 
       const tiles = [];
-      for (let i = 0; i < 230; i += 1) {
-        const c = centres[Math.floor(rnd() * centres.length)];
-        const w = Math.round(BASE * (0.72 + rnd() * 0.9)); // 0.72x .. 1.62x
-        const h = Math.round(w * 1.34);
-        const x = c.x + (rnd() - 0.5) * 240;
-        const y = c.y + (rnd() - 0.5) * 190;
+      for (let r = 0; r < rows; r += 1) {
+        for (let c = 0; c < cols; c += 1) {
+          // Size varies per tile; smaller tiles leave a wider gap, which is what
+          // a hand-swirled field actually looks like.
+          const s = 0.84 + rnd() * 0.16;
+          const w = Math.round(tw * s);
+          const h = Math.round(th * s);
+          const x = PAD + c * cw + cw / 2 + rowShift[r] + (rnd() - 0.5) * 8;
+          const y = PAD + r * ch + ch / 2 + (rnd() - 0.5) * 6;
 
-        // Whole tiles only: the rotated bounds must fit inside the frame.
-        const reach = Math.ceil((Math.hypot(w, h) / 2) + AMP + 2);
-        if (x - reach < 0 || y - reach < 0 || x + reach > W || y + reach > H) continue;
+          // Whole tiles only, and inside this tile's own cell.
+          const reach = Math.ceil(Math.hypot(w, h) / 2) + SLIDE + 2;
+          if (x - reach < 2 || y - reach < 2 || x + reach > W - 2 || y + reach > H - 2) continue;
 
-        tiles.push({
-          x, y, w, h,
-          rot: (rnd() - 0.5) * 76,   // up to +/-38 degrees
-          ph: rnd() * Math.PI * 2,
-          spin: (rnd() - 0.5) * 5,
-          back: rnd() < 0.5,
-          face: Math.floor(rnd() * 5),
-          glyph: WINDS[Math.floor(rnd() * 4)],
-          pips: 1 + Math.floor(rnd() * 6),
-        });
+          tiles.push({
+            x, y, w, h,
+            rot: (rnd() - 0.5) * TILT * 2,
+            ph: rnd() * Math.PI * 2,
+            spin: (rnd() - 0.5) * 2.5,
+            back: rnd() < 0.5,
+            face: Math.floor(rnd() * 5),
+            glyph: WINDS[Math.floor(rnd() * 4)],
+            pips: 1 + Math.floor(rnd() * 6),
+          });
+        }
       }
 
       const stage = document.getElementById('stage');
@@ -108,8 +125,10 @@
       window.setPhase = (p) => {
         const a = p * Math.PI * 2;
         tiles.forEach((t, i) => {
-          const dx = Math.cos(a + t.ph) * AMP;
-          const dy = Math.sin(a + t.ph * 1.3) * AMP * 0.8;
+          // Circular slide, the way a palm pushes tiles around the felt. It
+          // stays inside the cell, so neighbours never collide.
+          const dx = Math.cos(a + t.ph) * SLIDE;
+          const dy = Math.sin(a + t.ph) * SLIDE;
           const rot = t.rot + Math.sin(a + t.ph) * t.spin;
           els[i].style.transform = `translate(${dx.toFixed(2)}px, ${dy.toFixed(2)}px) rotate(${rot.toFixed(2)}deg)`;
         });

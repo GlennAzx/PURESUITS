@@ -599,6 +599,18 @@ back to DOM tiles (~0 KB, needs per-tile motion to churn).
 transition done at 856-869 ms in headless (the animation is 640 ms; the rest is React
 re-render and paint).
 
+**A mahjong wash is FLAT — tiles never stack.** Sources checked: themahjongguide.com
+("tiles should slide across the mat rather than being lifted, flipped, or thrown"; "use flat hands
+rather than stacking or dropping tiles"), mahjongkit.com and schoolofmahjong.com ("turn all tiles
+face down and swirl them around"), tsumoron.com. The motion is circular sweeps of flat tiles, not
+a pile.
+
+My first sprite was wrong: it had tiles overlapping with large drop shadows, i.e. stacked. The
+capture now places every tile in its own lattice cell (cell = 1.26x the tile), caps tilt at 10
+degrees so a rotated tile still fits its cell, varies tile size within the cell, staggers each row
+sideways, and uses a 1px contact shadow only. Verified: **0 overlapping bounding boxes across 67
+tiles.**
+
 **Pending: v2 in the lab.** `transition-lab.html` + `public/transition/tiles-v2-q66.webp`
 (8 frames, 1560x860, 512 KB) is the next candidate: green tile backs instead of pink, whole tiles
 only (nothing cut at the frame edge), gaps allowed with the blue field baked in, feathered ends,
