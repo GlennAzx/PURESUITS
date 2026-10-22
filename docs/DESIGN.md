@@ -558,66 +558,48 @@ blank page behind an invisible overlay.
 entirely. Sequence: 0.88, 0.96, 0.98, 0.99 — the user asked for less three times, so treat
 this as a ceiling, not a starting point.
 
-## 15. Page transition — the tile wall
+## 15. Page transition — one sprite, sweeping right to left
 
-A wall of face-down mahjong tiles sweeps right to left across the screen, and the route
+A pre-rendered sprite of a mahjong table being shuffled crosses the screen and the route
 changes underneath it.
 
 | Part | Value |
 |---|---|
-| File | `src/lib/transition.js`, `src/components/PageTransition.jsx`, `src/styles/transition.css` |
-| Motion | one transform on one element: `translate3d(100%)` to `0` to `-100%` |
-| Timing | 320 ms cover, 320 ms reveal, `cubic-bezier(.76, 0, .24, 1)` |
-| Commit | the route state and `pushState` run at the instant the wall covers |
-| Tiles | ~106-181 spill tiles over an opaque **tile-back base course**; sizes 1.15x-2.4x cell, tilt to 34deg |
-| Cost | one composited layer — the browser does not re-lay out during the sweep |
+| Sprite | `public/transition/tiles.webp` — 10 frames, 1560x860 each, **494 KB** |
+| Files | `src/lib/transition.js`, `src/components/PageTransition.jsx`, `src/styles/transition.css` |
+| Panel | 150vw wide, parked at `left: -25vw`, so 25vw of tile hangs off each side |
+| Motion | transform `translate3d(100%)` -> `0` -> `-100%`, plus a `steps(10)` background offset |
+| Timing | 320 ms cover, 320 ms reveal |
+| Frames | rendered by `transition-capture.html` (dev-only), stitched with PIL |
 
-**The route commits under the wall, not after it.** `playTransition(commit)` takes the state
-update as a callback and runs it after the cover animation resolves, then waits two frames so
-the new page has painted before the reveal. Measured: wall fully covers from 395 ms, route
-changes at 412 ms — so the swap is never visible.
+**Why one sprite.** The DOM version needed ~200 rotating, shadowed elements and per-tile
+motion to churn. The sprite is one image and one background offset: no per-frame layout, no
+per-tile layers. It is the same reason the dice cursor became a sprite.
 
-**A decoration must never lose a navigation.** `playTransition` calls `commit()` immediately
-when: reduced motion is set, the boot loader is still on screen, an overlay is not registered,
-or another sweep is in flight. Measured: three navigations 45 ms apart end on the last URL
-with the wall parked off-screen.
+**Why the panel is wider than the viewport.** The sprite's left and right ends are ragged —
+tiles are thinned out over the outer 150px of each frame — so the wall enters and leaves with
+a broken edge instead of a straight vertical cut. Those ragged ends must be off-screen at the
+covered instant or the page shows through at the screen edges. At 150vw the overhang is 25vw
+per side (~300px at 1200), comfortably more than the 150px taper. **If you narrow the panel,
+the ragged edge becomes a leak.**
 
-**Two layers: an opaque tile-back base course, then the messy spill on top.** `.pgt` paints a
-packed grid of face-down tiles with gradients (54x38 cells). That layer is what guarantees the
-route swap is hidden. The spill above it can then be as chaotic as it wants — sizes 1.15x to
-2.4x the cell, tilt to 34 degrees, thrown tiles and 3-4 tile piles — because a gap in the spill
-shows more tile, never the page.
+**Coverage is asserted by a pixel test, not assumed.** Append a magenta layer under `.pgt`
+(inside `.page-shell`, z-index 1), pin the panel to `translate3d(0,0,0)`, screenshot, count
+magenta pixels. Worst case across all 10 frames: **0 px**. The base course in
+`transition-capture.html` (a static grid of unrotated tiles) is what guarantees the centre is
+solid while the churn layer moves on top.
 
-The previous single-layer approach (spill only, tuned overlap) could not do both: at 1.35
-overlap and 16 degrees it was gap-free but read as a grid, and at 34 degrees the corners opened
-0.08-0.11% pinholes. Splitting the job fixed it — density is the base course's job, mess is the
-spill's.
+**The sprite costs 494 KB.** That is the real trade for this design: the whole JS bundle is
+about 340 KB. It is cached after first load and only fetched when a transition runs, but it is
+still the heaviest asset on the site. If that is unacceptable, the alternatives in order of
+cost are: drop to 8 frames (~400 KB), render at 1170x645 and upscale (~280 KB, softer), or go
+back to DOM tiles (~0 KB, needs per-tile motion to churn).
 
-**Backs are not evenly mixed.** Six soft blobs bias the back/face probability per region, so
-one area runs heavy on backs and another shows mostly faces. An even 50/50 everywhere was the
-thing that read as "not messy".
+**Measured:** route commits at 429-444 ms with the screen covered from ~400 ms; whole
+transition done at 856-869 ms in headless (the animation is 640 ms; the rest is React
+re-render and paint).
 
-**Measured timing is longer than the spec, and the extra is not the animation.** Two 320 ms
-animations = 640 ms, but wall-clock end-to-end measured 970-1126 ms over three production runs:
-the remainder is React re-rendering the new page plus two rAF waits on a loaded main thread.
-Do not "fix" this by shortening the animation without measuring on the target machine first.
-
-**Coverage is asserted by a pixel test, not assumed.** The check: append a magenta layer
-under `.pgt` (inside `.page-shell`, z-index 1), pin the panel to `translate3d(0,0,0)`, screenshot
-and count magenta pixels. At `OVERLAP = 1.22` this found 0.08-0.11% pinholes at tile corners,
-because a 16-degree rotation pulls a corner inward by ~20px. At 1.35 it is 0 holes at
-1200x760, 1600x900, 900x1000 and 1440x720. **If you change `TILT` or `JITTER`, re-run that test.**
-
-**Never move a tile off its cell.** The first version "skipped" 18% of cells and threw the tile
-nearby, which is exactly what opened the holes. Extra thrown tiles are now decorative only and
-sit on top of a complete grid.
-
-**The layout is seeded** (`seeded(20261022)`); a non-seeded `Math.random()` reshuffles on every
-React render. The grid is rebuilt on resize (180ms debounce) because it is derived from the
-viewport — a stale grid leaves a strip uncovered.
-
-**Do not animate the tiles individually.** They ride the panel; one transform moves all 210.
-No per-tile `filter` either — 210 filtered layers is a compositing cost the variation does not
-pay for.
-
-**Reduced motion commits instantly** — verified at 75 ms with no wall shown.
+**Regenerating the sprite:** serve `transition-capture.html` from the dev server, set the
+viewport to 1560x860, call `window.setPhase(i / 10)` for i in 0..9, screenshot each with
+`omit_background=True` and a transparent CDP background, then stitch horizontally and encode
+WebP. 10 frames is the maximum at 1560 px wide — WebP caps sheet width at 16,383 px.

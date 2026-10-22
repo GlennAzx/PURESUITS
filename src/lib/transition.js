@@ -17,6 +17,11 @@ const COVER_MS = 320;
 const REVEAL_MS = 320;
 const EASE = 'cubic-bezier(0.76, 0, 0.24, 1)';
 
+// The sprite sheet: 10 frames side by side. The panel is 150vw wide, and each
+// frame covers the full panel, so one frame is 1.5 x innerWidth px.
+const FRAMES = 10;
+const PANEL_VW = 1.5;
+
 const HIDDEN = 'translate3d(100%, 0, 0)';
 const COVERED = 'translate3d(0, 0, 0)';
 const PASSED = 'translate3d(-100%, 0, 0)';
@@ -58,6 +63,18 @@ export async function playTransition(commit) {
   busy = true;
   overlay.style.visibility = 'visible';
 
+  // Frame width in px for the current viewport.
+  const frame = Math.round(window.innerWidth * PANEL_VW);
+  overlay.style.backgroundSize = `${frame * FRAMES}px 100%`;
+  overlay.style.backgroundPosition = '0px 0px';
+
+  // The shuffle runs for the whole crossing, not just the cover, so the tiles
+  // keep moving as the wall leaves.
+  const shuffle = overlay.animate(
+    [{ backgroundPositionX: '0px' }, { backgroundPositionX: `-${frame * FRAMES}px` }],
+    { duration: COVER_MS + REVEAL_MS, easing: `steps(${FRAMES}, end)`, fill: 'forwards' }
+  );
+
   try {
     await overlay.animate(
       [{ transform: HIDDEN }, { transform: COVERED }],
@@ -75,9 +92,11 @@ export async function playTransition(commit) {
   } finally {
     // Always reset, even if an animation was cancelled — otherwise the wall
     // stays parked over the page and the site looks broken.
+    shuffle.cancel();
     overlay.getAnimations().forEach((a) => a.cancel());
     overlay.style.visibility = 'hidden';
     overlay.style.transform = HIDDEN;
+    overlay.style.backgroundPosition = '0px 0px';
     busy = false;
   }
 }

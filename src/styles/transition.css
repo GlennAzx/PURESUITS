@@ -1,20 +1,30 @@
 /* ─────────────────────────────────────────────────────────────
-   Page transition — a messy spill of mahjong tiles
-   sweeping right to left across the screen.
+   Page transition — one sprite, sweeping right to left.
 
-   The panel is opaque felt, so the route swap is always hidden.
-   The tiles are decoration on top of it, scattered with a seeded
-   random layout: a mix of face-up and face-down, rotated, slightly
-   overlapping, the way a real table looks mid-hand.
+   The cover is a single pre-rendered sprite of a mahjong table being
+   shuffled: 10 frames (public/transition/tiles.webp). CSS steps through
+   the frames while the whole panel translates, which is one composited
+   layer and one background offset per frame — no DOM tiles, no per-tile
+   animation.
 
-   The whole panel is ONE transform. The tiles do not animate; they
-   ride the panel. 110 static nodes inside a composited layer cost
-   nothing per frame.
+   Geometry matters here:
+     - the panel is 150vw wide, parked 25vw off the left
+     - the sprite's left and right ends are ragged (tiles thinned out),
+       and those ends sit INSIDE the overhang, off-screen at the covered
+       instant. So the wall enters and leaves with a broken edge, but the
+       screen is solidly covered while the route swaps.
+     - if you shrink the overhang below ~130px, the ragged end becomes
+       visible at cover and the page will show through at the edges.
+
+   Timing lives in src/lib/transition.js.
    ───────────────────────────────────────────────────────────── */
 
 .pgt {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: -25vw;
+  width: 150vw;
+  height: 100vh;
   z-index: 9000; /* above content, below the boot loader (10000) */
   pointer-events: none;
   visibility: hidden;
@@ -22,87 +32,8 @@
   will-change: transform;
   overflow: hidden;
 
-  /* The base course: a packed grid of face-down tiles painted with gradients.
-     It is opaque, so coverage is guaranteed by construction and the messy layer
-     above it can be as chaotic as it likes without opening the page up. Gaps in
-     the spill show more tile, never felt. */
-  background-color: #e7c3ba;
-  background-image:
-    linear-gradient(90deg, rgba(60, 22, 16, 0.34) 0 2px, transparent 2px 54px),
-    repeating-linear-gradient(
-      180deg,
-      #f8e0d9 0px,
-      #f0cec5 16px,
-      #e2bbb1 32px,
-      #d2a69c 36px,
-      #b98d83 38px
-    );
-  background-size:
-    54px 100%,
-    100% 38px;
-}
-
-.pgt__tile {
-  position: absolute;
-  border-radius: 5px;
-  display: grid;
-  place-items: center;
-  /* A deep, tight shadow is what separates one tile from the one under it.
-     Light shadows merged the stack into a sheet of paper. */
-  box-shadow:
-    0 6px 11px rgba(0, 0, 0, 0.5),
-    0 1px 0 rgba(255, 255, 255, 0.55) inset,
-    inset 0 -3px 0 rgba(0, 0, 0, 0.18);
-}
-
-/* Face down: the pink-white shell of a real tile back. */
-.pgt__tile--back {
-  /* Clearly pink, not white. On a table the back is the only coloured side, and
-     without that difference the whole pile reads as blank paper. */
-  background: linear-gradient(180deg, #f7ddd6 0%, #eac3ba 62%, #d3a79d 100%);
-  border: 1px solid rgba(90, 40, 32, 0.3);
-}
-
-/* Face up: the ivory face. */
-.pgt__tile--face {
-  background: linear-gradient(180deg, #fffdf6 0%, #f4f1e4 68%, #e6e1cf 100%);
-  border: 1px solid rgba(40, 30, 20, 0.25);
-}
-
-/* Glyphs. Colours match the site's MahjongTile tones. */
-.pgt__glyph {
-  font-family: "Noto Serif SC", "Microsoft YaHei", serif;
-  line-height: 1;
-  font-weight: 700;
-  user-select: none;
-}
-.pgt__glyph--wind { color: #22384f; }
-.pgt__glyph--red { color: #b02a1c; }
-.pgt__glyph--green { color: #1c6b3c; }
-
-/* 白 — the blank tile: a blue frame, nothing inside. */
-.pgt__frame {
-  width: 58%;
-  height: 68%;
-  border: 2px solid #2b5fa8;
-  border-radius: 2px;
-}
-
-/* Suit pips. */
-.pgt__pips {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2px;
-  place-items: center;
-  width: 62%;
-  height: 70%;
-}
-.pgt__pips i {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #22384f;
-}
-.pgt__pips i:nth-child(3n + 1) {
-  background: #b02a1c;
+  background-image: url("/transition/tiles.webp");
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  /* background-size is set from transition.js: frames x panel width. */
 }
