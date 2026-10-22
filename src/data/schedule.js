@@ -50,7 +50,7 @@ export const EVENTS = [
       'Weekly Heroes Realm clear on Monday, with a second run on Friday straight after Guild Party.',
   },
   {
-    id: 'guild-vs-guild',
+    id: 'guild-vs-guild-league',
     name: 'Guild vs Guild League',
     category: 'PvP',
     cadence: 'weekly',
