@@ -435,52 +435,51 @@ site that still falls back. Either accept it, write 鸢, or add a Traditional so
 
 ## 13. Dice cursor (LOCAL ONLY — not deployed, awaiting approval)
 
-A 26px ivory die that follows the pointer and rolls in the direction of travel, then
-settles with its nearest face square to the viewer. `src/components/DiceCursor.jsx` +
-`.dice-cursor` in `src/index.css`. Mounted once in `App.jsx`, above the nav.
+A pre-rendered 24-frame tumble, played by CSS, that sits exactly on the pointer.
+`src/components/DiceCursor.jsx` + `.dice-cursor` in `src/index.css`. Mounted once in
+`App.jsx`, above the nav.
 
 | Part | Value |
 |---|---|
-| Body | 28px cube, `perspective: 150px`, six faces at `translateZ(14px)` |
-| Follow | `lerp 0.38` per frame — measured 7–11px behind a pointer moving in 200px steps |
-| Roll | `rotateX += dy * 0.5`, `rotateY -= dx * 0.5` while speed > 0.6px/frame |
-| Settle | after 110ms idle, ease to the nearest multiple of 90° at `0.16`/frame |
-| Faces | opposite faces sum to 7: 1/6, 3/4, 5/2 |
-| Pips | **6px** on a 28px body — 21% of the face. Ink `#1b2733` with a 1px inset recess; faces 1 and 4 in `--c-cinnabar` |
-| The 1 pip | **11px** — 39% of the face, roughly double a normal pip. Traditional on a mahjong-table die, and it overflows its 8px grid cell on purpose |
-| Light | **uniform** — every face `#efe7d5`, no per-face tint, no inner gradient |
-| Edge | warm tan `--dice-edge: 140, 121, 84` — `inset 0 0 0 1px` at `0.34` + `inset 0 0 7px` at `0.2`, radius **4px** |
-| Shadow | `.dice-cursor::before` — blurred rounded rect at `translateZ(-1.2 × half)`, behind the cube, does not rotate |
+| Body | 32px die inside a 50px sprite cell |
+| Sprite | `/dice/tumble.webp` — 24 frames, 2400×100 at 2×, 60 KB |
+| Playback | `background-position` + `steps(24)`, 1s loop |
+| Position | 1:1 from `pointermove` — **measured 0px offset**, no easing |
+| Shadow | `filter: drop-shadow(0 2px 3px rgba(8,16,26,0.55))` — reads the sprite's alpha |
 | Native cursor | `html.dice-cursor-on * { cursor: none !important }` |
 
-**The edges are the die's own colour, only darker.** The edge rule was cool site ink, which
-read as a line drawn on top of the die rather than a fold in it. It is now a warm tan,
-`--dice-edge: 140, 121, 84`, at low alpha over the ivory body — a darker shade of the same
-material, so a seam blends instead of outlining. Do not switch it back to `--c-ink`.
+**The cursor must not lag the pointer.** The first build eased the position at `0.38` per
+frame "so the die has weight". Users read that trail as unresponsive — *"the lag noticed was
+by other users noticing it lags behind the cursor (feels not super responsive)"*. The
+position is now written 1:1 inside `pointermove` and measures 0px at 20ms after every move.
+Do not reintroduce smoothing.
 
-**The edges must be soft, and the shadow carries the contrast.** The ring is a faint
-vignette over a deeper ivory body `#efe7d5`, with a blurred shadow parked behind the cube.
-Measured on a blank tile: still clearly readable without the old hard ring.
+**No rAF loop.** The old version re-composited a 3D cube — six shadowed faces inside a
+`preserve-3d` context — every frame. The sprite asks the compositor for one background
+offset. Headless Chromium measured both at a locked 60fps here, so that comparison proves
+nothing about a real GPU; the sprite simply removes the per-frame 3D work.
 
-**Corner radius is 4px, not 6px.** At 6px each face was cut back so far that the six faces
-stopped meeting along the edges; at 45° the die read as three separate rounded plates with
-notches between them. 4px still reads soft and closes the corners.
+**A pseudo-element shadow painted over the sprite.** `::before` draws above its parent's
+background, not behind it, and greyed the whole die. `drop-shadow` is the fix: it reads the
+sprite's alpha, so the shadow follows the tumble shape frame by frame.
 
-**All six faces are lit identically.** An earlier build shaded them in three tones; the user
-rejected it — *"the dice should be equally lit on all sides (some sides are clearly darker
-atm)"*. Do not reintroduce per-face tints. A 6-plane cube cannot have a true rounded *edge* —
-only rounded face corners — so softness comes from the vignette and the shadow, not geometry.
+**Frames come from `dice-capture.html`.** It renders the CSS cube at a fixed pose on a
+transparent page; Playwright shoots each pose and PIL stitches the sheet. Regenerate with 24
+poses of `(rx, ry) = (i * 15, i * 15)`. `dice-lab.html` compares variants at `/dice-lab.html`
+— dev-only, not in the build.
 
-**Written from one rAF loop, no React state.** Re-rendering at 60fps is how a custom cursor
-ends up lagging. The loop **stops** once the die has settled and restarts on the next
-`pointermove` — an always-on rAF for a decoration is wasted battery.
+**The die's look is fixed** and now baked into the sprite: 32px body, pips at ~21% of the
+face, the 1 pip oversized at ~39% and cinnabar, faces 1 and 4 red, uniform lighting, warm-tan
+edges rather than ink. Do not re-shade individual faces — the user rejected that.
 
 | Off by default | Why |
 |---|---|
 | `(pointer: coarse)` | No pointer to follow; the die would sit frozen at 0,0 |
 | `(prefers-reduced-motion: reduce)` | It is pure motion |
 
-**Measured locally:** die centre lands exactly on the pointer when settled; lag 7–11px while
-moving; settled rotation `rotateX(179.98deg) rotateY(-720.002deg)`, both exact multiples of
-90°; 6 faces, 21 pips; tile click and nav still work with `pointer-events: none`; no page
-errors on any of the five routes.
+**Measured locally:** pointer offset `(0, 0)` at 20ms after each move; `steps(24)` with
+`background-size: 1200px 50px`; sprite served as `image/webp`; 0 leftover 3D nodes; a tile
+click still navigates to `/members/quincy` with `pointer-events: none`; die present on all
+five routes; `display: none` and `cursor: auto` under reduced motion and on touch; no page
+errors.
+

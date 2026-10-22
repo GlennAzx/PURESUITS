@@ -894,118 +894,49 @@
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Dice cursor
-   A 26px die that follows the pointer and rolls with it. The real
-   cursor is hidden while it is active (html.dice-cursor-on).
-   Position and spin are written from DiceCursor.jsx's rAF loop.
+   Dice cursor (sprite)
+   A pre-rendered 24-frame tumble, played by CSS. DiceCursor.jsx
+   only moves this element to the pointer — one style write per
+   pointer event, no rAF, no 3D. The real cursor is hidden while
+   it is active (html.dice-cursor-on).
+
+   The position is set 1:1 from pointermove. An earlier build
+   smoothed it at 0.38 per frame; users read that trail as "lagging
+   behind the cursor". A cursor must not lag the pointer.
    ───────────────────────────────────────────────────────────── */
 
 .dice-cursor {
-  /* 28px body with 6px pips: a pip is ~21% of the face, which is what a real
-     mahjong die measures. At 26px/4px the pips read as specks. */
-  --dice-size: 28px;
-  --dice-half: 14px;
-  /* Edge tone, derived from the die body rather than from the site ink. A warm
-     tan at low alpha darkens the ivory into a fold of the same material; the
-     cool ink read as a line drawn on top of the die. */
-  --dice-edge: 140, 121, 84;
+  /* Cell is the sprite frame; the die itself is 32px centred inside it. */
+  --dice-frames: 24;
+  --dice-cell: 50px;
 
   position: fixed;
   top: 0;
   left: 0;
-  width: var(--dice-size);
-  height: var(--dice-size);
+  width: var(--dice-cell);
+  height: var(--dice-cell);
+  margin: calc(var(--dice-cell) / -2) 0 0 calc(var(--dice-cell) / -2);
+  background-image: url("/dice/tumble.webp");
+  background-repeat: no-repeat;
+  background-size: calc(var(--dice-frames) * var(--dice-cell)) var(--dice-cell);
+  animation: dice-play 1s steps(var(--dice-frames)) infinite;
   z-index: 9999;
   pointer-events: none;
   opacity: 0;
-  /* Was 260px: at that strength the tumble barely converged and the cube read
-     as two flat panels. 150px gives a visible foreshortening on a 26px body
-     without warping it. Face-on — the settled state — perspective is moot. */
-  perspective: 150px;
   transition: opacity 200ms var(--ease-out);
+  /* The shadow must follow the die's silhouette, which changes every frame, so
+     it cannot be a static box behind the sprite. A drop-shadow reads the
+     sprite's alpha. A ::before painted OVER the background — a pseudo-element
+     draws above its parent's background, which greyed the whole die. */
+  filter: drop-shadow(0 2px 3px rgba(8, 16, 26, 0.55));
   will-change: transform;
 }
 
-.dice-cursor__cube {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  transform-style: preserve-3d;
-  will-change: transform;
+@keyframes dice-play {
+  to {
+    background-position: calc(var(--dice-frames) * var(--dice-cell) * -1) 0;
+  }
 }
-
-/* Soft contact shadow, parked behind the whole cube. This is what makes the die
-   readable on a white tile now that the faces carry no hard outline. It does
-   not rotate with the cube: a shadow belongs to the ground, not the object. */
-.dice-cursor::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: 9px;
-  background: rgba(8, 16, 26, 0.55);
-  filter: blur(5px);
-  transform: translateZ(calc(var(--dice-half) * -1.2));
-  z-index: -1;
-}
-
-.dice-face {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 1fr);
-  padding: 2px;
-  /* 4px, not 6px. A bigger radius softened each face but cut the corners back
-     far enough that the six faces stopped meeting at the edges — at 45° the
-     die read as three separate rounded plates with notches between them. */
-  border-radius: 4px;
-  /* A deeper ivory than the tiles, so it still separates from a white member
-     tile without needing a hard ring. */
-  background: #efe7d5;
-  /* Soft edge, not a drawn outline. A 1.5px ink ring at 0.62 alpha drew a
-     wireframe on every receding face as the die turned — the edges must read
-     as a rounded material edge, so the only shading is a faint inner vignette.
-     Contrast against the page comes from the drop shadow on .dice-cursor. */
-  box-shadow:
-    inset 0 0 0 1px rgba(var(--dice-edge), 0.34),
-    inset 0 0 7px rgba(var(--dice-edge), 0.2);
-  backface-visibility: hidden;
-}
-
-.dice-cell {
-  display: grid;
-  place-items: center;
-}
-
-.dice-pip {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #1b2733;
-  /* Shallow recess, the way a drilled pip catches light at its upper rim. */
-  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.45);
-}
-
-/* The traditional die colours: one and four carry red pips. */
-.dice-face--red .dice-pip {
-  background: rgb(var(--c-cinnabar));
-}
-
-/* On a mahjong-table die the single pip is oversized — roughly double a normal
-   pip, which is why it reads as the centrepiece of the face. The cell is 8px,
-   so this one overflows it on purpose and centres on the face instead. */
-.dice-face--front .dice-pip {
-  width: 11px;
-  height: 11px;
-  box-shadow: inset 0 2px 2px rgba(0, 0, 0, 0.4);
-}
-
-.dice-face--front  { transform: translateZ(var(--dice-half)); }
-.dice-face--back   { transform: rotateY(180deg) translateZ(var(--dice-half)); }
-.dice-face--right  { transform: rotateY(90deg) translateZ(var(--dice-half)); }
-.dice-face--left   { transform: rotateY(-90deg) translateZ(var(--dice-half)); }
-.dice-face--top    { transform: rotateX(90deg) translateZ(var(--dice-half)); }
-.dice-face--bottom { transform: rotateX(-90deg) translateZ(var(--dice-half)); }
 
 /* Hide the real cursor only where the die can actually follow it. */
 html.dice-cursor-on,

@@ -75,22 +75,24 @@
       }
       .field.is-live .hint { opacity: 0; }
       .die {
+        --frames: 12;
+        --cell: 50px;
         position: absolute;
         left: 0;
         top: 0;
-        width: 50px;
-        height: 50px;
-        margin: -25px 0 0 -25px;
+        width: var(--cell);
+        height: var(--cell);
+        margin: calc(var(--cell) / -2) 0 0 calc(var(--cell) / -2);
         background-repeat: no-repeat;
-        background-size: 600px 50px;
-        animation: play 1s steps(12) infinite;
+        background-size: calc(var(--frames) * var(--cell)) var(--cell);
+        animation: play 1s steps(var(--frames)) infinite;
         pointer-events: none;
         opacity: 0;
         will-change: background-position;
       }
       @keyframes play {
         from { background-position: 0 0; }
-        to   { background-position: -600px 0; }
+        to   { background-position: calc(var(--frames) * var(--cell) * -1) 0; }
       }
       .foot { max-width: 1080px; margin: 26px auto 0; color: var(--muted); font-size: 13px; }
       .foot code { color: var(--ink); }
@@ -114,10 +116,10 @@
       <div class="field"><span class="hint">move here</span><div class="die"></div></div>
     </section>
 
-    <section class="row" data-src="/dice/tumble.png" data-duration="1s">
+    <section class="row" data-src="/dice/tumble.webp" data-frames="24" data-duration="1s">
       <div class="meta">
         <h2>B — Tumble</h2>
-        <p>Diagonal tumble on both axes, 12 frames.</p>
+        <p>Diagonal tumble on both axes, 24 frames.</p>
         <span class="tag">1.0s loop</span>
       </div>
       <div class="field"><span class="hint">move here</span><div class="die"></div></div>
@@ -152,6 +154,7 @@
         const die = row.querySelector('.die');
         die.style.backgroundImage = `url(${row.dataset.src})`;
         die.style.animationDuration = row.dataset.duration;
+        if (row.dataset.frames) die.style.setProperty('--frames', row.dataset.frames);
 
         field.addEventListener('pointermove', (e) => {
           const r = field.getBoundingClientRect();
