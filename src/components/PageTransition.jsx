@@ -4,9 +4,8 @@ import { registerTransition } from '../lib/transition';
 /**
  * The overlay the page transition animates.
  *
- * A single element. The shuffle is a pre-rendered sprite in
- * public/transition/tiles.webp, played by stepping background-position; the
- * element itself only translates. Nothing here re-renders during a transition.
+ * A single empty element. The controller fades its opacity; nothing here
+ * re-renders during a transition. All styling lives in styles/transition.css.
  */
 export default function PageTransition() {
   const ref = useRef(null);

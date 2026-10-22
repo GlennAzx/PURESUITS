@@ -1,30 +1,21 @@
 /**
  * Page transition controller.
  *
- * A wall of face-down mahjong tiles sweeps right to left across the screen. The
- * route commits at the instant the wall fully covers the viewport, so the user
- * never sees the content swap.
+ * A plain fade. An ink panel fades in, the route commits while the screen is
+ * covered, the panel fades out. No assets, no sprite, no per-tile work.
  *
- * Timing: one continuous crossing, 320 ms in, 320 ms out. The wall travels two
- * viewport widths (from +100% to -100%), so the speed is constant across the
- * whole move — no pause, no easing between the two halves.
+ * This replaced a mahjong tile sweep. The tile version is kept in
+ * `transition-capture.html` + `transition-lab.html` for a future attempt; see
+ * DESIGN.md for why it was parked.
  *
- * Motion is a single transform on one element, animated with the Web Animations
- * API. No React state per frame, no GSAP timeline, no per-tile animation.
+ * Motion is opacity on one element, animated with the Web Animations API.
+ * No React state per frame.
  */
 
-const COVER_MS = 320;
-const REVEAL_MS = 320;
-const EASE = 'cubic-bezier(0.76, 0, 0.24, 1)';
-
-// The sprite sheet: 10 frames side by side. The panel is 150vw wide, and each
-// frame covers the full panel, so one frame is 1.5 x innerWidth px.
-const FRAMES = 10;
-const PANEL_VW = 1.5;
-
-const HIDDEN = 'translate3d(100%, 0, 0)';
-const COVERED = 'translate3d(0, 0, 0)';
-const PASSED = 'translate3d(-100%, 0, 0)';
+const COVER_MS = 170;
+const HOLD_MS = 60;
+const REVEAL_MS = 190;
+const EASE = 'cubic-bezier(0.4, 0, 0.2, 1)';
 
 let overlay = null;
 let busy = false;
@@ -33,7 +24,7 @@ export function registerTransition(el) {
   overlay = el;
 }
 
-/** True while a sweep is running. Used to skip double transitions. */
+/** True while a transition is running. Used to skip double transitions. */
 export function isTransitioning() {
   return busy;
 }
@@ -41,8 +32,10 @@ export function isTransitioning() {
 const nextPaint = () =>
   new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 /**
- * Run a route change under the wall.
+ * Run a route change under the fade.
  * `commit` performs the state update and the history push.
  *
  * If anything prevents the animation — reduced motion, the boot loader still on
@@ -63,21 +56,9 @@ export async function playTransition(commit) {
   busy = true;
   overlay.style.visibility = 'visible';
 
-  // Frame width in px for the current viewport.
-  const frame = Math.round(window.innerWidth * PANEL_VW);
-  overlay.style.backgroundSize = `${frame * FRAMES}px 100%`;
-  overlay.style.backgroundPosition = '0px 0px';
-
-  // The shuffle runs for the whole crossing, not just the cover, so the tiles
-  // keep moving as the wall leaves.
-  const shuffle = overlay.animate(
-    [{ backgroundPositionX: '0px' }, { backgroundPositionX: `-${frame * FRAMES}px` }],
-    { duration: COVER_MS + REVEAL_MS, easing: `steps(${FRAMES}, end)`, fill: 'forwards' }
-  );
-
   try {
     await overlay.animate(
-      [{ transform: HIDDEN }, { transform: COVERED }],
+      [{ opacity: 0 }, { opacity: 1 }],
       { duration: COVER_MS, easing: EASE, fill: 'forwards' }
     ).finished;
 
@@ -85,18 +66,19 @@ export async function playTransition(commit) {
     commit();
     await nextPaint();
 
+    // A short hold stops the fade reading as a flicker on a fast machine.
+    await wait(HOLD_MS);
+
     await overlay.animate(
-      [{ transform: COVERED }, { transform: PASSED }],
+      [{ opacity: 1 }, { opacity: 0 }],
       { duration: REVEAL_MS, easing: EASE, fill: 'forwards' }
     ).finished;
   } finally {
-    // Always reset, even if an animation was cancelled — otherwise the wall
+    // Always reset, even if an animation was cancelled — otherwise the panel
     // stays parked over the page and the site looks broken.
-    shuffle.cancel();
     overlay.getAnimations().forEach((a) => a.cancel());
     overlay.style.visibility = 'hidden';
-    overlay.style.transform = HIDDEN;
-    overlay.style.backgroundPosition = '0px 0px';
+    overlay.style.opacity = '0';
     busy = false;
   }
 }

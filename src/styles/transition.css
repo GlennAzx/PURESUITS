@@ -1,39 +1,28 @@
 /* ─────────────────────────────────────────────────────────────
-   Page transition — one sprite, sweeping right to left.
+   Page transition — a plain fade.
 
-   The cover is a single pre-rendered sprite of a mahjong table being
-   shuffled: 10 frames (public/transition/tiles.webp). CSS steps through
-   the frames while the whole panel translates, which is one composited
-   layer and one background offset per frame — no DOM tiles, no per-tile
-   animation.
+   One element, one property: opacity. The panel is the page's own ink
+   colour, so the fade reads as the page dimming through the swap rather
+   than a foreign sheet dropping over it.
 
-   Geometry matters here:
-     - the panel is 150vw wide, parked 25vw off the left
-     - the sprite's left and right ends are ragged (tiles thinned out),
-       and those ends sit INSIDE the overhang, off-screen at the covered
-       instant. So the wall enters and leaves with a broken edge, but the
-       screen is solidly covered while the route swaps.
-     - if you shrink the overhang below ~130px, the ragged end becomes
-       visible at cover and the page will show through at the edges.
-
-   Timing lives in src/lib/transition.js.
+   This replaced a mahjong tile sweep (sprite, ~424 KB). The tile work is
+   parked in transition-capture.html + transition-lab.html.
    ───────────────────────────────────────────────────────────── */
 
 .pgt {
   position: fixed;
-  top: 0;
-  left: -25vw;
-  width: 150vw;
-  height: 100vh;
-  z-index: 9000; /* above content, below the boot loader (10000) */
+  inset: 0;
+  z-index: 9000;
   pointer-events: none;
   visibility: hidden;
-  transform: translate3d(100%, 0, 0); /* parked off the right edge */
-  will-change: transform;
-  overflow: hidden;
+  opacity: 0;
+  background: var(--page, #14263a);
+  will-change: opacity;
+}
 
-  background-image: url("/transition/tiles.webp");
-  background-repeat: no-repeat;
-  background-position: 0 0;
-  /* background-size is set from transition.js: frames x panel width. */
+/* No motion: the controller commits immediately and never shows the panel. */
+@media (prefers-reduced-motion: reduce) {
+  .pgt {
+    display: none;
+  }
 }

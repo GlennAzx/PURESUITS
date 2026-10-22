@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>tile art comparison</title>
+    <style>
+      body { margin:0; padding:30px; background:#14263a; font:14px "Segoe UI",system-ui,sans-serif; color:#eef5fa; }
+      h2 { font-size:15px; font-weight:600; margin:0 0 4px; }
+      p.n { margin:0 0 14px; color:#a9c0d4; font-size:12.5px; }
+      .pair { display:grid; grid-template-columns:1fr 1fr; gap:40px; max-width:900px; }
+      .box { padding:26px; background:#1a2e44; border-radius:10px; border:1px solid #2f4b66; }
+      .strip { display:flex; gap:14px; align-items:center; }
+
+      /* ---- A: the sprite tile I have been shipping ---- */
+      .sprite-t {
+        width:76px; height:100px; border-radius:4px;
+        display:grid; place-items:center;
+        box-shadow:0 1px 2px rgba(0,0,0,.3);
+        border:1px solid rgba(40,30,20,.26);
+        background:linear-gradient(180deg,#fffdf6 0%,#f4f1e4 68%,#e6e1cf 100%);
+        font-family:"Noto Serif SC",serif; font-weight:700; font-size:42px; line-height:1;
+      }
+      .sprite-t.back {
+        background:linear-gradient(180deg,#cfe7d6 0%,#a8cdb6 58%,#7aa88c 100%);
+        border-color:rgba(28,60,44,.34);
+      }
+
+      /* ---- B: the approved MahjongTile from src/index.css ---- */
+      .mj-tile-wrap { width:76px; height:100px; }
+      .mj-tile { position:relative; width:100%; height:100%; }
+      .mj-tile-face {
+        position:absolute; inset:0; border-radius:7px;
+        background:linear-gradient(157deg,#fffdf6 0%,#faf6ea 30%,#f1ebda 62%,#e6ddc8 100%);
+        display:grid; place-items:center; overflow:hidden;
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,.95),
+          inset 0 -1px 2px rgba(120,105,80,.22),
+          inset 1px 0 0 rgba(255,255,255,.6),
+          inset -1px 0 1px rgba(120,105,80,.14),
+          0 1px 0 #d6cdb7, 0 2px 0 #c6bca4, 0 3px 0 #b3a88f,
+          0 6px 12px rgba(0,0,0,.5);
+      }
+      .mj-tile-face::before {
+        content:''; position:absolute; inset:3px; border-radius:4px;
+        border-top:1px solid rgba(255,255,255,.6);
+        border-left:1px solid rgba(255,255,255,.45);
+        border-right:1px solid rgba(140,125,98,.16);
+        border-bottom:1px solid rgba(140,125,98,.22);
+      }
+      .mj-glyph {
+        font-family:"Noto Serif SC",serif; font-size:42px; font-weight:700; line-height:1;
+        text-shadow:0 1px 0 rgba(0,0,0,.22), 0 -1px 0 rgba(255,255,255,.65);
+      }
+      /* green back in the approved tile's language */
+      .mj-tile-face.back {
+        background:linear-gradient(157deg,#d6ead9 0%,#b9d9c3 34%,#95c2a4 68%,#74a888 100%);
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,.7),
+          inset 0 -2px 3px rgba(26,66,44,.3),
+          inset 1px 0 0 rgba(255,255,255,.4),
+          inset -1px 0 1px rgba(26,66,44,.2),
+          0 1px 0 #6c9c80, 0 2px 0 #5d8a70, 0 3px 0 #4e7a60,
+          0 6px 12px rgba(0,0,0,.5);
+      }
+      .mj-tile-face.back::before {
+        border-top-color:rgba(255,255,255,.5);
+        border-left-color:rgba(255,255,255,.35);
+        border-right-color:rgba(20,54,36,.2);
+        border-bottom-color:rgba(20,54,36,.26);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="pair">
+      <div class="box">
+        <h2>A — the sprite tile (what I shipped)</h2>
+        <p class="n">1 gradient, 1px border, 1px shadow</p>
+        <div class="strip">
+          <div class="sprite-t" style="color:#22384f">南</div>
+          <div class="sprite-t" style="color:#b02a1c">中</div>
+          <div class="sprite-t back"></div>
+        </div>
+      </div>
+      <div class="box">
+        <h2>B — the approved MahjongTile</h2>
+        <p class="n">8 shadow layers, extruded body, inner bevel, engraved glyph</p>
+        <div class="strip">
+          <div class="mj-tile-wrap"><div class="mj-tile"><div class="mj-tile-face"><span class="mj-glyph" style="color:#22384f">南</span></div></div></div>
+          <div class="mj-tile-wrap"><div class="mj-tile"><div class="mj-tile-face"><span class="mj-glyph" style="color:#b02a1c">中</span></div></div></div>
+          <div class="mj-tile-wrap"><div class="mj-tile"><div class="mj-tile-face back"></div></div></div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

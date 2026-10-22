@@ -558,66 +558,47 @@ blank page behind an invisible overlay.
 entirely. Sequence: 0.88, 0.96, 0.98, 0.99 — the user asked for less three times, so treat
 this as a ceiling, not a starting point.
 
-## 15. Page transition — one sprite, sweeping right to left
+## 15. Page transition — a plain fade
 
-A pre-rendered sprite of a mahjong table being shuffled crosses the screen and the route
-changes underneath it.
+An ink panel fades in, the route commits while the screen is covered, the panel fades out.
 
 | Part | Value |
 |---|---|
-| Sprite | `public/transition/tiles.webp` — 10 frames, 1560x860 each, **494 KB** |
 | Files | `src/lib/transition.js`, `src/components/PageTransition.jsx`, `src/styles/transition.css` |
-| Panel | 150vw wide, parked at `left: -25vw`, so 25vw of tile hangs off each side |
-| Motion | transform `translate3d(100%)` -> `0` -> `-100%`, plus a `steps(10)` background offset |
-| Timing | 320 ms cover, 320 ms reveal |
-| Frames | rendered by `transition-capture.html` (dev-only), stitched with PIL |
+| Assets | **none** |
+| Timing | 170 ms in, 60 ms hold, 190 ms out |
+| Colour | `var(--page)` — the page's own ink, so it reads as a dim, not a foreign sheet |
 
-**Why one sprite.** The DOM version needed ~200 rotating, shadowed elements and per-tile
-motion to churn. The sprite is one image and one background offset: no per-frame layout, no
-per-tile layers. It is the same reason the dice cursor became a sprite.
+**Measured:** the route swaps at **opacity 1.0**, 276 ms in; the panel is visible 0-540 ms;
+3 navigations 40 ms apart end on the last route with the panel hidden; reduced motion commits in
+145 ms with the panel at `display: none`.
 
-**Why the panel is wider than the viewport.** The sprite's left and right ends are ragged —
-tiles are thinned out over the outer 150px of each frame — so the wall enters and leaves with
-a broken edge instead of a straight vertical cut. Those ragged ends must be off-screen at the
-covered instant or the page shows through at the screen edges. At 150vw the overhang is 25vw
-per side (~300px at 1200), comfortably more than the 150px taper. **If you narrow the panel,
-the ragged edge becomes a leak.**
+The `finally` block always cancels animations and re-hides the panel. Without it a cancelled
+transition leaves the panel parked over the page and the site looks broken.
 
-**Coverage is asserted by a pixel test, not assumed.** Append a magenta layer under `.pgt`
-(inside `.page-shell`, z-index 1), pin the panel to `translate3d(0,0,0)`, screenshot, count
-magenta pixels. Worst case across all 10 frames: **0 px**. The base course in
-`transition-capture.html` (a static grid of unrotated tiles) is what guarantees the centre is
-solid while the churn layer moves on top.
+### The mahjong tile sweep is PARKED (2026-10-22)
 
-**The sprite costs 494 KB.** That is the real trade for this design: the whole JS bundle is
-about 340 KB. It is cached after first load and only fetched when a transition runs, but it is
-still the heaviest asset on the site. If that is unacceptable, the alternatives in order of
-cost are: drop to 8 frames (~400 KB), render at 1170x645 and upscale (~280 KB, softer), or go
-back to DOM tiles (~0 KB, needs per-tile motion to churn).
+A tile wall sweeping right to left was attempted over 8 commits and rejected. Kept for a future
+attempt: `transition-capture.html` (frame renderer) and `transition-lab.html` (speed comparison).
+The sprite `public/transition/*.webp` was **deleted** (919 KB); regenerate it from the capture page
+before using the lab.
 
-**Measured:** route commits at 429-444 ms with the screen covered from ~400 ms; whole
-transition done at 856-869 ms in headless (the animation is 640 ms; the rest is React
-re-render and paint).
+**Why it failed — two causes, both worth knowing before retrying:**
 
-**A mahjong wash is FLAT — tiles never stack.** Sources checked: themahjongguide.com
-("tiles should slide across the mat rather than being lifted, flipped, or thrown"; "use flat hands
-rather than stacking or dropping tiles"), mahjongkit.com and schoolofmahjong.com ("turn all tiles
-face down and swirl them around"), tsumoron.com. The motion is circular sweeps of flat tiles, not
-a pile.
+1. **The tile art was wrong, and that was the real problem.** The sprite used a tile built from
+   scratch: one gradient, a 1px border, a 1px shadow. The site's approved tile
+   (`src/components/MahjongTile.jsx` + `.mj-tile-face` in `index.css`) has a 4-stop gradient, a
+   3-layer extruded body, an inner bevel ring and an engraved glyph — 8 shadow layers. Every round
+   of feedback was about the tile looking cheap, and every fix I made was aimed at the layout
+   instead. `tile-compare.html` shows the two side by side.
 
-My first sprite was wrong: it had tiles overlapping with large drop shadows, i.e. stacked. The
-capture now places every tile in its own lattice cell (cell = 1.26x the tile), caps tilt at 10
-degrees so a rotated tile still fits its cell, varies tile size within the cell, staggers each row
-sideways, and uses a 1px contact shadow only. Verified: **0 overlapping bounding boxes across 67
-tiles.**
+2. **Flat non-overlapping tiles cannot occlude the screen.** A real wash keeps tiles flat on the
+   felt (sources: themahjongguide.com, mahjongkit.com, schoolofmahjong.com), so they must not
+   overlap. Perfect packing of a 1:1.34 tile at 10 degrees of tilt caps coverage at **73.7%**; the
+   built field measured **41%**. The blue field baked into the sprite did the actual hiding, which
+   makes the design a blue wipe with tiles drawn on it.
 
-**Pending: v2 in the lab.** `transition-lab.html` + `public/transition/tiles-v2-q66.webp`
-(8 frames, 1560x860, 512 KB) is the next candidate: green tile backs instead of pink, whole tiles
-only (nothing cut at the frame edge), gaps allowed with the blue field baked in, feathered ends,
-and **linear** motion so the entrance and exit run at one constant speed. The app still ships v1;
-do not wire v2 until the user approves the lab.
-
-**Regenerating the sprite:** serve `transition-capture.html` from the dev server, set the
-viewport to 1560x860, call `window.setPhase(i / 10)` for i in 0..9, screenshot each with
-`omit_background=True` and a transparent CDP background, then stitch horizontally and encode
-WebP. 10 frames is the maximum at 1560 px wide — WebP caps sheet width at 16,383 px.
+**If retried:** use `MahjongTile` as DOM nodes, not a sprite. The flat lattice needs only ~81 tiles
+(288 DOM nodes), which is cheap enough to animate live, costs 0 KB, and keeps full tile fidelity.
+Frame timing on real hardware was never measured — headless Chromium throttles rAF — so that is the
+open risk.
