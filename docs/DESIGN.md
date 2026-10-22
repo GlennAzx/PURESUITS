@@ -533,17 +533,14 @@ Measured deltas on a 120x120 bare-background crop (max channel difference):
 | coin | 20 | 0.66 | 768 |
 | smoke | 3 | 0.08 | 0 — still effectively invisible; needs a redesign, not a tweak |
 
-**The buffer runs in two modes, both mandatory.** `components/Loader.jsx` is mounted twice in
-`App.jsx` with different durations:
+**The buffer is boot-only: 2500 ms on a full page load or a refresh.** `BOOT_MS` in
+`App.jsx` is the only number. It runs on every route, not just `/`.
 
-| Mode | Constant | Duration | When |
-|---|---|---|---|
-| Boot | `BOOT_MS` | 2500 ms | Full page load — every route, not just Home |
-| Nav | `NAV_MS` | 700 ms | Every in-app route change |
-
-A route change in this app is a React state update with nothing to fetch. `NAV_MS` exists
-because the user asked for the buffer on every page, not because anything loads. Keep it
-short; raise it in `App.jsx` if the beat should be longer.
+**It is NOT shown on in-app navigation — that was tried and reverted.** A nav buffer (700 ms)
+was implemented and removed in the same session: a route change in this app is a React state
+update with nothing to fetch, so the buffer delayed every click to cover work that was not
+happening. Page changes should be covered by a *transition* animation instead, planned in
+`.hermes/plans/2026-10-22_222744_page-transition-overlay.md`. Do not re-add a nav buffer.
 
 **The fade is layered, not a flat dissolve.** The backdrop clears in 420 ms while the dice
 lift and shrink away in 320 ms, so the eye follows them out. In parallel, `html.is-buffering`

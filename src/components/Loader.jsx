@@ -97,7 +97,7 @@ export default function Loader({ ms = 2500, onDone = null }) {
           <div className="loader__die" />
           <div className="loader__die" />
         </div>
-        <div className="loader__label">Shuffling the wall</div>
+        <div className="loader__label">Testing your Luck</div>
         <div className="loader__bar">
           <div className="loader__fill" ref={fillRef} style={{ width: '0%' }} />
         </div>
