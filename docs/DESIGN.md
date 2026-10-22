@@ -533,5 +533,15 @@ Measured deltas on a 120x120 bare-background crop (max channel difference):
 | coin | 20 | 0.66 | 768 |
 | smoke | 3 | 0.08 | 0 — still effectively invisible; needs a redesign, not a tweak |
 
-**The loader waits for `document.fonts.ready`, never `window.load`.** `load` includes the hero
-video; the overlay sat on screen for 3.2 s because of it. Floor is 550 ms, hard cap 1200 ms.
+**The loader is a mandatory beat of 2500 ms, then a 560 ms fade.** `MANDATORY_MS` in
+`components/Loader.jsx` is the only number to change. The user asked for "a few seconds" —
+this is a deliberate, permanent cost on every full page load, not a wait for anything.
+
+It does **not** wait for `window.load` any more: `load` includes the hero video and once held
+the overlay for 3.2 s, which was an accident rather than a decision.
+
+The progress bar is eased across the whole 2500 ms (0 to 92, then 100 on finish) and is
+written straight to the fill element from a rAF loop. A React state update per frame would
+re-render the component ~150 times for one animation.
+
+Measured: visible 3003 ms end to end; bar 4.4% at 100 ms, 52% at 900 ms, 83% at 1.9 s.
