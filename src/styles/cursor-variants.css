@@ -93,8 +93,10 @@
   border-color: rgb(var(--c-imperial-gold) / 0.8);
 }
 
+/* 0.96, not 0.88. At 0.88 the die visibly jumped on every click — the user
+   asked for less. 4% is felt as a press without reading as motion. */
 :root[data-cursor="halo"].is-pressing .dice-cursor {
-  scale: 0.88;
+  scale: 0.96;
 }
 
 /* ── D. ROLL-ON-HOT — rolls only where it matters ──────────────

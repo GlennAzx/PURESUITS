@@ -11,6 +11,8 @@ import MembersPage from './pages/MembersPage';
 import MahjongGuidePage from './pages/MahjongGuidePage';
 import BuildsPage from './pages/BuildsPage';
 import GalleryPage from './pages/GalleryPage';
+import NotFoundPage from './pages/NotFoundPage';
+import Loader from './components/Loader';
 import { installRevealGuard } from './lib/revealGuard';
 import { setLenis } from './lib/scroll';
 
@@ -33,11 +35,15 @@ const TITLES = {
   'mahjong-guide': 'Mahjong Guide | PURESUIT',
   builds: 'Martial Path Guides | PURESUIT',
   gallery: 'Gallery | PURESUIT',
+  'not-found': '404 | PURESUIT',
 };
 
 const pathFor = (page, slug) => {
   if (page === 'home') return '/';
   if (page === 'members' && slug) return `/members/${encodeURIComponent(slug)}`;
+  // 'not-found' is never a navigation target, only a render result, so it has
+  // no path of its own — the URL the visitor typed stays in the bar.
+  if (page === 'not-found') return window.location.pathname;
   return `/${page}`;
 };
 
@@ -52,7 +58,13 @@ function parseRoute() {
         return s;
       }
     });
-  const page = PAGES.includes(segs[0]) ? segs[0] : 'home';
+  // An unknown first segment is a 404, not the home page. Falling back to home
+  // served the front page with a 200 for every typo, which hides broken links
+  // from everyone including us.
+  let page;
+  if (segs.length === 0) page = 'home';
+  else if (PAGES.includes(segs[0])) page = segs[0];
+  else page = 'not-found';
   const slug = page === 'members' && segs[1] ? segs[1] : null;
   // source tells the members page how the slug arrived. 'click' scrolls to the
   // tile; 'load' means the URL was typed, shared or refreshed, and that must
@@ -177,6 +189,8 @@ export default function App() {
         return <BuildsPage />;
       case 'gallery':
         return <GalleryPage />;
+      case 'not-found':
+        return <NotFoundPage onNavigate={navigate} />;
       default:
         return <HomePage setActivePage={navigate} />;
     }
@@ -184,6 +198,7 @@ export default function App() {
 
   return (
     <div ref={mainRef} className="min-h-screen bg-ink-black text-gray-200">
+      <Loader />
       <DiceCursor />
       <FannedMahjongNav activePage={activePage} setActivePage={navigate} />
       <main className="pb-16">{renderPage()}</main>

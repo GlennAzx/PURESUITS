@@ -20,7 +20,7 @@ export const EVENTS = [
     category: 'Social',
     cadence: 'daily',
     time: GUILD_PARTY,
-    durationMinutes: 60,
+    durationMinutes: 15,
     description:
       'Daily guild gathering. Everyone logs in, shares tea, and banks the day\u2019s rewards together.',
   },

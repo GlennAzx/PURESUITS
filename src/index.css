@@ -1,5 +1,13 @@
 @import 'lenis/dist/lenis.css';
 
+/* Page texture, cursor variants and the buffer screen. Each is selected by a
+   data-attribute on <html> (see index.html), so a variant swap is one
+   attribute and the rest stay available. */
+@import './styles/texture.css';
+@import './styles/cursor-variants.css';
+@import './styles/loader.css';
+@import './styles/furniture.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

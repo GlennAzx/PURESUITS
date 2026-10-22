@@ -6,6 +6,7 @@ import { ArrowUpRight } from 'lucide-react';
 import VideoHero from '../components/VideoHero';
 import EventCarousel from '../components/EventCarousel';
 import { EVENTS, activeOccurrence } from '../data/schedule';
+import useTimeMode, { setTimeMode } from '../lib/useTimeMode';
 
 const DISCORD_URL = 'https://discord.gg/QrnhSzcYkb';
 
@@ -56,6 +57,7 @@ function OngoingBanner() {
 
 export default function HomePage() {
   const eventsRef = useRef(null);
+  const [timeMode] = useTimeMode();
 
   useGSAP(
     () => {
@@ -109,11 +111,43 @@ export default function HomePage() {
             <h2 className="text-2xl font-serif font-bold text-ivory">
               Guild Events
             </h2>
-            <p className="text-xs text-gray-500 mt-1">All times UTC+8</p>
+            <p className="text-xs text-gray-500 mt-1">
+              {timeMode === 'sgt' ? 'All times UTC+8 (guild time)' : 'Times in your local zone'}
+            </p>
           </div>
-          <span className="text-[10px] font-mono text-gray-600 uppercase tracking-wider">
-            Countdowns update live
-          </span>
+
+          {/* Time zone toggle. One control, applies to every card, remembered. */}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono text-gray-600 uppercase tracking-wider">
+              Countdowns update live
+            </span>
+            <div className="flex overflow-hidden rounded-md border border-imperial-gold/25">
+              <button
+                type="button"
+                onClick={() => setTimeMode('sgt')}
+                aria-pressed={timeMode === 'sgt'}
+                className={`px-2.5 py-1 text-[10px] uppercase tracking-wider transition-colors ${
+                  timeMode === 'sgt'
+                    ? 'bg-imperial-gold/20 text-imperial-gold'
+                    : 'text-gray-500 hover:text-ivory'
+                }`}
+              >
+                UTC+8
+              </button>
+              <button
+                type="button"
+                onClick={() => setTimeMode('local')}
+                aria-pressed={timeMode === 'local'}
+                className={`px-2.5 py-1 text-[10px] uppercase tracking-wider transition-colors ${
+                  timeMode === 'local'
+                    ? 'bg-imperial-gold/20 text-imperial-gold'
+                    : 'text-gray-500 hover:text-ivory'
+                }`}
+              >
+                My time
+              </button>
+            </div>
+          </div>
         </div>
 
         <OngoingBanner />

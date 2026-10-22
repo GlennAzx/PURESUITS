@@ -26,6 +26,7 @@ export default function MembersPage({
   // Which tile is currently ringed. React owns this, not the DOM: an
   // imperative classList.add is wiped the next time the tile re-renders.
   const [ringSlug, setRingSlug] = useState(null);
+  const [query, setQuery] = useState('');
 
   const { leadership, commanders, members, total } = useMemo(() => {
     const byTier = (t) => membersData.filter((m) => m.tier === t);
@@ -37,6 +38,32 @@ export default function MembersPage({
       total: membersData.length,
     };
   }, []);
+
+  // Search. Matches name, role and tier, so typing "deputy" works as well as a
+  // name. CJK names need no special handling — there is no case to fold.
+  //
+  // Filtering REMOVES tiles from the DOM, and the deep-link code below finds
+  // its tile by data-slug. A filtered-out slug would silently fail to ring, so
+  // the query is cleared whenever a slug arrives. That is the whole trap.
+  const hits = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return null;
+    const match = (m) =>
+      `${m.name} ${m.role || ''} ${m.tier || ''}`.toLowerCase().includes(q);
+    return {
+      leadership: leadership.filter(match),
+      commanders: commanders.filter(match),
+      members: members.filter(match),
+    };
+  }, [query, leadership, commanders, members]);
+
+  const shown = hits ?? { leadership, commanders, members };
+  const shownTotal = shown.leadership.length + shown.commanders.length + shown.members.length;
+
+  // A tile must exist for a deep link to land on it.
+  useEffect(() => {
+    if (focusSlug) setQuery('');
+  }, [focusSlug]);
 
   // Focus comes from a CLICK on a tile: scroll it into view and ring it. The
   // ring and the slug then persist — only a refresh or a click outside clears
@@ -144,14 +171,51 @@ export default function MembersPage({
             {total} {total === 1 ? 'Member' : 'Members'}
           </span>
         </div>
+
+        {/* Roster search. Interim until the roster is trimmed to core members
+            plus recent standouts — then this becomes a filter over a shorter
+            list, but it earns its place either way. */}
+        <div className="mt-7 flex justify-center">
+          <div className="relative w-full max-w-sm">
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Find a member, a role, a tier…"
+              aria-label="Search the roster"
+              className="w-full rounded-full border border-imperial-gold/30 bg-ink-charcoal/70 px-5 py-2.5 pr-24 text-sm text-ivory placeholder:text-ivory/35 outline-none transition-colors focus:border-imperial-gold/70"
+            />
+            {query ? (
+              <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-2">
+                <span className="font-mono text-[11px] uppercase tracking-wider text-imperial-gold">
+                  {shownTotal} {shownTotal === 1 ? 'hit' : 'hits'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setQuery('')}
+                  aria-label="Clear search"
+                  className="grid h-6 w-6 place-items-center rounded-full text-ivory/50 transition-colors hover:text-ivory"
+                >
+                  ×
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </div>
       </div>
 
+      {hits && shownTotal === 0 ? (
+        <p className="py-20 text-center text-sm text-ivory/45">
+          No member matches “{query}”.
+        </p>
+      ) : null}
+
       {/* Leadership — separate pane */}
-      <section className="leadership-pane mb-16">
+      <section className={`leadership-pane mb-16 ${shown.leadership.length === 0 ? 'hidden' : ''}`}>
         <div className="rounded-2xl border border-imperial-gold/25 bg-gradient-to-b from-ink-charcoal to-ink-black p-6 sm:p-8">
           <SectionHeading title="Leadership" />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-16 justify-items-center">
-            {leadership.map((m, i) => (
+            {shown.leadership.map((m, i) => (
               <MemberCard3D key={m.id} member={m} index={i} variant="leader" onOpen={onOpenMember} highlighted={ringSlug === memberSlug(m)} />
             ))}
           </div>
@@ -159,11 +223,11 @@ export default function MembersPage({
       </section>
 
       {/* Commanders */}
-      {commanders.length > 0 && (
+      {shown.commanders.length > 0 && (
         <section className="mb-16">
           <SectionHeading title="Commanders" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-16 justify-items-center">
-            {commanders.map((m, i) => (
+            {shown.commanders.map((m, i) => (
               <MemberCard3D key={m.id} member={m} index={i} onOpen={onOpenMember} highlighted={ringSlug === memberSlug(m)} />
             ))}
           </div>
@@ -171,11 +235,11 @@ export default function MembersPage({
       )}
 
       {/* Members */}
-      {members.length > 0 && (
+      {shown.members.length > 0 && (
         <section>
           <SectionHeading title="Members" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-16 justify-items-center">
-            {members.map((m, i) => (
+            {shown.members.map((m, i) => (
               <MemberCard3D key={m.id} member={m} index={i} onOpen={onOpenMember} highlighted={ringSlug === memberSlug(m)} />
             ))}
           </div>

@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en" data-texture="silk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PURESUIT — feature demos</title>
+    <style>
+      :root {
+        --c-ink-black: 20 38 58;
+        --c-ink-charcoal: 29 50 71;
+        --c-imperial-gold: 239 139 74;
+        --c-jade-accent: 116 178 141;
+        --c-cinnabar: 226 96 74;
+        --c-ivory: 223 233 242;
+        --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+        --page-ink: #dfe9f2;
+        --wall-1: #8fc7a4;
+        --wall-2: #74b28d;
+        --wall-3: #579378;
+        --wall-4: #407661;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: rgb(var(--c-ink-black));
+        color: var(--page-ink);
+        font: 15px/1.6 "Segoe UI", system-ui, sans-serif;
+      }
+      .wrap { max-width: 1100px; margin: 0 auto; padding: 44px 30px 100px; }
+      h1 { font-size: 26px; margin: 0 0 6px; font-weight: 600; }
+      .sub { color: rgb(var(--c-ivory) / 0.6); margin: 0 0 20px; max-width: 72ch; }
+      h2 {
+        font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase;
+        color: rgb(var(--c-imperial-gold)); margin: 52px 0 6px;
+        padding-bottom: 9px; border-bottom: 1px solid rgb(var(--c-ivory) / 0.13);
+      }
+      .lead { color: rgb(var(--c-ivory) / 0.62); margin: 0 0 20px; max-width: 74ch; font-size: 14px; }
+
+      /* ── #5 WEEKLY AGENDA STRIP ───────────────────────────── */
+      .agenda {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 8px;
+        background: rgb(var(--c-ink-charcoal) / 0.5);
+        border: 1px solid rgb(var(--c-ivory) / 0.1);
+        border-radius: 12px;
+        padding: 12px;
+      }
+      .day {
+        border-radius: 9px;
+        padding: 10px 9px 12px;
+        background: rgb(var(--c-ink-black) / 0.5);
+        border: 1px solid transparent;
+        min-height: 116px;
+        display: flex; flex-direction: column; gap: 6px;
+      }
+      .day--today {
+        border-color: rgb(var(--c-imperial-gold) / 0.65);
+        background: rgb(var(--c-imperial-gold) / 0.1);
+      }
+      .day__name {
+        font-size: 10px; letter-spacing: 0.17em; text-transform: uppercase;
+        color: rgb(var(--c-ivory) / 0.5);
+      }
+      .day--today .day__name { color: rgb(var(--c-imperial-gold)); }
+      .day__ev {
+        font-size: 11.5px; line-height: 1.35;
+        border-left: 2px solid;
+        padding: 3px 0 3px 7px;
+      }
+      .day__ev b { display: block; font-weight: 600; font-size: 11px; opacity: 0.75; }
+      .ev--PvP    { border-color: rgb(var(--c-cinnabar)); }
+      .ev--PvE    { border-color: rgb(var(--c-jade-accent)); }
+      .ev--Social { border-color: rgb(var(--c-imperial-gold)); }
+      .day__none { font-size: 11px; color: rgb(var(--c-ivory) / 0.26); margin-top: auto; }
+
+      /* ── #8 NEXT-UP CHIP ──────────────────────────────────── */
+      .handledemo {
+        position: relative; height: 290px; border-radius: 12px;
+        border: 1px dashed rgb(var(--c-ivory) / 0.2); overflow: hidden;
+        background:
+          linear-gradient(rgb(var(--c-ink-charcoal) / 0.4), rgb(var(--c-ink-charcoal) / 0.1));
+      }
+      .fakepage { padding: 26px 30px; color: rgb(var(--c-ivory) / 0.3); font-size: 13px; }
+      .handle {
+        position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+        display: flex; align-items: stretch;
+        border-radius: 10px 0 0 10px; overflow: hidden;
+        box-shadow: -6px 0 22px rgba(0,0,0,0.45);
+      }
+      .handle__tab {
+        width: 46px; background: rgb(var(--c-ink-charcoal));
+        border: 1px solid rgb(var(--c-imperial-gold) / 0.45); border-right: none;
+        display: grid; place-items: center; gap: 5px; padding: 16px 0;
+        writing-mode: vertical-rl; color: rgb(var(--c-imperial-gold));
+        font-size: 12px; letter-spacing: 0.26em;
+      }
+      .chip {
+        background: rgb(var(--c-ink-charcoal));
+        border: 1px solid rgb(var(--c-imperial-gold) / 0.45);
+        border-right: none;
+        display: flex; flex-direction: column; justify-content: center;
+        gap: 3px; padding: 12px 15px; min-width: 164px;
+      }
+      .chip__k {
+        font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase;
+        color: rgb(var(--c-ivory) / 0.45);
+      }
+      .chip__n { font-size: 13px; font-weight: 600; }
+      .chip__t {
+        font-size: 15px; font-variant-numeric: tabular-nums;
+        color: rgb(var(--c-imperial-gold));
+      }
+      .chip__live {
+        font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+        color: rgb(var(--c-cinnabar));
+      }
+      /* collapsed form: just a dot + time, expands on hover */
+      .handle--slim .chip { min-width: 0; padding: 10px 12px; }
+      .handle--slim .chip__n { display: none; }
+
+      /* ── #12 TILE-WALL DIVIDER ────────────────────────────── */
+      .wall-divider {
+        --wall-tile: 26px; --wall-h: 34px;
+        position: relative; height: var(--wall-h); margin: 36px 0; pointer-events: none;
+        background-image:
+          linear-gradient(90deg, rgba(0,0,0,0.34) 0 1px, transparent 1px calc(var(--wall-tile) - 1px), rgba(0,0,0,0.34) calc(var(--wall-tile) - 1px) var(--wall-tile)),
+          linear-gradient(180deg, var(--wall-1) 0%, var(--wall-2) 38%, var(--wall-3) 74%, var(--wall-4) 100%);
+        background-size: var(--wall-tile) 100%, 100% 100%;
+        -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+        mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+      }
+      .wall-divider::before {
+        content: ""; position: absolute; inset: 0 0 auto 0; height: 7px;
+        background-image:
+          linear-gradient(90deg, rgba(0,0,0,0.34) 0 1px, transparent 1px calc(var(--wall-tile) - 1px), rgba(0,0,0,0.34) calc(var(--wall-tile) - 1px) var(--wall-tile)),
+          linear-gradient(180deg, #d8ecdf, #a9d3b8);
+        background-size: var(--wall-tile) 100%, 100% 100%;
+      }
+      .wall-divider::after {
+        content: ""; position: absolute; inset: auto 0 -9px 0; height: 10px;
+        background: radial-gradient(ellipse 60% 100% at 50% 0%, rgba(0,0,0,0.3), transparent 70%);
+      }
+      .wall-divider--tall { --wall-h: 52px; --wall-tile: 34px; }
+      .wall-divider--flat::before { display: none; }
+
+      .secdemo h3 { margin: 0 0 4px; font-size: 19px; font-weight: 600; }
+      .secdemo p { margin: 0; color: rgb(var(--c-ivory) / 0.55); font-size: 13.5px; }
+
+      /* ── #6 LOCAL TIME ────────────────────────────────────── */
+      .tz { display: flex; flex-wrap: wrap; gap: 14px; }
+      .tzcard {
+        flex: 1 1 250px; background: rgb(var(--c-ink-charcoal) / 0.6);
+        border: 1px solid rgb(var(--c-ivory) / 0.1); border-radius: 11px; padding: 15px 17px;
+      }
+      .tzcard h4 { margin: 0 0 9px; font-size: 12px; letter-spacing: 0.14em;
+        text-transform: uppercase; color: rgb(var(--c-imperial-gold)); }
+      .tzline { font-size: 14px; margin: 4px 0; font-variant-numeric: tabular-nums; }
+      .tzline small { color: rgb(var(--c-ivory) / 0.45); font-size: 11px; letter-spacing: 0.1em; }
+      .swap { animation: swapfade 4s ease-in-out infinite; }
+      @keyframes swapfade { 0%,44% {opacity:1} 50%,94% {opacity:0} 100% {opacity:1} }
+      .swap2 { animation: swapfade2 4s ease-in-out infinite; }
+      @keyframes swapfade2 { 0%,44% {opacity:0} 50%,94% {opacity:1} 100% {opacity:0} }
+      .stack { position: relative; height: 22px; }
+      .stack > * { position: absolute; inset: 0; }
+
+      .note {
+        font-size: 13px; color: rgb(var(--c-ivory) / 0.6);
+        background: rgb(var(--c-ink-charcoal) / 0.7);
+        border-left: 2px solid rgb(var(--c-imperial-gold) / 0.6);
+        padding: 11px 15px; border-radius: 0 7px 7px 0; margin: 16px 0 0;
+      }
+      .opts { display: flex; gap: 9px; flex-wrap: wrap; margin: 0 0 16px; }
+      button.opt {
+        font: inherit; font-size: 13px; padding: 7px 14px; border-radius: 7px;
+        border: 1px solid rgb(var(--c-ivory) / 0.2); background: rgb(var(--c-ink-charcoal));
+        color: var(--page-ink); cursor: pointer;
+      }
+      button.opt[aria-pressed="true"] {
+        border-color: rgb(var(--c-imperial-gold)); color: rgb(var(--c-imperial-gold));
+        background: rgb(var(--c-imperial-gold) / 0.17);
+      }
+    </style>
+    <link rel="stylesheet" href="/src/styles/texture.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Feature demos</h1>
+      <p class="sub">
+        Four things you asked to see before deciding. Each is built against the
+        real schedule in <code>src/data/schedule.js</code> — the times below are
+        computed, not drawn.
+      </p>
+
+      <h2>#5 — Weekly agenda strip</h2>
+      <p class="lead">
+        A fixed Monday–Sunday row. The carousel answers “what is next”; this
+        answers “what does my week look like”. It sits under the hero, reuses
+        the same three events, and marks today. Colour is the category: red PvP,
+        green PvE, orange Social.
+      </p>
+      <div class="agenda" id="agenda"></div>
+      <p class="note" id="agendaNote"></p>
+
+      <h2>#8 — “Next up” chip in the nav handle</h2>
+      <p class="lead">
+        The nav handle is on screen on every page. The chip puts the next event
+        and a live countdown there, so the schedule is not trapped on Home. It
+        turns red while an event is running.
+      </p>
+      <div class="opts" id="chipOpts"></div>
+      <div class="handledemo">
+        <div class="fakepage">…page content…</div>
+        <div class="handle" id="handle">
+          <div class="chip" id="chip"></div>
+          <div class="handle__tab">牌 NAV</div>
+        </div>
+      </div>
+
+      <h2>#12 — Tile-wall divider</h2>
+      <p class="lead">
+        A band of tile backs between sections, in the wall green your palette
+        already defines and nothing currently uses. One element, pure CSS — the
+        tiles are a repeating gradient, not thirty DOM nodes.
+      </p>
+      <div class="opts" id="wallOpts"></div>
+      <div class="secdemo">
+        <h3>Upcoming Events</h3>
+        <p>Three recurring runs, every week.</p>
+      </div>
+      <div class="wall-divider" id="wall"></div>
+      <div class="secdemo">
+        <h3>The Roster</h3>
+        <p>Seventy-seven members across four tiers.</p>
+      </div>
+
+      <h2>#6 — Local time</h2>
+      <p class="lead">
+        Three ways to show it. Your overseas members currently have to convert
+        UTC+8 in their head.
+      </p>
+      <div class="tz">
+        <div class="tzcard">
+          <h4>A — Both, always</h4>
+          <div class="tzline" id="tzA1">—</div>
+          <div class="tzline" id="tzA2">—</div>
+          <p class="note" style="margin-top:12px">
+            Nothing to click, nothing to learn. Costs one extra line per card.
+          </p>
+        </div>
+        <div class="tzcard">
+          <h4>B — Swap on a timer</h4>
+          <div class="stack">
+            <div class="tzline swap" id="tzB1">—</div>
+            <div class="tzline swap2" id="tzB2">—</div>
+          </div>
+          <p class="note" style="margin-top:12px">
+            Saves space. But it moves, and a time that changes while you read it
+            is a bad idea. <b>I do not recommend this one.</b>
+          </p>
+        </div>
+        <div class="tzcard">
+          <h4>C — One toggle, remembered</h4>
+          <div class="opts" style="margin:0 0 10px">
+            <button class="opt" id="tzSGT" aria-pressed="true">UTC+8</button>
+            <button class="opt" id="tzLocal" aria-pressed="false">My time</button>
+          </div>
+          <div class="tzline" id="tzC">—</div>
+          <p class="note" style="margin-top:12px">
+            One switch in the header, stored in localStorage, applies to every
+            time on the site. <b>My recommendation.</b>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+      // Mirror of src/data/schedule.js — epoch maths only, no local Date getters.
+      const SGT = 8 * 3600 * 1000;
+      const EVENTS = [
+        { id: 'guild-party', name: 'Guild Party', category: 'Social', cadence: 'daily',
+          time: { h: 21, m: 0 }, durationMinutes: 60 },
+        { id: 'breaking-army', name: 'Breaking Army & Showdown', category: 'PvP',
+          cadence: 'weekly', weekdays: [3, 6], time: { h: 21, m: 30 }, durationMinutes: 45 },
+        { id: 'heroes-realm', name: 'Heroes Realm', category: 'PvE', cadence: 'weekly',
+          weekdays: [1, 5], time: { h: 21, m: 0 }, timeByWeekday: { 5: { h: 22, m: 0 } },
+          durationMinutes: 90 },
+      ];
+      const parts = (ms) => { const d = new Date(ms + SGT);
+        return { y: d.getUTCFullYear(), mo: d.getUTCMonth(), day: d.getUTCDate(), dow: d.getUTCDay() }; };
+      const epoch = (y, mo, day, h, m) => Date.UTC(y, mo, day, h, m) - SGT;
+      const timeFor = (e, dow) => e.timeByWeekday?.[dow] || e.time;
+
+      function next(e, now = Date.now()) {
+        const { y, mo, day, dow } = parts(now);
+        if (e.cadence === 'daily') {
+          const t = epoch(y, mo, day, e.time.h, e.time.m);
+          return t > now ? t : t + 86400000;
+        }
+        let best = Infinity;
+        for (let i = 0; i < 8; i++) {
+          const d2 = parts(now + i * 86400000);
+          if (!e.weekdays.includes(d2.dow)) continue;
+          const tt = timeFor(e, d2.dow);
+          const t = epoch(d2.y, d2.mo, d2.day, tt.h, tt.m);
+          if (t > now && t < best) best = t;
+        }
+        return best;
+      }
+      const live = (e, now = Date.now()) => {
+        const n = next(e, now) - (e.cadence === 'daily' ? 86400000 : 7 * 86400000);
+        return now >= n && now < n + e.durationMinutes * 60000;
+      };
+      const fmtSGT = (ms) => {
+        const d = new Date(ms + SGT);
+        const h = d.getUTCHours(), m = String(d.getUTCMinutes()).padStart(2, '0');
+        return `${((h + 11) % 12) + 1}:${m}${h < 12 ? 'am' : 'pm'}`;
+      };
+
+      // ---- #5 agenda
+      const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+      const DOW = [1,2,3,4,5,6,0];
+      const todayDow = parts(Date.now()).dow;
+      document.getElementById('agenda').innerHTML = DOW.map((dw, i) => {
+        const evs = EVENTS.filter((e) => e.cadence === 'daily' || e.weekdays.includes(dw));
+        const rows = evs.map((e) => {
+          const t = timeFor(e, dw);
+          const label = `${((t.h + 11) % 12) + 1}:${String(t.m).padStart(2,'0')}${t.h < 12 ? 'am' : 'pm'}`;
+          return `<div class="day__ev ev--${e.category}"><b>${label}</b>${e.name}</div>`;
+        }).join('');
+        return `<div class="day ${dw === todayDow ? 'day--today' : ''}">
+          <div class="day__name">${DAYS[i]}${dw === todayDow ? ' · today' : ''}</div>
+          ${rows || '<div class="day__none">rest day</div>'}
+        </div>`;
+      }).join('');
+      document.getElementById('agendaNote').textContent =
+        `Computed from the real schedule. Today is ${DAYS[DOW.indexOf(todayDow)]}.`;
+
+      // ---- #8 chip
+      let chipMode = 'full';
+      function renderChip() {
+        const ranked = EVENTS.map((e) => ({ e, t: next(e) })).sort((a, b) => a.t - b.t);
+        const { e, t } = ranked[0];
+        const isLive = live(e);
+        const ms = t - Date.now();
+        const h = Math.floor(ms / 3600000), m = Math.floor(ms / 60000) % 60, s = Math.floor(ms / 1000) % 60;
+        const cd = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        document.getElementById('chip').innerHTML = isLive
+          ? `<div class="chip__live">● live now</div><div class="chip__n">${e.name}</div>`
+          : `<div class="chip__k">Next up</div><div class="chip__n">${e.name}</div><div class="chip__t">${cd}</div>`;
+      }
+      renderChip();
+      setInterval(renderChip, 1000);
+      [['full','full'],['slim','collapsed']].forEach(([k, label], i) => {
+        const b = document.createElement('button');
+        b.className = 'opt'; b.textContent = label; b.setAttribute('aria-pressed', i === 0);
+        b.onclick = () => {
+          chipMode = k;
+          document.getElementById('handle').classList.toggle('handle--slim', k === 'slim');
+          [...document.getElementById('chipOpts').children].forEach((c) => c.setAttribute('aria-pressed','false'));
+          b.setAttribute('aria-pressed','true');
+        };
+        document.getElementById('chipOpts').appendChild(b);
+      });
+
+      // ---- #12 wall options
+      [['','standard'],['wall-divider--tall','tall'],['wall-divider--flat','flat']].forEach(([cls,label],i)=>{
+        const b = document.createElement('button');
+        b.className='opt'; b.textContent=label; b.setAttribute('aria-pressed', i===0);
+        b.onclick = () => {
+          const w = document.getElementById('wall');
+          w.className = 'wall-divider' + (cls ? ' ' + cls : '');
+          [...document.getElementById('wallOpts').children].forEach(c=>c.setAttribute('aria-pressed','false'));
+          b.setAttribute('aria-pressed','true');
+        };
+        document.getElementById('wallOpts').appendChild(b);
+      });
+
+      // ---- #6 local time
+      const sample = next(EVENTS[1]);
+      const localStr = new Date(sample).toLocaleString([], { weekday:'short', hour:'numeric', minute:'2-digit' });
+      const tzName = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const sgtStr = `${fmtSGT(sample)} SGT`;
+      document.getElementById('tzA1').innerHTML = `${sgtStr} <small>UTC+8</small>`;
+      document.getElementById('tzA2').innerHTML = `${localStr} <small>${tzName}</small>`;
+      document.getElementById('tzB1').innerHTML = `${sgtStr} <small>UTC+8</small>`;
+      document.getElementById('tzB2').innerHTML = `${localStr} <small>your time</small>`;
+      const tzC = document.getElementById('tzC');
+      const setC = (mode) => {
+        tzC.innerHTML = mode === 'sgt'
+          ? `${sgtStr} <small>UTC+8</small>`
+          : `${localStr} <small>${tzName}</small>`;
+        document.getElementById('tzSGT').setAttribute('aria-pressed', mode === 'sgt');
+        document.getElementById('tzLocal').setAttribute('aria-pressed', mode !== 'sgt');
+      };
+      setC('sgt');
+      document.getElementById('tzSGT').onclick = () => setC('sgt');
+      document.getElementById('tzLocal').onclick = () => setC('local');
+    </script>
+  </body>
+</html>

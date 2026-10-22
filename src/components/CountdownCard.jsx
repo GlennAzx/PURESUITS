@@ -3,12 +3,15 @@ import {
   nextOccurrence,
   activeOccurrence,
   splitCountdown,
-  formatSGT,
   cadenceLabel,
 } from '../data/schedule';
+import { formatTime, zoneLabel, downloadICS } from '../lib/calendar';
+import useTimeMode from '../lib/useTimeMode';
 
 export default function CountdownCard({ event }) {
   const [now, setNow] = useState(() => Date.now());
+  // Time zone preference is shared across every card and persisted.
+  const [timeMode] = useTimeMode();
 
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
@@ -100,10 +103,25 @@ export default function CountdownCard({ event }) {
 
         <div className="text-[10px] font-mono text-gray-500 pt-2.5 border-t border-gray-800 flex items-center justify-between">
           <span>{isOngoing ? 'Ends' : 'Next'}</span>
-          <span className={isOngoing ? 'text-jade-accent' : 'text-imperial-gold'}>
-            {formatSGT(target)}
+          <span className="flex items-baseline gap-1.5">
+            <span className={isOngoing ? 'text-jade-accent' : 'text-imperial-gold'}>
+              {formatTime(target, timeMode)}
+            </span>
+            <span className="text-[9px] uppercase tracking-wider text-gray-600">
+              {zoneLabel(timeMode)}
+            </span>
           </span>
         </div>
+
+        {/* Add to calendar. The .ics carries a 15-minute alarm, so it answers
+            "remind me", which the countdown alone cannot. */}
+        <button
+          type="button"
+          onClick={() => downloadICS(event, isOngoing ? ongoingStart : target)}
+          className="mt-2.5 w-full rounded-md border border-imperial-gold/25 py-1.5 text-[10px] uppercase tracking-wider text-imperial-gold/80 transition-colors hover:border-imperial-gold/60 hover:text-imperial-gold"
+        >
+          Add to calendar
+        </button>
       </div>
     </article>
   );
