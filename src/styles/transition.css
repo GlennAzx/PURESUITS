@@ -22,12 +22,24 @@
   will-change: transform;
   overflow: hidden;
 
-  /* No background. The tiles ARE the cover: they sit on a jittered grid with a
-     22% overlap, so the wall stays opaque through its own density. The route
-     swap happens underneath at the covered instant, so a gap would expose it —
-     PageTransition.jsx guarantees overlap, and the coverage is asserted by a
-     pixel test rather than assumed. */
-  background: transparent;
+  /* The base course: a packed grid of face-down tiles painted with gradients.
+     It is opaque, so coverage is guaranteed by construction and the messy layer
+     above it can be as chaotic as it likes without opening the page up. Gaps in
+     the spill show more tile, never felt. */
+  background-color: #e7c3ba;
+  background-image:
+    linear-gradient(90deg, rgba(60, 22, 16, 0.34) 0 2px, transparent 2px 54px),
+    repeating-linear-gradient(
+      180deg,
+      #f8e0d9 0px,
+      #f0cec5 16px,
+      #e2bbb1 32px,
+      #d2a69c 36px,
+      #b98d83 38px
+    );
+  background-size:
+    54px 100%,
+    100% 38px;
 }
 
 .pgt__tile {

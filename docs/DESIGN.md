@@ -569,7 +569,7 @@ changes underneath it.
 | Motion | one transform on one element: `translate3d(100%)` to `0` to `-100%` |
 | Timing | 320 ms cover, 320 ms reveal, `cubic-bezier(.76, 0, .24, 1)` |
 | Commit | the route state and `pushState` run at the instant the wall covers |
-| Tiles | the cover itself — ~170-270 tiles on a jittered grid, 1.35x cell overlap, no background behind |
+| Tiles | ~106-181 spill tiles over an opaque **tile-back base course**; sizes 1.15x-2.4x cell, tilt to 34deg |
 | Cost | one composited layer — the browser does not re-lay out during the sweep |
 
 **The route commits under the wall, not after it.** `playTransition(commit)` takes the state
@@ -582,9 +582,25 @@ when: reduced motion is set, the boot loader is still on screen, an overlay is n
 or another sweep is in flight. Measured: three navigations 45 ms apart end on the last URL
 with the wall parked off-screen.
 
-**The tiles ARE the cover — there is no background behind them.** `.pgt` has
-`background: transparent`. Every grid cell gets a tile, the tiles are drawn 1.35x the cell, and
-jitter and tilt come on top. Coverage is therefore structural, not a matter of luck.
+**Two layers: an opaque tile-back base course, then the messy spill on top.** `.pgt` paints a
+packed grid of face-down tiles with gradients (54x38 cells). That layer is what guarantees the
+route swap is hidden. The spill above it can then be as chaotic as it wants — sizes 1.15x to
+2.4x the cell, tilt to 34 degrees, thrown tiles and 3-4 tile piles — because a gap in the spill
+shows more tile, never the page.
+
+The previous single-layer approach (spill only, tuned overlap) could not do both: at 1.35
+overlap and 16 degrees it was gap-free but read as a grid, and at 34 degrees the corners opened
+0.08-0.11% pinholes. Splitting the job fixed it — density is the base course's job, mess is the
+spill's.
+
+**Backs are not evenly mixed.** Six soft blobs bias the back/face probability per region, so
+one area runs heavy on backs and another shows mostly faces. An even 50/50 everywhere was the
+thing that read as "not messy".
+
+**Measured timing is longer than the spec, and the extra is not the animation.** Two 320 ms
+animations = 640 ms, but wall-clock end-to-end measured 970-1126 ms over three production runs:
+the remainder is React re-rendering the new page plus two rAF waits on a loaded main thread.
+Do not "fix" this by shortening the animation without measuring on the target machine first.
 
 **Coverage is asserted by a pixel test, not assumed.** The check: append a magenta layer
 under `.pgt` (inside `.page-shell`, z-index 1), pin the panel to `translate3d(0,0,0)`, screenshot

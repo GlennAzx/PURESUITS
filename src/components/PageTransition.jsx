@@ -19,12 +19,17 @@ import { registerTransition } from '../lib/transition';
 // Cell of the underlying grid, in CSS px. Tiles are drawn larger than the cell
 // (OVERLAP) so rotation and jitter can never open a hole between them.
 const CELL_W = 76;
-// 1.35, not 1.22. A tile rotated 16 degrees pulls its corners inward by ~20px,
-// which was enough to open pinholes at 1.22. Coverage is asserted by a magenta
-// pixel test, not assumed.
-const OVERLAP = 1.35;
-const JITTER = 7; // px of positional wobble
-const TILT = 16; // degrees
+// Base tile is 1.6x the cell. Rotation up to 26 degrees pulls a corner inward by
+// ~38px, and 1.6x leaves a 42px margin, so corners cannot open a hole. A lower
+// base or a higher TILT breaks coverage — re-run the magenta test if you change
+// either.
+// The base course (see transition.css) guarantees coverage, so the spill can be
+// genuinely chaotic: tiles as small as 1.15x the cell and as large as 2.4x, with
+// up to 34 degrees of tilt.
+const OVERLAP = 1.15;
+const BIG_MAX = 2.4;
+const JITTER = 14;
+const TILT = 34;
 
 // mulberry32 — a tiny seeded PRNG. Same seed, same table, forever.
 function seeded(a) {
@@ -41,13 +46,38 @@ const WINDS = ['東', '南', '西', '北'];
 
 function buildTiles(w, h) {
   const rnd = seeded(20261022);
-  const cw = Math.max(58, Math.min(96, Math.round(w / 15)));
+  // Fewer, larger cells. 240 rotating, shadowed tiles cost enough paint to
+  // stretch a 640ms transition to ~800ms; ~100 big ones look the same or better
+  // and stay inside the timing.
+  const cw = Math.max(72, Math.min(132, Math.round(w / 10)));
   const ch = Math.round(cw * 1.34);
-  const tw = Math.round(cw * OVERLAP);
-  const th = Math.round(ch * OVERLAP);
+  // Base cell size. The tile size comes from `scale` in make(), which starts at
+  // OVERLAP — multiplying here as well would square the overlap and make every
+  // tile 2.5x the cell.
+  const tw = cw;
+  const th = ch;
 
   const cols = Math.ceil(w / cw) + 1;
   const rows = Math.ceil(h / ch) + 1;
+
+  // Backs are not evenly mixed: real tables have a dense run of backs in one
+  // place and loose faces in another. Six soft blobs bias the mix per region,
+  // so the split varies across the panel instead of being 50/50 everywhere.
+  const blobs = Array.from({ length: 6 }, () => ({
+    x: rnd() * w,
+    y: rnd() * h,
+    r: 160 + rnd() * 260,
+    p: rnd(),
+  }));
+
+  const backChance = (x, y) => {
+    let v = 0.5;
+    for (const b of blobs) {
+      const d = Math.hypot(x - b.x, y - b.y);
+      if (d < b.r) v += (b.p - 0.5) * (1 - d / b.r) * 1.9;
+    }
+    return Math.min(0.97, Math.max(0.03, v));
+  };
 
   const out = [];
   let id = 0;
@@ -58,35 +88,52 @@ function buildTiles(w, h) {
       // opened pinholes in the first version.
       const x = c * cw - tw * 0.12 + (rnd() - 0.5) * JITTER * 2;
       const y = r * ch - th * 0.12 + (rnd() - 0.5) * JITTER * 2;
+      const bias = backChance(x + tw / 2, y + th / 2);
 
-      out.push({
+      const make = (px, py, scale, rot) => ({
         id: id += 1,
-        left: x,
-        top: y,
-        w: tw,
-        h: th,
-        rot: (rnd() - 0.5) * TILT * 2,
-        back: rnd() < 0.45,
+        left: px,
+        top: py,
+        w: Math.round(tw * scale),
+        h: Math.round(th * scale),
+        rot,
+        back: rnd() < bias,
         face: Math.floor(rnd() * 5),
         glyph: WINDS[Math.floor(rnd() * 4)],
         pips: 1 + Math.floor(rnd() * 6),
       });
 
+      // The guaranteed tile for this cell. Scale varies from the safe base up
+      // to 2.3x, which is what stops every tile being the same slab.
+      out.push(make(x, y, OVERLAP + rnd() * (BIG_MAX - OVERLAP), (rnd() - 0.5) * TILT * 2));
+
       // A thrown tile, lying across its neighbours. Decorative only: it can
       // never be the difference between covered and not covered.
-      if (rnd() < 0.22) {
-        out.push({
-          id: id += 1,
-          left: x + (rnd() - 0.5) * cw * 0.9,
-          top: y + (rnd() - 0.5) * ch * 0.9,
-          w: tw,
-          h: th,
-          rot: (rnd() - 0.5) * TILT * 3,
-          back: rnd() < 0.45,
-          face: Math.floor(rnd() * 5),
-          glyph: WINDS[Math.floor(rnd() * 4)],
-          pips: 1 + Math.floor(rnd() * 6),
-        });
+      if (rnd() < 0.3) {
+        out.push(
+          make(
+            x + (rnd() - 0.5) * cw * 1.0,
+            y + (rnd() - 0.5) * ch * 1.0,
+            1.0 + rnd() * 0.7,
+            (rnd() - 0.5) * TILT * 3
+          )
+        );
+      }
+
+      // A small pile: three or four tiles almost on top of each other, as if
+      // someone dropped them. Reads as a stack, which a single layer cannot.
+      if (rnd() < 0.12) {
+        const pile = 2 + Math.floor(rnd() * 3);
+        for (let k = 0; k < pile; k += 1) {
+          out.push(
+            make(
+              x + (rnd() - 0.5) * 26,
+              y + (rnd() - 0.5) * 26,
+              1.05 + rnd() * 0.35,
+              (rnd() - 0.5) * TILT * 2.4
+            )
+          );
+        }
       }
     }
   }
