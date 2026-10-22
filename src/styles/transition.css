@@ -22,40 +22,33 @@
   will-change: transform;
   overflow: hidden;
 
-  /* The table. Deeper than the page's tile wall, so the ivory tiles and the
-     white faces both read against it. */
-  background-color: #2f6b4f;
-  background-image:
-    radial-gradient(ellipse 70% 60% at 50% 42%, rgba(255, 255, 255, 0.07), transparent 70%),
-    linear-gradient(180deg, #35734f 0%, #2b6146 55%, #1f4a37 100%);
-}
-
-/* A faint weave, so the felt is not a flat colour behind the tiles. */
-.pgt::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image:
-    repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.05) 0 1px, transparent 1px 4px),
-    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 4px);
-  pointer-events: none;
+  /* No background. The tiles ARE the cover: they sit on a jittered grid with a
+     22% overlap, so the wall stays opaque through its own density. The route
+     swap happens underneath at the covered instant, so a gap would expose it —
+     PageTransition.jsx guarantees overlap, and the coverage is asserted by a
+     pixel test rather than assumed. */
+  background: transparent;
 }
 
 .pgt__tile {
   position: absolute;
-  border-radius: 4px;
+  border-radius: 5px;
   display: grid;
   place-items: center;
+  /* A deep, tight shadow is what separates one tile from the one under it.
+     Light shadows merged the stack into a sheet of paper. */
   box-shadow:
-    0 4px 9px rgba(0, 0, 0, 0.42),
-    0 1px 0 rgba(255, 255, 255, 0.5) inset,
-    inset 0 -2px 0 rgba(0, 0, 0, 0.14);
+    0 6px 11px rgba(0, 0, 0, 0.5),
+    0 1px 0 rgba(255, 255, 255, 0.55) inset,
+    inset 0 -3px 0 rgba(0, 0, 0, 0.18);
 }
 
 /* Face down: the pink-white shell of a real tile back. */
 .pgt__tile--back {
-  background: linear-gradient(180deg, #fbf1ee 0%, #f3e2de 60%, #e4cfc9 100%);
-  border: 1px solid rgba(70, 30, 25, 0.22);
+  /* Clearly pink, not white. On a table the back is the only coloured side, and
+     without that difference the whole pile reads as blank paper. */
+  background: linear-gradient(180deg, #f7ddd6 0%, #eac3ba 62%, #d3a79d 100%);
+  border: 1px solid rgba(90, 40, 32, 0.3);
 }
 
 /* Face up: the ivory face. */

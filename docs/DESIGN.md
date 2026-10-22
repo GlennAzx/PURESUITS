@@ -569,7 +569,7 @@ changes underneath it.
 | Motion | one transform on one element: `translate3d(100%)` to `0` to `-100%` |
 | Timing | 320 ms cover, 320 ms reveal, `cubic-bezier(.76, 0, .24, 1)` |
 | Commit | the route state and `pushState` run at the instant the wall covers |
-| Tiles | 210 scattered tiles: 55% face down, 45% face up (winds, 中, 發, 白, pips), rotated +/-30deg |
+| Tiles | the cover itself — ~170-270 tiles on a jittered grid, 1.35x cell overlap, no background behind |
 | Cost | one composited layer — the browser does not re-lay out during the sweep |
 
 **The route commits under the wall, not after it.** `playTransition(commit)` takes the state
@@ -582,15 +582,23 @@ when: reduced motion is set, the boot loader is still on screen, an overlay is n
 or another sweep is in flight. Measured: three navigations 45 ms apart end on the last URL
 with the wall parked off-screen.
 
-**The tiles are a messy spill, not a grid, and the layout is seeded.** 210 absolutely
-positioned tiles on felt: 55% face down (pale pink shell), 45% face up (東南西北, 中, 發, the
-白 frame, or suit pips). Placement is 78% clustered around 17 centres with a centre-weighted
-jitter and 22% in four loose rows, because an even scatter reads as wallpaper rather than as a
-table. `seeded(20261022)` in `PageTransition.jsx` makes the table identical on every mount; a
-non-seeded `Math.random()` would reshuffle on every React render.
+**The tiles ARE the cover — there is no background behind them.** `.pgt` has
+`background: transparent`. Every grid cell gets a tile, the tiles are drawn 1.35x the cell, and
+jitter and tilt come on top. Coverage is therefore structural, not a matter of luck.
 
-**The felt is opaque on purpose.** The tile scatter has gaps, so the panel background is what
-guarantees the route swap is hidden. Never make the panel transparent.
+**Coverage is asserted by a pixel test, not assumed.** The check: append a magenta layer
+under `.pgt` (inside `.page-shell`, z-index 1), pin the panel to `translate3d(0,0,0)`, screenshot
+and count magenta pixels. At `OVERLAP = 1.22` this found 0.08-0.11% pinholes at tile corners,
+because a 16-degree rotation pulls a corner inward by ~20px. At 1.35 it is 0 holes at
+1200x760, 1600x900, 900x1000 and 1440x720. **If you change `TILT` or `JITTER`, re-run that test.**
+
+**Never move a tile off its cell.** The first version "skipped" 18% of cells and threw the tile
+nearby, which is exactly what opened the holes. Extra thrown tiles are now decorative only and
+sit on top of a complete grid.
+
+**The layout is seeded** (`seeded(20261022)`); a non-seeded `Math.random()` reshuffles on every
+React render. The grid is rebuilt on resize (180ms debounce) because it is derived from the
+viewport — a stale grid leaves a strip uncovered.
 
 **Do not animate the tiles individually.** They ride the panel; one transform moves all 210.
 No per-tile `filter` either — 210 filtered layers is a compositing cost the variation does not

@@ -1,25 +1,30 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { registerTransition } from '../lib/transition';
 
 /**
  * The overlay the page transition animates.
  *
- * A messy spill of mahjong tiles on felt, the way a table looks mid-hand: a mix
- * of face-up and face-down, rotated, slightly overlapping.
+ * The cover IS the tiles — there is no felt behind them. They sit on a
+ * jittered grid so neighbours overlap: the layout looks thrown, but every
+ * point of the viewport is covered by at least one tile. That matters,
+ * because the route swap happens underneath at the covered instant and the
+ * panel has no background to hide it.
  *
- * The layout is generated once with a SEEDED random function, so it is identical
- * on every mount and every reload. Random-per-render would reshuffle the table
- * each time React re-rendered, which is expensive and looks like noise.
+ * The layout is seeded, so the table is identical on every mount. A
+ * non-seeded random would reshuffle on every React render.
  *
  * The tiles never animate. The panel is one transform; they ride on it.
  */
 
-const COUNT = 210;
-const CLUSTERS = 17;
-// Rows that run across the table, like the wall a hand is dealt from. Real
-// tables are clumps plus a few straight runs, not an even scatter — an even
-// scatter reads as wallpaper.
-const ROW_SHARE = 0.22;
+// Cell of the underlying grid, in CSS px. Tiles are drawn larger than the cell
+// (OVERLAP) so rotation and jitter can never open a hole between them.
+const CELL_W = 76;
+// 1.35, not 1.22. A tile rotated 16 degrees pulls its corners inward by ~20px,
+// which was enough to open pinholes at 1.22. Coverage is asserted by a magenta
+// pixel test, not assumed.
+const OVERLAP = 1.35;
+const JITTER = 7; // px of positional wobble
+const TILT = 16; // degrees
 
 // mulberry32 — a tiny seeded PRNG. Same seed, same table, forever.
 function seeded(a) {
@@ -34,72 +39,77 @@ function seeded(a) {
 
 const WINDS = ['東', '南', '西', '北'];
 
-function buildTiles() {
+function buildTiles(w, h) {
   const rnd = seeded(20261022);
+  const cw = Math.max(58, Math.min(96, Math.round(w / 15)));
+  const ch = Math.round(cw * 1.34);
+  const tw = Math.round(cw * OVERLAP);
+  const th = Math.round(ch * OVERLAP);
 
-  // Cluster centres, then tiles gather around them with a wide jitter. This is
-  // what makes the spill read as messy instead of evenly sprinkled.
-  const centres = Array.from({ length: CLUSTERS }, () => ({
-    x: -4 + rnd() * 108,
-    y: -3 + rnd() * 106,
-  }));
-  const rows = Array.from({ length: 4 }, () => -3 + rnd() * 100);
+  const cols = Math.ceil(w / cw) + 1;
+  const rows = Math.ceil(h / ch) + 1;
 
   const out = [];
-  for (let i = 0; i < COUNT; i += 1) {
-    const w = 36 + Math.round(rnd() * 22);
-    const h = Math.round(w * 1.34);
+  let id = 0;
+  for (let r = 0; r < rows; r += 1) {
+    for (let c = 0; c < cols; c += 1) {
+      // EVERY cell gets a tile. Mess comes from jitter, tilt and extra tossed
+      // tiles on top — never from moving a tile off its cell, which is what
+      // opened pinholes in the first version.
+      const x = c * cw - tw * 0.12 + (rnd() - 0.5) * JITTER * 2;
+      const y = r * ch - th * 0.12 + (rnd() - 0.5) * JITTER * 2;
 
-    let x;
-    let y;
-    if (rnd() < ROW_SHARE) {
-      // A run across the table.
-      x = -4 + rnd() * 108;
-      y = rows[Math.floor(rnd() * rows.length)] + (rnd() - 0.5) * 3;
-    } else {
-      const c = centres[Math.floor(rnd() * centres.length)];
-      // Sum of two randoms biases toward the centre of the cluster.
-      x = c.x + (rnd() + rnd() - 1) * 20;
-      y = c.y + (rnd() + rnd() - 1) * 20;
+      out.push({
+        id: id += 1,
+        left: x,
+        top: y,
+        w: tw,
+        h: th,
+        rot: (rnd() - 0.5) * TILT * 2,
+        back: rnd() < 0.45,
+        face: Math.floor(rnd() * 5),
+        glyph: WINDS[Math.floor(rnd() * 4)],
+        pips: 1 + Math.floor(rnd() * 6),
+      });
+
+      // A thrown tile, lying across its neighbours. Decorative only: it can
+      // never be the difference between covered and not covered.
+      if (rnd() < 0.22) {
+        out.push({
+          id: id += 1,
+          left: x + (rnd() - 0.5) * cw * 0.9,
+          top: y + (rnd() - 0.5) * ch * 0.9,
+          w: tw,
+          h: th,
+          rot: (rnd() - 0.5) * TILT * 3,
+          back: rnd() < 0.45,
+          face: Math.floor(rnd() * 5),
+          glyph: WINDS[Math.floor(rnd() * 4)],
+          pips: 1 + Math.floor(rnd() * 6),
+        });
+      }
     }
-
-    // 55% face down, as on the reference table: mostly shells with faces
-    // showing through.
-    const back = rnd() < 0.55;
-
-    out.push({
-      id: i,
-      x,
-      y,
-      rot: (rnd() + rnd() - 1) * 30,
-      w,
-      h,
-      back,
-      face: Math.floor(rnd() * 5),
-      glyph: WINDS[Math.floor(rnd() * 4)],
-      pips: 1 + Math.floor(rnd() * 6),
-    });
   }
   return out;
 }
 
 function FaceContent({ tile }) {
   if (tile.face === 0) {
-    return <span className="pgt__glyph pgt__glyph--wind" style={{ fontSize: tile.w * 0.52 }}>{tile.glyph}</span>;
+    return <span className="pgt__glyph pgt__glyph--wind" style={{ fontSize: tile.w * 0.5 }}>{tile.glyph}</span>;
   }
   if (tile.face === 1) {
-    return <span className="pgt__glyph pgt__glyph--red" style={{ fontSize: tile.w * 0.56 }}>中</span>;
+    return <span className="pgt__glyph pgt__glyph--red" style={{ fontSize: tile.w * 0.54 }}>中</span>;
   }
   if (tile.face === 2) {
-    return <span className="pgt__glyph pgt__glyph--green" style={{ fontSize: tile.w * 0.56 }}>發</span>;
+    return <span className="pgt__glyph pgt__glyph--green" style={{ fontSize: tile.w * 0.54 }}>發</span>;
   }
   if (tile.face === 3) {
     return <span className="pgt__frame" />;
   }
   return (
-    <span className="pgt__pips" style={{ gap: Math.max(2, tile.w * 0.05) }}>
+    <span className="pgt__pips" style={{ gap: Math.max(2, tile.w * 0.045) }}>
       {Array.from({ length: tile.pips }, (_, k) => (
-        <i key={k} style={{ width: tile.w * 0.11, height: tile.w * 0.11 }} />
+        <i key={k} style={{ width: tile.w * 0.1, height: tile.w * 0.1 }} />
       ))}
     </span>
   );
@@ -107,12 +117,32 @@ function FaceContent({ tile }) {
 
 export default function PageTransition() {
   const ref = useRef(null);
-  const tiles = useMemo(buildTiles, []);
+  const [size, setSize] = useState(() => ({
+    w: typeof window === 'undefined' ? 1200 : window.innerWidth,
+    h: typeof window === 'undefined' ? 800 : window.innerHeight,
+  }));
 
   useEffect(() => {
     registerTransition(ref.current);
     return () => registerTransition(null);
   }, []);
+
+  // A resize rebuilds the table. Debounced: the grid depends on the viewport,
+  // and a stale grid would leave a strip of the page uncovered.
+  useEffect(() => {
+    let t = 0;
+    const onResize = () => {
+      clearTimeout(t);
+      t = setTimeout(() => setSize({ w: window.innerWidth, h: window.innerHeight }), 180);
+    };
+    window.addEventListener('resize', onResize);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener('resize', onResize);
+    };
+  }, []);
+
+  const tiles = useMemo(() => buildTiles(size.w, size.h), [size.w, size.h]);
 
   return (
     <div className="pgt" ref={ref} aria-hidden="true">
@@ -121,8 +151,8 @@ export default function PageTransition() {
           key={t.id}
           className={`pgt__tile pgt__tile--${t.back ? 'back' : 'face'}`}
           style={{
-            left: `${t.x}%`,
-            top: `${t.y}%`,
+            left: t.left,
+            top: t.top,
             width: t.w,
             height: t.h,
             transform: `rotate(${t.rot.toFixed(1)}deg)`,
