@@ -3,15 +3,19 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
 import { Play, Pause, Volume2, VolumeX, Link2, X } from 'lucide-react';
+import { media, MEDIA } from '../lib/media';
 
-const DEFAULT_SRC = '/hero-bamboo.mp4';
-const DEFAULT_POSTER = '/hero-bamboo-poster.jpg';
+// Resolved through media(), so the hero follows VITE_MEDIA_BASE: the R2 bucket
+// when it is set, this origin when it is not. See src/lib/media.js.
+const DEFAULT_SRC = media(MEDIA.heroVideo);
+const DEFAULT_POSTER = media(MEDIA.heroPoster);
 
 // The "custom video URL" control is a build-time preview tool, not a visitor
 // feature. `import.meta.env.DEV` is true under `npm run dev` and false in
 // `vite build`, so the button, the dialog and their strings are absent from the
-// deployed bundle. To change the hero for real, replace public/hero-bamboo.mp4
-// or change DEFAULT_SRC above and commit.
+// deployed bundle. To change the hero for real, upload a new file to R2:
+//   node scripts/upload-media.mjs ./media/hero hero
+// and update MEDIA.heroVideo in src/lib/media.js if the filename changes.
 const SHOW_STUDIO = import.meta.env.DEV;
 
 export default function VideoHero() {
@@ -128,7 +132,7 @@ export default function VideoHero() {
           muted={isMuted}
           playsInline
           preload="metadata"
-          poster={DEFAULT_POSTER}
+          poster={videoSrc === DEFAULT_SRC ? DEFAULT_POSTER : undefined}
           onError={() => setVideoFailed(true)}
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}

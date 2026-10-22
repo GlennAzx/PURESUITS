@@ -6,3 +6,11 @@ dist-ssr
 
 # Local tool state, not part of the site.
 .omc
+
+# Media staging. Heavy source files live in R2, never in git — git keeps every
+# version of a binary forever, so one committed clip bloats every future clone.
+# Upload with: node scripts/upload-media.mjs ./media/<dir> <prefix>
+/media/
+
+# Local env (holds VITE_MEDIA_BASE)
+.env.local
