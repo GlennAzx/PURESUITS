@@ -1,5 +1,11 @@
 # Page Transition Overlay — Implementation Plan
 
+> **STATUS: IMPLEMENTED 2026-10-22.** Built as a single rigid wall of tile backs
+> sweeping right to left, not as 12 independently animated strips. The controller
+> and the commit-under-cover mechanic are as planned; the visual is the wall the
+> user specified afterwards. See `docs/DESIGN.md` §15 for the shipped values.
+> Tasks 1-2 below describe the strip approach and are kept only as history.
+
 **Goal:** cover the content swap on an in-app route change with a short, on-brand
 animation, so switching pages reads as a deliberate move instead of an instant cut.
 

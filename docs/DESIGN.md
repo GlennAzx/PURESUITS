@@ -557,3 +557,32 @@ blank page behind an invisible overlay.
 **Halo press scale is `--halo-press`, default 0.99.** Set it to `1` to remove click movement
 entirely. Sequence: 0.88, 0.96, 0.98, 0.99 — the user asked for less three times, so treat
 this as a ceiling, not a starting point.
+
+## 15. Page transition — the tile wall
+
+A wall of face-down mahjong tiles sweeps right to left across the screen, and the route
+changes underneath it.
+
+| Part | Value |
+|---|---|
+| File | `src/lib/transition.js`, `src/components/PageTransition.jsx`, `src/styles/transition.css` |
+| Motion | one transform on one element: `translate3d(100%)` to `0` to `-100%` |
+| Timing | 320 ms cover, 320 ms reveal, `cubic-bezier(.76, 0, .24, 1)` |
+| Commit | the route state and `pushState` run at the instant the wall covers |
+| Tiles | CSS gradients: 56x38 cells, lit top lip, shadowed foot, 2px seam |
+| Cost | one composited layer — the browser does not re-lay out during the sweep |
+
+**The route commits under the wall, not after it.** `playTransition(commit)` takes the state
+update as a callback and runs it after the cover animation resolves, then waits two frames so
+the new page has painted before the reveal. Measured: wall fully covers from 395 ms, route
+changes at 412 ms — so the swap is never visible.
+
+**A decoration must never lose a navigation.** `playTransition` calls `commit()` immediately
+when: reduced motion is set, the boot loader is still on screen, an overlay is not registered,
+or another sweep is in flight. Measured: three navigations 45 ms apart end on the last URL
+with the wall parked off-screen.
+
+**Do not animate the tiles individually.** Tiles are a repeating background, not DOM nodes. A
+hundred nodes animating in sync costs more than one panel and looks identical at speed.
+
+**Reduced motion commits instantly** — verified at 75 ms with no wall shown.

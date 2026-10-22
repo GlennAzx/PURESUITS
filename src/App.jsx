@@ -13,6 +13,8 @@ import BuildsPage from './pages/BuildsPage';
 import GalleryPage from './pages/GalleryPage';
 import NotFoundPage from './pages/NotFoundPage';
 import Loader from './components/Loader';
+import PageTransition from './components/PageTransition';
+import { playTransition } from './lib/transition';
 import { installRevealGuard } from './lib/revealGuard';
 import { setLenis } from './lib/scroll';
 
@@ -88,7 +90,8 @@ export default function App() {
 
   // Back / Forward. Without this the URL changes but the view does not.
   useEffect(() => {
-    const onPop = () => setRoute(parseRoute());
+    // Back/Forward already changed the URL, so only the state is committed.
+    const onPop = () => playTransition(() => setRoute(parseRoute()));
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
   }, []);
@@ -97,11 +100,16 @@ export default function App() {
   const navigate = useCallback((page, slug = null) => {
     const next = PAGES.includes(page) ? page : 'home';
     const nextSlug = next === 'members' ? slug : null;
-    setRoute({ page: next, slug: nextSlug, source: nextSlug ? 'click' : 'load' });
     const url = pathFor(next, nextSlug);
-    if (window.location.pathname !== url) {
-      window.history.pushState({ page: next, slug: nextSlug }, '', url);
-    }
+
+    // The state update and the history push happen INSIDE the transition, at
+    // the instant the tile wall covers the screen, so the swap is never seen.
+    playTransition(() => {
+      setRoute({ page: next, slug: nextSlug, source: nextSlug ? 'click' : 'load' });
+      if (window.location.pathname !== url) {
+        window.history.pushState({ page: next, slug: nextSlug }, '', url);
+      }
+    });
   }, []);
 
   // Clicking outside a member drops the slug from the URL but does not move the
@@ -207,6 +215,7 @@ export default function App() {
   return (
     <div ref={mainRef} className="page-shell min-h-screen bg-ink-black text-gray-200">
       <Loader ms={BOOT_MS} />
+      <PageTransition />
       <DiceCursor />
       <FannedMahjongNav activePage={activePage} setActivePage={navigate} />
       <main className="pb-16">{renderPage()}</main>

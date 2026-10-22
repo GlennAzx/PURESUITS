@@ -1,0 +1,64 @@
+/* ─────────────────────────────────────────────────────────────
+   Page transition — a wall of face-down mahjong tiles
+   sweeping right to left across the screen.
+
+   One element, one transform. The wall is a single composited layer:
+   the tiles are a repeating gradient, not hundreds of DOM nodes, so
+   the browser never re-lays out during the sweep.
+
+   Timing lives in src/lib/transition.js.
+   ───────────────────────────────────────────────────────────── */
+
+.pgt {
+  position: fixed;
+  inset: 0;
+  z-index: 9000; /* above content, below the boot loader (10000) */
+  pointer-events: none;
+  visibility: hidden;
+  transform: translate3d(100%, 0, 0); /* parked off the right edge */
+  will-change: transform;
+  contain: strict;
+
+  /* Tile back. A mahjong wall shows the plain side of the tile: a smooth
+     green shell with a lit top edge and a dark seam where it meets the next
+     one. Three layers: seam, per-tile shading, base. */
+  background-color: #6fa985;
+  background-image:
+    /* seam between tiles, vertical */
+    linear-gradient(90deg, rgba(0, 0, 0, 0.62) 0 2px, transparent 2px 56px),
+    /* corner shadow: a dark arc at the top-left of every tile, which is what
+       makes a cell read as a rounded object rather than a grid square */
+    radial-gradient(circle at 0 0, rgba(0, 0, 0, 0.5) 0 2.5px, transparent 3.5px),
+    /* the tile itself: lit top lip, body, shadowed foot */
+    repeating-linear-gradient(
+      180deg,
+      #d9f0e2 0px,
+      #bfe0cb 2px,
+      #abd1b7 12px,
+      #9cc7a9 28px,
+      #7fae92 34px,
+      #5f9076 37px,
+      #4c7a63 38px
+    ),
+    linear-gradient(180deg, #a9d3b8, #5f9a7e);
+  background-size:
+    56px 100%,
+    56px 38px,
+    100% 38px,
+    100% 100%;
+  background-repeat: repeat, repeat, repeat, no-repeat;
+}
+
+/* The seam between the two stacked rows of a real wall: a faint horizontal
+   line across the middle, so the wall reads as bricks rather than as a grid. */
+.pgt::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(
+    180deg,
+    transparent 0 49.4%,
+    rgba(0, 0, 0, 0.22) 49.4% 50.6%,
+    transparent 50.6% 100%
+  );
+}
