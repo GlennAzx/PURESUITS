@@ -93,10 +93,12 @@
   border-color: rgb(var(--c-imperial-gold) / 0.8);
 }
 
-/* 0.96, not 0.88. At 0.88 the die visibly jumped on every click — the user
-   asked for less. 4% is felt as a press without reading as motion. */
+/* 0.98. The sequence was 0.88 then 0.96; the user asked for less again. At 2%
+   the die registers as pressed without any visible travel. Do not raise this —
+   the click motion is the one thing about this cursor that has been rejected
+   twice. */
 :root[data-cursor="halo"].is-pressing .dice-cursor {
-  scale: 0.96;
+  scale: 0.98;
 }
 
 /* ── D. ROLL-ON-HOT — rolls only where it matters ──────────────

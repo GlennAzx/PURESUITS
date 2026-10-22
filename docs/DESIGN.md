@@ -505,6 +505,8 @@ Three systems, each selected by an attribute on `<html>` in `index.html`:
 |---|---|---|
 | Texture | `src/styles/texture.css` | `none` `mat` `grid` `silk` `smoke` `coin` |
 | Cursor | `src/styles/cursor-variants.css` | `tumble` `still` `dot` `halo` `rollhot` `none` |
+
+**Halo press scale is 0.98.** Sequence: 0.88, then 0.96, then 0.98 — the user asked twice for less click movement. Treat 0.98 as the ceiling; the click motion is the one property of this cursor that has been rejected twice.
 | Loader | `src/styles/loader.css` + `components/Loader.jsx` | `pair` (only variant wired) |
 
 Furniture (404, wall divider) lives in `src/styles/furniture.css`.
