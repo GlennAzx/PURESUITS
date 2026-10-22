@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dice cursor — variants</title>
+    <style>
+      /* Dev-only lab. Not linked from the app, not part of the build.
+         All four variants are pre-rendered sprites: the browser animates a
+         background-position. No 3D, no per-frame JS. */
+      :root {
+        --page: #2c4763;
+        --ink: #eef5fa;
+        --muted: #a9c0d4;
+        --card: #22394f;
+        --line: #3d5b78;
+        --accent: #f0904f;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 40px 32px 64px;
+        background: var(--page);
+        color: var(--ink);
+        font: 15px/1.5 "Segoe UI", system-ui, sans-serif;
+      }
+      header { max-width: 1080px; margin: 0 auto 28px; }
+      h1 { font-size: 24px; margin: 0 0 6px; font-weight: 600; }
+      .sub { color: var(--muted); margin: 0; }
+      .row {
+        max-width: 1080px;
+        margin: 0 auto 18px;
+        display: grid;
+        grid-template-columns: 250px 1fr;
+        gap: 22px;
+        align-items: center;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 16px 18px;
+      }
+      .meta h2 { margin: 0 0 4px; font-size: 16px; font-weight: 600; }
+      .meta p { margin: 0; color: var(--muted); font-size: 13px; }
+      .meta .tag {
+        display: inline-block;
+        margin-top: 8px;
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+      .field {
+        position: relative;
+        height: 120px;
+        border-radius: 8px;
+        border: 1px dashed var(--line);
+        background: repeating-linear-gradient(
+          45deg,
+          rgba(255, 255, 255, 0.02) 0 10px,
+          transparent 10px 20px
+        );
+        overflow: hidden;
+        cursor: none;
+        touch-action: none;
+      }
+      .field .hint {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        color: var(--muted);
+        font-size: 13px;
+        pointer-events: none;
+        transition: opacity 160ms ease;
+      }
+      .field.is-live .hint { opacity: 0; }
+      .die {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 50px;
+        height: 50px;
+        margin: -25px 0 0 -25px;
+        background-repeat: no-repeat;
+        background-size: 600px 50px;
+        animation: play 1s steps(12) infinite;
+        pointer-events: none;
+        opacity: 0;
+        will-change: background-position;
+      }
+      @keyframes play {
+        from { background-position: 0 0; }
+        to   { background-position: -600px 0; }
+      }
+      .foot { max-width: 1080px; margin: 26px auto 0; color: var(--muted); font-size: 13px; }
+      .foot code { color: var(--ink); }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Dice cursor — four variants</h1>
+      <p class="sub">
+        Move the mouse inside each box. All four are pre-rendered sprites, so the browser
+        only animates a background position — no 3D transform per frame.
+      </p>
+    </header>
+
+    <section class="row" data-src="/dice/roll.png" data-duration="1s">
+      <div class="meta">
+        <h2>A — Roll</h2>
+        <p>End-over-end tumble, 12 frames.</p>
+        <span class="tag">1.0s loop</span>
+      </div>
+      <div class="field"><span class="hint">move here</span><div class="die"></div></div>
+    </section>
+
+    <section class="row" data-src="/dice/tumble.png" data-duration="1s">
+      <div class="meta">
+        <h2>B — Tumble</h2>
+        <p>Diagonal tumble on both axes, 12 frames.</p>
+        <span class="tag">1.0s loop</span>
+      </div>
+      <div class="field"><span class="hint">move here</span><div class="die"></div></div>
+    </section>
+
+    <section class="row" data-src="/dice/wheel.png" data-duration="1s">
+      <div class="meta">
+        <h2>C — Wheel</h2>
+        <p>Face-on spin in the page plane. No perspective distortion.</p>
+        <span class="tag">1.0s loop</span>
+      </div>
+      <div class="field"><span class="hint">move here</span><div class="die"></div></div>
+    </section>
+
+    <section class="row" data-src="/dice/cycle.png" data-duration="1.5s">
+      <div class="meta">
+        <h2>D — Flip</h2>
+        <p>Face changes 1→2→3→4→5→6 with a small pop. No rotation.</p>
+        <span class="tag">1.5s loop</span>
+      </div>
+      <div class="field"><span class="hint">move here</span><div class="die"></div></div>
+    </section>
+
+    <p class="foot">
+      Tell me the letter. Sprites live in <code>public/dice/</code>; the chosen one replaces
+      the 3D cursor in <code>src/components/DiceCursor.jsx</code>.
+    </p>
+
+    <script>
+      document.querySelectorAll('.row').forEach((row) => {
+        const field = row.querySelector('.field');
+        const die = row.querySelector('.die');
+        die.style.backgroundImage = `url(${row.dataset.src})`;
+        die.style.animationDuration = row.dataset.duration;
+
+        field.addEventListener('pointermove', (e) => {
+          const r = field.getBoundingClientRect();
+          die.style.left = `${e.clientX - r.left}px`;
+          die.style.top = `${e.clientY - r.top}px`;
+          die.style.opacity = '1';
+          field.classList.add('is-live');
+        });
+        field.addEventListener('pointerleave', () => {
+          /* keep is-live: the hint is only useful until the box is first used */
+        });
+      });
+    </script>
+  </body>
+</html>

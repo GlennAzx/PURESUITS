@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>dice capture</title>
+    <style>
+      /* Capture-only. Renders ONE die at ONE pose on a transparent page so
+         Playwright can shoot a frame. The sprite built from these frames is
+         what ships; this page is dev-only and is not part of the build. */
+      :root { --dice-edge: 140, 121, 84; }
+
+      html, body { margin: 0; padding: 0; background: transparent; }
+
+      .stage {
+        width: 50px;
+        height: 50px;
+        display: grid;
+        place-items: center;
+        perspective: 150px;
+      }
+
+      .cube {
+        position: relative;
+        width: 32px;
+        height: 32px;
+        transform-style: preserve-3d;
+      }
+
+      .face {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+        padding: 2px;
+        border-radius: 4px;
+        background: #efe7d5;
+        box-shadow:
+          inset 0 0 0 1px rgba(var(--dice-edge), 0.34),
+          inset 0 0 7px rgba(var(--dice-edge), 0.2);
+        backface-visibility: hidden;
+      }
+
+      .cell { display: grid; place-items: center; }
+
+      .pip {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #1b2733;
+        box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.45);
+      }
+
+      .face--red .pip { background: rgb(226, 96, 74); }
+
+      .face--front .pip {
+        width: 13px;
+        height: 13px;
+        box-shadow: inset 0 2px 2px rgba(0, 0, 0, 0.4);
+      }
+
+      .face--front  { transform: translateZ(16px); }
+      .face--back   { transform: rotateY(180deg) translateZ(16px); }
+      .face--right  { transform: rotateY(90deg) translateZ(16px); }
+      .face--left   { transform: rotateY(-90deg) translateZ(16px); }
+      .face--top    { transform: rotateX(90deg) translateZ(16px); }
+      .face--bottom { transform: rotateX(-90deg) translateZ(16px); }
+    </style>
+  </head>
+  <body>
+    <div class="stage" id="stage">
+      <div class="cube" id="cube"></div>
+    </div>
+
+    <script>
+      // Same pip map as src/components/DiceCursor.jsx. Opposite faces sum to 7.
+      const FACES = [
+        { key: 'front', pips: [4], red: true },
+        { key: 'back', pips: [0, 2, 3, 5, 6, 8], red: false },
+        { key: 'right', pips: [0, 4, 8], red: false },
+        { key: 'left', pips: [0, 2, 6, 8], red: true },
+        { key: 'top', pips: [0, 2, 4, 6, 8], red: false },
+        { key: 'bottom', pips: [0, 8], red: false },
+      ];
+
+      const cube = document.getElementById('cube');
+      cube.innerHTML = FACES.map((f) => `
+        <div class="face face--${f.key}${f.red ? ' face--red' : ''}">
+          ${Array.from({ length: 9 }, (_, i) =>
+            `<span class="cell">${f.pips.includes(i) ? '<i class="pip"></i>' : ''}</span>`
+          ).join('')}
+        </div>
+      `).join('');
+
+      window.setPose = (rx, ry, rz, scale) => {
+        cube.style.transform =
+          `rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${rz}deg) scale(${scale || 1})`;
+      };
+
+      window.setPose(0, 0, 0, 1);
+    </script>
+  </body>
+</html>
