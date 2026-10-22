@@ -17,7 +17,10 @@
   display: grid;
   place-items: center;
   background: rgb(var(--c-ink-black));
-  transition: opacity 520ms var(--ease-out);
+  /* Two speeds: the backdrop clears quickly, the dice leave a beat later. A
+     single flat dissolve of both read as a hard cut with a soft edge. */
+  transition: opacity 420ms var(--ease-out);
+  will-change: opacity;
 }
 
 .loader[data-state="out"] {
@@ -29,6 +32,28 @@
   display: grid;
   justify-items: center;
   gap: 22px;
+  transition:
+    opacity 320ms var(--ease-out),
+    transform 320ms var(--ease-out);
+  will-change: opacity, transform;
+}
+
+/* The dice lift and shrink away as they fade, so the eye follows them out. */
+.loader[data-state="out"] .loader__inner {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.97);
+}
+
+/* Cross-fade: while the overlay is up, the page behind is held at 0. When the
+   overlay releases, both move at once, so there is never a frame where a blank
+   page is exposed. The class is added by Loader.jsx, so if the loader never
+   mounts the page is simply visible — no flash of nothing. */
+html.is-buffering .page-shell {
+  opacity: 0;
+}
+
+.page-shell {
+  transition: opacity 460ms var(--ease-out);
 }
 
 .loader__label {

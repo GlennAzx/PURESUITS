@@ -38,6 +38,13 @@ const TITLES = {
   'not-found': '404 | PURESUIT',
 };
 
+// Boot buffer: the full branded beat on a cold load.
+const BOOT_MS = 2500;
+// Nav buffer: every in-app route change. Short on purpose — the app is a SPA
+// and nothing is actually loading, so this is a transition, not a wait. Raise
+// it here if the beat should be longer.
+const NAV_MS = 700;
+
 const pathFor = (page, slug) => {
   if (page === 'home') return '/';
   if (page === 'members' && slug) return `/members/${encodeURIComponent(slug)}`;
@@ -74,6 +81,8 @@ function parseRoute() {
 
 export default function App() {
   const [route, setRoute] = useState(parseRoute);
+  // Key forces a fresh Loader per navigation, so its timer restarts.
+  const [navBuffer, setNavBuffer] = useState(null);
   const mainRef = useRef(null);
   const lenisRef = useRef(null);
   const activePage = route.page;
@@ -117,6 +126,17 @@ export default function App() {
 
   useEffect(() => {
     document.title = TITLES[activePage] ?? TITLES.home;
+  }, [activePage]);
+
+  // Nav buffer. The ref skips the first run: the boot loader already covers the
+  // initial mount, and showing both would stack two overlays.
+  const firstPage = useRef(true);
+  useEffect(() => {
+    if (firstPage.current) {
+      firstPage.current = false;
+      return;
+    }
+    setNavBuffer({ key: Date.now() });
   }, [activePage]);
 
   // Initialize Lenis smooth scroll + sync with GSAP ScrollTrigger
@@ -198,7 +218,10 @@ export default function App() {
 
   return (
     <div ref={mainRef} className="page-shell min-h-screen bg-ink-black text-gray-200">
-      <Loader />
+      <Loader ms={BOOT_MS} />
+      {navBuffer ? (
+        <Loader key={navBuffer.key} ms={NAV_MS} onDone={() => setNavBuffer(null)} />
+      ) : null}
       <DiceCursor />
       <FannedMahjongNav activePage={activePage} setActivePage={navigate} />
       <main className="pb-16">{renderPage()}</main>

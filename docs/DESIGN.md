@@ -533,15 +533,30 @@ Measured deltas on a 120x120 bare-background crop (max channel difference):
 | coin | 20 | 0.66 | 768 |
 | smoke | 3 | 0.08 | 0 — still effectively invisible; needs a redesign, not a tweak |
 
-**The loader is a mandatory beat of 2500 ms, then a 560 ms fade.** `MANDATORY_MS` in
-`components/Loader.jsx` is the only number to change. The user asked for "a few seconds" —
-this is a deliberate, permanent cost on every full page load, not a wait for anything.
+**The buffer runs in two modes, both mandatory.** `components/Loader.jsx` is mounted twice in
+`App.jsx` with different durations:
 
-It does **not** wait for `window.load` any more: `load` includes the hero video and once held
-the overlay for 3.2 s, which was an accident rather than a decision.
+| Mode | Constant | Duration | When |
+|---|---|---|---|
+| Boot | `BOOT_MS` | 2500 ms | Full page load — every route, not just Home |
+| Nav | `NAV_MS` | 700 ms | Every in-app route change |
 
-The progress bar is eased across the whole 2500 ms (0 to 92, then 100 on finish) and is
-written straight to the fill element from a rAF loop. A React state update per frame would
-re-render the component ~150 times for one animation.
+A route change in this app is a React state update with nothing to fetch. `NAV_MS` exists
+because the user asked for the buffer on every page, not because anything loads. Keep it
+short; raise it in `App.jsx` if the beat should be longer.
 
-Measured: visible 3003 ms end to end; bar 4.4% at 100 ms, 52% at 900 ms, 83% at 1.9 s.
+**The fade is layered, not a flat dissolve.** The backdrop clears in 420 ms while the dice
+lift and shrink away in 320 ms, so the eye follows them out. In parallel, `html.is-buffering`
+holds `.page-shell` at `opacity: 0` and releases it with a 460 ms fade when the overlay goes,
+so there is never a frame exposing a blank page.
+
+Measured: boot loader gone at 3418 ms (2500 + 470); nav loader gone at 1171 ms (700 + 470);
+shell opacity during a nav 1 -> 0.22 at 120 ms -> 0.03 at 300 ms.
+
+**`html.is-buffering` is added by the component**, so if the loader never mounts the page is
+simply visible. Do not move that class into static HTML — a JS failure would then leave a
+blank page behind an invisible overlay.
+
+**Halo press scale is `--halo-press`, default 0.99.** Set it to `1` to remove click movement
+entirely. Sequence: 0.88, 0.96, 0.98, 0.99 — the user asked for less three times, so treat
+this as a ceiling, not a starting point.

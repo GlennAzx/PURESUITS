@@ -65,6 +65,13 @@
    Keeps the mahjong die but parks it in a ring that reacts to
    interactive elements. The die itself never rolls; the ring does the
    signalling. A middle option: identity plus function. */
+:root {
+  /* How far the die shrinks while a button is held. 1 = no movement at all.
+     This is the knob the user asked for; the sequence has been 0.88, 0.96,
+     0.98, and now 0.99. Anything below 0.98 has been rejected twice. */
+  --halo-press: 0.99;
+}
+
 :root[data-cursor="halo"] .dice-cursor {
   /* Drive the cell, not background-size. The sprite's frame width is
      calc(frames * cell), so overriding only background-size left the 34px
@@ -72,9 +79,10 @@
   --dice-cell: 34px;
   animation: none !important;
   background-position: 0 0 !important;
+  /* Slower than before (160 -> 220ms): a 1% change at 160ms read as a snap. */
   transition:
     opacity 200ms var(--ease-out),
-    scale 160ms var(--ease-out);
+    scale 220ms var(--ease-out);
 }
 
 :root[data-cursor="halo"] .dice-cursor::after {
@@ -98,7 +106,7 @@
    the click motion is the one thing about this cursor that has been rejected
    twice. */
 :root[data-cursor="halo"].is-pressing .dice-cursor {
-  scale: 0.98;
+  scale: var(--halo-press);
 }
 
 /* ── D. ROLL-ON-HOT — rolls only where it matters ──────────────
