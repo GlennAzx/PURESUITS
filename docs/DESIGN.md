@@ -492,3 +492,44 @@ click still navigates to `/members/quincy` with `pointer-events: none`; die pres
 five routes; `display: none` and `cursor: auto` under reduced motion and on touch; no page
 errors.
 
+
+## 14. Page texture, cursor variants, loader (LOCAL ONLY)
+
+Three systems, each selected by an attribute on `<html>` in `index.html`:
+
+```html
+<html data-texture="silk" data-cursor="halo">
+```
+
+| System | File | Values |
+|---|---|---|
+| Texture | `src/styles/texture.css` | `none` `mat` `grid` `silk` `smoke` `coin` |
+| Cursor | `src/styles/cursor-variants.css` | `tumble` `still` `dot` `halo` `rollhot` `none` |
+| Loader | `src/styles/loader.css` + `components/Loader.jsx` | `pair` (only variant wired) |
+
+Furniture (404, wall divider) lives in `src/styles/furniture.css`.
+
+**The texture must paint on `.page-shell`, not on `body`.** `body::before` at `z-index: -1`
+sits *under* the app's opaque root `<div class="bg-ink-black">`, which covers the viewport, so
+the texture painted nothing. Measured: **0 pixels of difference** between `none` and `silk`
+across a 120x120 crop. `.page-shell` now carries `position: relative; isolation: isolate`, so
+its `::before` lands above its own background and below its children. After the fix: max
+channel delta **18** for silk.
+
+**Verify a background texture by PIXELS, not by computed style.** Reading
+`getComputedStyle(body, '::before').backgroundImage` and counting gradient layers proved only
+that the rule matched. Two textures passed that check while rendering invisibly. The honest
+test is a pixel diff of the same crop with the texture off and on.
+
+Measured deltas on a 120x120 bare-background crop (max channel difference):
+
+| Texture | max | mean | pixels > 3 |
+|---|---|---|---|
+| mat | 10 | 2.92 | 4893 |
+| grid | 14 | 0.82 | 615 |
+| silk | 18 | 1.03 | 1973 |
+| coin | 20 | 0.66 | 768 |
+| smoke | 3 | 0.08 | 0 — still effectively invisible; needs a redesign, not a tweak |
+
+**The loader waits for `document.fonts.ready`, never `window.load`.** `load` includes the hero
+video; the overlay sat on screen for 3.2 s because of it. Floor is 550 ms, hard cap 1200 ms.

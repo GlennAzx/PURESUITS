@@ -11,7 +11,18 @@
    background colour; the texture only sits on top of it.
    ───────────────────────────────────────────────────────────── */
 
-body::before {
+/* The texture paints on .page-shell, not body. The app's root div carries an
+   opaque bg-ink-black and covers the viewport, so a body::before at z-index -1
+   is painted UNDER that div and never seen: measured 0 pixels of difference
+   between 'none' and 'silk' before this change. .page-shell isolates its own
+   stacking context, so -1 sits above its background and below its children. */
+.page-shell {
+  position: relative;
+  isolation: isolate;
+}
+
+body::before,
+.page-shell::before {
   content: "";
   position: fixed;
   inset: 0;
@@ -28,16 +39,17 @@ body::before {
    Two fine diagonal weaves at 90° to each other, plus a slow
    vignette. This is the quietest option: at 4px the weave reads as
    a material, not as stripes. */
-:root[data-texture="mat"] body::before {
+:root[data-texture="mat"] body::before,
+:root[data-texture="mat"] .page-shell::before {
   background-image:
     repeating-linear-gradient(
       45deg,
-      rgba(255, 255, 255, 0.016) 0 1px,
+      rgba(255, 255, 255, 0.03) 0 1px,
       transparent 1px 4px
     ),
     repeating-linear-gradient(
       -45deg,
-      rgba(0, 0, 0, 0.035) 0 1px,
+      rgba(0, 0, 0, 0.06) 0 1px,
       transparent 1px 4px
     ),
     radial-gradient(
@@ -53,7 +65,8 @@ body::before {
    contrast: 64x44 cells, the proportion of a real tile face, with a
    lighter rule on the top and left of each cell so the cells read as
    raised rather than drawn. */
-:root[data-texture="grid"] body::before {
+:root[data-texture="grid"] body::before,
+:root[data-texture="grid"] .page-shell::before {
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.028) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.028) 1px, transparent 1px),
@@ -78,7 +91,8 @@ body::before {
    repeats. Warmer than the others: the lattice carries a trace of
    the accent orange, so it reads as woven cloth rather than graph
    paper. */
-:root[data-texture="silk"] body::before {
+:root[data-texture="silk"] body::before,
+:root[data-texture="silk"] .page-shell::before {
   background-image:
     repeating-linear-gradient(
       30deg,
@@ -111,16 +125,17 @@ body::before {
    Four soft radial clouds at different scales. There is no repeat,
    so nothing tiles and nothing reads as a texture — it simply stops
    the background being one flat colour. The calmest option. */
-:root[data-texture="smoke"] body::before {
+:root[data-texture="smoke"] body::before,
+:root[data-texture="smoke"] .page-shell::before {
   background-image:
     radial-gradient(
       ellipse 50% 40% at 15% 12%,
-      rgb(var(--c-jade-accent) / 0.05),
+      rgb(var(--c-jade-accent) / 0.12),
       transparent 60%
     ),
     radial-gradient(
       ellipse 45% 35% at 85% 28%,
-      rgb(var(--c-imperial-gold) / 0.04),
+      rgb(var(--c-imperial-gold) / 0.1),
       transparent 60%
     ),
     radial-gradient(
@@ -140,7 +155,8 @@ body::before {
    68px repeat. Built from one radial ring plus a small square, so
    the "coin" is a ring with a hole rather than a drawn circle.
    The busiest option; still under 4% contrast. */
-:root[data-texture="coin"] body::before {
+:root[data-texture="coin"] body::before,
+:root[data-texture="coin"] .page-shell::before {
   background-image:
     radial-gradient(
       circle at 50% 50%,
@@ -165,7 +181,8 @@ body::before {
    gets them — they do not move — but a high-contrast preference
    means the page must not carry a competing pattern. */
 @media (prefers-contrast: more) {
-  body::before {
+  body::before,
+  .page-shell::before {
     background-image: none;
   }
 }

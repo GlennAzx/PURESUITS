@@ -197,7 +197,7 @@ export default function App() {
   };
 
   return (
-    <div ref={mainRef} className="min-h-screen bg-ink-black text-gray-200">
+    <div ref={mainRef} className="page-shell min-h-screen bg-ink-black text-gray-200">
       <Loader />
       <DiceCursor />
       <FannedMahjongNav activePage={activePage} setActivePage={navigate} />
