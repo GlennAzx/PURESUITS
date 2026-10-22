@@ -599,6 +599,12 @@ back to DOM tiles (~0 KB, needs per-tile motion to churn).
 transition done at 856-869 ms in headless (the animation is 640 ms; the rest is React
 re-render and paint).
 
+**Pending: v2 in the lab.** `transition-lab.html` + `public/transition/tiles-v2-q66.webp`
+(8 frames, 1560x860, 512 KB) is the next candidate: green tile backs instead of pink, whole tiles
+only (nothing cut at the frame edge), gaps allowed with the blue field baked in, feathered ends,
+and **linear** motion so the entrance and exit run at one constant speed. The app still ships v1;
+do not wire v2 until the user approves the lab.
+
 **Regenerating the sprite:** serve `transition-capture.html` from the dev server, set the
 viewport to 1560x860, call `window.setPhase(i / 10)` for i in 0..9, screenshot each with
 `omit_background=True` and a transparent CDP background, then stitch horizontally and encode

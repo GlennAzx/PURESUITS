@@ -85,7 +85,7 @@
     <div class="row" data-cover="220">
       <div class="meta">
         <h2>Fast</h2>
-        <p>220 + 220 ms</p>
+        <p>220 + 220 ms, linear</p>
         <button class="btn">Play</button>
       </div>
       <div class="screen"><div class="mock"></div><div class="pgt"></div></div>
@@ -149,9 +149,11 @@
             { duration: cover * 2, easing: `steps(${FRAMES}, end)`, fill: 'forwards' }
           );
 
+          // Linear: constant speed across the whole crossing. Easing made the
+          // wall accelerate in and brake out, which read as two separate moves.
           await pgt.animate(
             [{ transform: 'translate3d(100%,0,0)' }, { transform: 'translate3d(0,0,0)' }],
-            { duration: cover, easing: 'cubic-bezier(.76,0,.24,1)', fill: 'forwards' }
+            { duration: cover, easing: 'linear', fill: 'forwards' }
           ).finished;
 
           // content swaps here, under the tiles
@@ -164,7 +166,7 @@
 
           await pgt.animate(
             [{ transform: 'translate3d(0,0,0)' }, { transform: 'translate3d(-100%,0,0)' }],
-            { duration: cover, easing: 'cubic-bezier(.76,0,.24,1)', fill: 'forwards' }
+            { duration: cover, easing: 'linear', fill: 'forwards' }
           ).finished;
 
           shuffle.cancel();
