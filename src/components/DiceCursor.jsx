@@ -26,6 +26,16 @@ export default function DiceCursor() {
 
     const el = ref.current;
     let shown = false;
+    let rolling = false;
+    let idleTimer = 0;
+
+    // Rolling stops 140ms after the last pointer event. Short enough that a die
+    // is still when you read, long enough that a slow drag does not stutter
+    // between events.
+    const stopRolling = () => {
+      rolling = false;
+      el.style.animationPlayState = 'paused';
+    };
 
     const onMove = (event) => {
       el.style.transform = `translate3d(${event.clientX}px, ${event.clientY}px, 0)`;
@@ -34,12 +44,20 @@ export default function DiceCursor() {
         el.style.opacity = '1';
         document.documentElement.classList.add('dice-cursor-on');
       }
+      if (!rolling) {
+        rolling = true;
+        el.style.animationPlayState = 'running';
+      }
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(stopRolling, 140);
     };
 
     // Hiding the real cursor is session-wide, so drop the die and the class
     // together if the pointer leaves for a touch screen or the mouse unplugs.
     const onLeave = () => {
       el.style.opacity = '0';
+      clearTimeout(idleTimer);
+      stopRolling();
     };
     const onEnter = () => {
       if (shown) el.style.opacity = '1';
@@ -50,6 +68,7 @@ export default function DiceCursor() {
     document.addEventListener('pointerenter', onEnter);
 
     return () => {
+      clearTimeout(idleTimer);
       window.removeEventListener('pointermove', onMove);
       document.removeEventListener('pointerleave', onLeave);
       document.removeEventListener('pointerenter', onEnter);

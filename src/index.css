@@ -920,6 +920,10 @@
   background-repeat: no-repeat;
   background-size: calc(var(--dice-frames) * var(--dice-cell)) var(--dice-cell);
   animation: dice-play 1s steps(var(--dice-frames)) infinite;
+  /* The die only rolls while the pointer is moving. A die that tumbles forever
+     while you read the page is noise, not a cursor. DiceCursor.jsx flips this to
+     running on pointermove and back to paused 140ms after the last event. */
+  animation-play-state: paused;
   z-index: 9999;
   pointer-events: none;
   opacity: 0;

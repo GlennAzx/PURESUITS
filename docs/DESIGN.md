@@ -444,9 +444,18 @@ A pre-rendered 24-frame tumble, played by CSS, that sits exactly on the pointer.
 | Body | 32px die inside a 50px sprite cell |
 | Sprite | `/dice/tumble.webp` — 24 frames, 2400×100 at 2×, 60 KB |
 | Playback | `background-position` + `steps(24)`, 1s loop |
+| Rolling | **only while the pointer moves** — `animation-play-state` goes `running` on `pointermove`, `paused` 140ms after the last event |
 | Position | 1:1 from `pointermove` — **measured 0px offset**, no easing |
 | Shadow | `filter: drop-shadow(0 2px 3px rgba(8,16,26,0.55))` — reads the sprite's alpha |
 | Native cursor | `html.dice-cursor-on * { cursor: none !important }` |
+
+**The die only rolls while the pointer moves.** A die that tumbles forever beside text you
+are reading is noise, not a cursor — the user asked for *"the dice should only roll when the
+cursor is moving"*. `animation-play-state` starts `paused`, goes `running` on the first
+`pointermove`, and returns to `paused` 140ms after the last event. 140ms is short enough to
+be still while reading and long enough that a slow drag does not stutter between events.
+The animation freezes on the frame it reached; measured, the `background-position` does not
+move once paused. All 24 tumble frames read as a die, so a frozen frame never looks broken.
 
 **The cursor must not lag the pointer.** The first build eased the position at `0.38` per
 frame "so the die has weight". Users read that trail as unresponsive — *"the lag noticed was
