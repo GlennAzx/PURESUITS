@@ -14,3 +14,7 @@ dist-ssr
 
 # Local env (holds VITE_MEDIA_BASE)
 .env.local
+
+# Local secrets. The admin token lives here and is NOT committed: the repo is
+# public, and anyone holding the token can write to the live site.
+/.secrets/

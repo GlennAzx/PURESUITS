@@ -231,29 +231,10 @@ export default function HomePage() {
             />
           </a>
 
-          {/* Support is a real button, not a footnote. The first version was a
-              10px link next to GitHub and nobody found it. Hidden entirely
-              while links.support is empty, so it never renders as a dead
-              control. */}
-          {links.support && (
-            <a
-              href={links.support}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group inline-flex items-center gap-2.5 rounded-xl border border-jade-accent/45 bg-jade-accent/10 px-5 py-3 text-jade-accent transition-[border-color,background-color,box-shadow] duration-200 hover:border-jade-accent hover:bg-jade-accent/15 hover:shadow-[0_0_26px_rgba(111,191,145,0.18)]"
-            >
-              <Heart size={16} />
-              <span className="font-serif text-sm font-bold tracking-wide">
-                Support this page
-              </span>
-              <ArrowUpRight
-                size={13}
-                className="opacity-50 transition-opacity group-hover:opacity-90"
-              />
-            </a>
-          )}
-
-          {/* Secondary links. */}
+          {/* Secondary links, one row. Support sits beside GitHub at the same
+              size: it is a quiet footer link, not a call to action competing
+              with the Discord button above it. Both are hidden when their URL
+              is empty, so neither ever renders as a dead control. */}
           <div className="flex flex-wrap items-center justify-center gap-2.5">
             {links.github && (
               <a
@@ -264,6 +245,18 @@ export default function HomePage() {
               >
                 <Github size={12} />
                 GitHub
+              </a>
+            )}
+
+            {links.support && (
+              <a
+                href={links.support}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-md border border-jade-accent/20 px-2.5 py-1.5 text-[10px] uppercase tracking-wider text-jade-accent/60 transition-colors hover:border-jade-accent/50 hover:text-jade-accent"
+              >
+                <Heart size={12} />
+                Support
               </a>
             )}
           </div>
