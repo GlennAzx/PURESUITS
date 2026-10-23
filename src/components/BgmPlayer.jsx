@@ -20,7 +20,10 @@ import { Volume2, VolumeX } from 'lucide-react';
  */
 
 const MUTED_KEY = 'puresuit.bgm.muted';
-const VOLUME = 0.32; // background music, not a foreground element
+// Quiet on purpose. A visitor who did not ask for music should notice it as
+// atmosphere, not as a hit of sound on arrival. 0.18 is audible but sits well
+// under speech and video.
+const VOLUME = 0.18;
 
 export default function BgmPlayer({ src }) {
   const audioRef = useRef(null);
@@ -119,8 +122,12 @@ export default function BgmPlayer({ src }) {
     <>
       <audio ref={audioRef} src={src} loop preload="none" aria-hidden="true" />
 
-      {/* Sits under the nav fan: the fan reaches about 139px above and below
-          the centre handle, so 168px clears it. */}
+      {/* Tucked directly under the nav handle, in the same right-edge column,
+          with an 8px gap: the handle is 96px tall so its bottom edge is 48px
+          below centre. Deliberately smaller and dimmer than the handle — it is
+          a utility, and the nav is the primary control. When the fan opens the
+          scrim (z-40) covers this element (z-30), so the tiles never collide
+          with it. */}
       <button
         type="button"
         onClick={toggle}
@@ -133,10 +140,10 @@ export default function BgmPlayer({ src }) {
               : 'Background music is off'
             : 'Music on'
         }
-        className="bgm-toggle btn-press fixed right-0 z-30 flex h-12 w-11 items-center justify-center rounded-l-xl border border-r-0 border-imperial-gold/50 bg-ink-charcoal text-imperial-gold shadow-[-8px_0_22px_rgba(0,0,0,0.7)] transition-[width,border-color,color,background-color] duration-200 ease-out-strong hover:w-14 hover:border-imperial-gold hover:bg-ink-charcoal hover:text-imperial-gold-bright"
-        style={{ top: 'calc(50% + 168px)' }}
+        className="bgm-toggle btn-press fixed right-0 z-30 flex h-8 w-8 items-center justify-center rounded-l-md border border-r-0 border-imperial-gold/20 bg-ink-charcoal/70 text-imperial-gold/55 shadow-[-4px_0_12px_rgba(0,0,0,0.45)] transition-[width,color,border-color,background-color] duration-200 ease-out-strong hover:w-10 hover:border-imperial-gold/50 hover:text-imperial-gold"
+        style={{ top: 'calc(50% + 56px)' }}
       >
-        {muted ? <VolumeX size={17} /> : <Volume2 size={17} />}
+        {muted ? <VolumeX size={13} /> : <Volume2 size={13} />}
       </button>
     </>
   );
