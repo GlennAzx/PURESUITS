@@ -971,3 +971,67 @@ html.dice-cursor-on * {
 
 
 
+
+
+/* ─────────────────────────────────────────────────────────────
+   Background music toggle (see components/BgmPlayer.jsx)
+
+   Two separate signals:
+   - three bars that move only while audio is actually playing, so the button
+     says "this is where the sound comes from" at a glance
+   - a one-shot pulse the first time playback starts, so a visitor who arrives
+     to music looks at the right corner
+
+   Both stop for prefers-reduced-motion. Music that announces itself with
+   movement must not fight a visitor who asked for less movement.
+   ───────────────────────────────────────────────────────────── */
+.bgm-bars span {
+  display: block;
+  width: 2px;
+  height: 30%;
+  border-radius: 1px;
+  background: currentColor;
+  animation: bgm-bar 900ms ease-in-out infinite;
+}
+.bgm-bars span:nth-child(2) {
+  animation-delay: 150ms;
+}
+.bgm-bars span:nth-child(3) {
+  animation-delay: 300ms;
+}
+
+@keyframes bgm-bar {
+  0%,
+  100% {
+    height: 30%;
+    opacity: 0.55;
+  }
+  50% {
+    height: 100%;
+    opacity: 1;
+  }
+}
+
+.bgm-toggle[data-nudge='on'] {
+  border-color: rgba(212, 175, 55, 0.75);
+  animation: bgm-nudge 900ms ease-out 2;
+}
+
+@keyframes bgm-nudge {
+  0% {
+    box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.3);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(212, 175, 55, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(212, 175, 55, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bgm-bars span,
+  .bgm-toggle[data-nudge='on'] {
+    animation: none;
+  }
+}

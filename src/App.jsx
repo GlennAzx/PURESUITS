@@ -6,7 +6,7 @@ import Lenis from 'lenis';
 
 import FannedMahjongNav from './components/FannedMahjongNav';
 import DiceCursor from './components/DiceCursor';
-import BgmPlayer from './components/BgmPlayer';
+import TopRightDock from './components/TopRightDock';
 import HomePage from './pages/HomePage';
 import MembersPage from './pages/MembersPage';
 import MahjongGuidePage from './pages/MahjongGuidePage';
@@ -20,6 +20,7 @@ import { playTransition } from './lib/transition';
 import { installRevealGuard } from './lib/revealGuard';
 import { setLenis } from './lib/scroll';
 import { media, MEDIA } from './lib/media';
+import useSiteContent from './lib/useSiteContent';
 
 // Register GSAP plugins once at top level
 gsap.registerPlugin(ScrollTrigger, useGSAP);
@@ -93,6 +94,10 @@ export default function App() {
   const mainRef = useRef(null);
   const lenisRef = useRef(null);
   const activePage = route.page;
+  // Fetched once here, not per page: the top-right dock needs the Discord URL
+  // and the home page needs the schedule. Two hooks would mean two requests and
+  // two copies of the same content.
+  const { content } = useSiteContent();
 
   // Back / Forward. Without this the URL changes but the view does not.
   useEffect(() => {
@@ -195,7 +200,7 @@ export default function App() {
   const renderPage = () => {
     switch (activePage) {
       case 'home':
-        return <HomePage setActivePage={navigate} />;
+        return <HomePage setActivePage={navigate} content={content} />;
       case 'members':
         return (
           <MembersPage
@@ -216,7 +221,7 @@ export default function App() {
       case 'not-found':
         return <NotFoundPage onNavigate={navigate} />;
       default:
-        return <HomePage setActivePage={navigate} />;
+        return <HomePage setActivePage={navigate} content={content} />;
     }
   };
 
@@ -225,9 +230,12 @@ export default function App() {
       <Loader ms={BOOT_MS} />
       <PageTransition />
       <DiceCursor />
-      {/* Looping BGM with its own mute control. Separate from the hero video's
-          mute: that one controls the video soundtrack, this one the music. */}
-      <BgmPlayer src={media(MEDIA.bgm)} />
+      {/* Music toggle and Discord link, one cluster. Separate from the hero
+          video's mute: that controls the video, this controls the music. */}
+      <TopRightDock
+        discordUrl={content.links.discord}
+        bgmSrc={media(MEDIA.bgm)}
+      />
       <FannedMahjongNav activePage={activePage} setActivePage={navigate} />
       <main className="pb-16">{renderPage()}</main>
     </div>

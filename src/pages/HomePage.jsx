@@ -65,14 +65,18 @@ function OngoingSection({ events, now }) {
   );
 }
 
-export default function HomePage() {
+/**
+ * @param {object} props
+ * @param {object} props.content - Site content, fetched in App and shared with
+ *   the top-right dock so the page does not issue a second request for it.
+ */
+export default function HomePage({ content }) {
   const eventsRef = useRef(null);
   const [timeMode] = useTimeMode();
   // One clock for the whole section, so every card flips on the same tick.
   const now = useNow();
   // Content comes from JSON in R2, so events and the schedule change without a
   // redeploy. Starts on the bundled defaults, so there is no empty first paint.
-  const { content } = useSiteContent();
   const { links } = content;
 
   // An event belongs in exactly one place: the stationary row while it runs,
@@ -146,7 +150,6 @@ export default function HomePage() {
   return (
     <div>
       <VideoHero />
-      <DiscordPill href={links.discord} />
 
       <EventsSection events={events} now={now} />
 
