@@ -60,6 +60,7 @@ export function media(path) {
 export const MEDIA = {
   heroVideo: 'hero/wwm-hero.mp4',
   heroPoster: 'hero/wwm-hero-poster.jpg',
+  bgm: 'audio/bgm-temple.mp3',
   // Editable content: events, weekly schedule and link URLs. Changing this
   // file does NOT need a deploy — see docs/MEDIA.md.
   siteContent: 'content/site.json',

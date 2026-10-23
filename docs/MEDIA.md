@@ -133,6 +133,7 @@ Always encode before uploading. Storage is cheap, but a visitor's connection is 
 |---|---|---|
 | `hero/wwm-hero.mp4` | 16.66 MB | 1920x1280, 42.6 s, no audio, faststart |
 | `hero/wwm-hero-poster.jpg` | 161 KB | frame at 6 s, shown while the video loads |
+| `audio/bgm-temple.mp3` | 2.68 MB | 2:56 loop, 128 kbps stereo, played by `BgmPlayer` |
 
 
 ## Editing events and the schedule without a deploy
@@ -269,3 +270,23 @@ quick syntax check before uploading:
 ```bash
 node -e "JSON.parse(require('fs').readFileSync('content/site.json','utf8')); console.log('valid')"
 ```
+
+
+## Background music
+
+`src/components/BgmPlayer.jsx` plays `audio/bgm-temple.mp3` on a loop, at 0.32
+volume, with a mute toggle pinned under the nav panel.
+
+Three behaviours that are not obvious from the code:
+
+- **It cannot start until the visitor interacts.** Browsers refuse to autoplay
+  audible media. `play()` rejects, and the rejection is silent if unhandled, so
+  the component waits for the first pointer or key event and starts then. A
+  visitor who never clicks hears nothing — that is the browser, not a bug.
+- **Mute pauses the element instead of setting volume to 0.** A muted-but-playing
+  element still decodes audio and holds the media pipeline.
+- **The choice is remembered** in `localStorage` under `puresuit.bgm.muted`, so a
+  visitor who muted it is not asked again on the next load.
+
+To change the track, upload a new file and update `MEDIA.bgm` in
+`src/lib/media.js` (or overwrite the same key, which needs no deploy).

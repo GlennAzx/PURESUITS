@@ -34,6 +34,11 @@ const NPX = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 // A wrong Content-Type on a video breaks streaming and seeking in Safari.
 const TYPES = {
   '.json': 'application/json',
+  '.mp3': 'audio/mpeg',
+  '.m4a': 'audio/mp4',
+  '.ogg': 'audio/ogg',
+  '.opus': 'audio/ogg',
+  '.wav': 'audio/wav',
   '.mp4': 'video/mp4',
   '.webm': 'video/webm',
   '.mov': 'video/quicktime',
@@ -110,7 +115,11 @@ for (const file of files) {
   const sizeMb = (statSync(file).size / 1024 / 1024).toFixed(2);
 
   if (!type) {
-    console.warn(`  SKIP  ${key} — unknown file type`);
+    // Counted as a failure on purpose. The first version skipped and still
+    // printed "All uploads succeeded", which is exactly the kind of false
+    // success that hides a broken deploy.
+    failed += 1;
+    console.error(`  SKIP  ${key} — unknown file type, add it to TYPES`);
     continue;
   }
 

@@ -6,6 +6,7 @@ import Lenis from 'lenis';
 
 import FannedMahjongNav from './components/FannedMahjongNav';
 import DiceCursor from './components/DiceCursor';
+import BgmPlayer from './components/BgmPlayer';
 import HomePage from './pages/HomePage';
 import MembersPage from './pages/MembersPage';
 import MahjongGuidePage from './pages/MahjongGuidePage';
@@ -18,6 +19,7 @@ import PageTransition from './components/PageTransition';
 import { playTransition } from './lib/transition';
 import { installRevealGuard } from './lib/revealGuard';
 import { setLenis } from './lib/scroll';
+import { media, MEDIA } from './lib/media';
 
 // Register GSAP plugins once at top level
 gsap.registerPlugin(ScrollTrigger, useGSAP);
@@ -223,6 +225,9 @@ export default function App() {
       <Loader ms={BOOT_MS} />
       <PageTransition />
       <DiceCursor />
+      {/* Looping BGM with its own mute control. Separate from the hero video's
+          mute: that one controls the video soundtrack, this one the music. */}
+      <BgmPlayer src={media(MEDIA.bgm)} />
       <FannedMahjongNav activePage={activePage} setActivePage={navigate} />
       <main className="pb-16">{renderPage()}</main>
     </div>
