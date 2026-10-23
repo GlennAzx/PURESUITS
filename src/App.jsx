@@ -12,6 +12,7 @@ import MahjongGuidePage from './pages/MahjongGuidePage';
 import BuildsPage from './pages/BuildsPage';
 import GalleryPage from './pages/GalleryPage';
 import NotFoundPage from './pages/NotFoundPage';
+import AdminPage from './pages/AdminPage';
 import Loader from './components/Loader';
 import PageTransition from './components/PageTransition';
 import { playTransition } from './lib/transition';
@@ -29,7 +30,7 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
  * makes this work in production: Workers serves index.html for any unknown
  * path. Remove it and /members/awooyin 404s.
  */
-const PAGES = ['home', 'members', 'mahjong-guide', 'builds', 'gallery'];
+const PAGES = ['home', 'members', 'mahjong-guide', 'builds', 'gallery', 'admin'];
 
 const TITLES = {
   home: 'PURESUIT | 清一色 - Where Winds Meet Guild',
@@ -37,6 +38,9 @@ const TITLES = {
   'mahjong-guide': 'Mahjong Guide | PURESUIT',
   builds: 'Martial Path Guides | PURESUIT',
   gallery: 'Gallery | PURESUIT',
+  // Deliberately absent from FannedMahjongNav: the admin page is reached by
+  // typing /admin, not by offering every visitor a door to it.
+  admin: 'Admin | PURESUIT',
   'not-found': '404 | PURESUIT',
 };
 
@@ -205,6 +209,8 @@ export default function App() {
         return <BuildsPage />;
       case 'gallery':
         return <GalleryPage />;
+      case 'admin':
+        return <AdminPage />;
       case 'not-found':
         return <NotFoundPage onNavigate={navigate} />;
       default:

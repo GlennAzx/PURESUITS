@@ -78,7 +78,7 @@ export const DEFAULT_CONTENT = {
   ],
   links: {
     discord: 'https://discord.gg/QrnhSzcYkb',
-    github: 'https://github.com/GlennAzx/PURESUITS',
+    github: 'https://github.com/GlennAzx',
     // Replace with the Stripe payment link. Empty hides the support button.
     support: '',
   },
