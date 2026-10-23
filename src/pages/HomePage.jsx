@@ -2,15 +2,19 @@ import React, { useRef, useEffect } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, Github, Heart } from 'lucide-react';
 import VideoHero from '../components/VideoHero';
 import EventCarousel from '../components/EventCarousel';
 import OngoingEventCard from '../components/OngoingEventCard';
-import { EVENTS, activeOccurrence } from '../data/schedule';
+import EventsSection from '../components/EventsSection';
+import DiscordPill from '../components/DiscordPill';
+import { activeOccurrence } from '../data/schedule';
+import { upcomingEvents } from '../lib/siteContent';
+import useSiteContent from '../lib/useSiteContent';
 import useNow from '../lib/useNow';
 import useTimeMode, { setTimeMode } from '../lib/useTimeMode';
 
-const DISCORD_URL = 'https://discord.gg/QrnhSzcYkb';
+
 
 function DiscordIcon({ size = 22 }) {
   return (
@@ -66,11 +70,22 @@ export default function HomePage() {
   const [timeMode] = useTimeMode();
   // One clock for the whole section, so every card flips on the same tick.
   const now = useNow();
+  // Content comes from JSON in R2, so events and the schedule change without a
+  // redeploy. Starts on the bundled defaults, so there is no empty first paint.
+  const { content } = useSiteContent();
+  const { links } = content;
 
   // An event belongs in exactly one place: the stationary row while it runs,
   // the carousel otherwise. Splitting here keeps that rule in a single spot.
-  const ongoing = EVENTS.filter((e) => activeOccurrence(e, now) !== null);
-  const upcoming = EVENTS.filter((e) => activeOccurrence(e, now) === null);
+  const ongoing = content.schedule.filter(
+    (e) => activeOccurrence(e, now) !== null
+  );
+  const upcoming = content.schedule.filter(
+    (e) => activeOccurrence(e, now) === null
+  );
+
+  // One-off events, soonest first. Finished ones drop out on their own.
+  const events = upcomingEvents(content.events, now);
 
   useGSAP(
     () => {
@@ -126,19 +141,23 @@ export default function HomePage() {
   // either fire early or never fire.
   useEffect(() => {
     ScrollTrigger.refresh();
-  }, [ongoing.length, upcoming.length]);
+  }, [ongoing.length, upcoming.length, events.length]);
 
   return (
     <div>
       <VideoHero />
+      <DiscordPill href={links.discord} />
+
+      <EventsSection events={events} now={now} />
 
       <section ref={eventsRef} className="max-w-6xl mx-auto px-4 lg:pr-24 py-20">
         <div className="events-header flex flex-wrap items-end justify-between gap-3 mb-6 pb-3 border-b border-imperial-gold/25">
           <div>
             <h2 className="text-2xl font-serif font-bold text-ivory">
-              Guild Events
+              Weekly Schedule
             </h2>
             <p className="text-xs text-gray-500 mt-1">
+              Recurring guild runs.{' '}
               {timeMode === 'sgt' ? 'All times UTC+8 (guild time)' : 'Times in your local zone'}
             </p>
           </div>
@@ -195,9 +214,9 @@ export default function HomePage() {
       </section>
 
       <footer className="landing-footer border-t border-imperial-gold/15">
-        <div className="max-w-6xl mx-auto px-4 lg:pr-24 py-14 flex flex-col items-center gap-4">
+        <div className="max-w-6xl mx-auto px-4 lg:pr-24 py-14 flex flex-col items-center gap-6">
           <a
-            href={DISCORD_URL}
+            href={links.discord}
             target="_blank"
             rel="noopener noreferrer"
             className="group inline-flex items-center gap-3 px-6 py-3.5 rounded-xl border border-imperial-gold/35 bg-ink-charcoal text-gray-300 hover:border-imperial-gold hover:text-imperial-gold-bright transition-[border-color,color,box-shadow] duration-200 ease-out-strong hover:shadow-[0_0_28px_rgba(212,175,55,0.16)]"
@@ -211,8 +230,37 @@ export default function HomePage() {
               className="opacity-40 group-hover:opacity-90 transition-opacity duration-200"
             />
           </a>
+
+          {/* Secondary links. Support is hidden while links.support is empty,
+              so the footer never shows a dead button. */}
+          <div className="flex flex-wrap items-center justify-center gap-2.5">
+            {links.github && (
+              <a
+                href={links.github}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-md border border-imperial-gold/20 px-2.5 py-1.5 text-[10px] uppercase tracking-wider text-gray-500 transition-colors hover:border-imperial-gold/50 hover:text-imperial-gold"
+              >
+                <Github size={12} />
+                GitHub
+              </a>
+            )}
+
+            {links.support && (
+              <a
+                href={links.support}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 rounded-md border border-jade-accent/25 px-2.5 py-1.5 text-[10px] uppercase tracking-wider text-jade-accent/70 transition-colors hover:border-jade-accent/60 hover:text-jade-accent"
+              >
+                <Heart size={12} />
+                Support this page
+              </a>
+            )}
+          </div>
+
           <p className="text-[11px] font-mono text-gray-600">
-            discord.gg/QrnhSzcYkb
+            {links.discord.replace(/^https?:\/\//, '')}
           </p>
         </div>
       </footer>

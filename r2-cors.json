@@ -1,0 +1,27 @@
+{
+  "rules": [
+    {
+      "allowed": {
+        "origins": [
+          "https://puresuit.net",
+          "https://www.puresuit.net",
+          "https://puresuits.glennangzx-568.workers.dev",
+          "http://localhost:5173",
+          "http://127.0.0.1:5173"
+        ],
+        "methods": [
+          "GET",
+          "HEAD"
+        ],
+        "headers": [
+          "*"
+        ]
+      },
+      "exposeHeaders": [
+        "ETag",
+        "Content-Length"
+      ],
+      "maxAgeSeconds": 3600
+    }
+  ]
+}

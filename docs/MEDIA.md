@@ -133,3 +133,79 @@ Always encode before uploading. Storage is cheap, but a visitor's connection is 
 |---|---|---|
 | `hero/wwm-hero.mp4` | 16.66 MB | 1920x1280, 42.6 s, no audio, faststart |
 | `hero/wwm-hero-poster.jpg` | 161 KB | frame at 6 s, shown while the video loads |
+
+
+## Editing events and the schedule without a deploy
+
+Events, the weekly schedule and the link URLs live in **one JSON file** in the
+bucket: `content/site.json`. The page fetches it at runtime.
+
+```bash
+# 1. edit content/site.json
+# 2. upload it
+node scripts/upload-media.mjs ./content content
+# 3. reload the page. No build, no deploy.
+```
+
+`content/site.json` in this repository is the source of truth. The copy in the
+bucket is what visitors see — keep them in step by uploading after every edit.
+
+### Shape
+
+```jsonc
+{
+  "events": [
+    {
+      "id": "winter-cup",
+      "title": "Winter Cup",
+      "description": "One-line blurb shown on the card.",
+      "date": "2026-11-15",          // guild time, UTC+8
+      "time": "21:30",
+      "durationMinutes": 120,
+      "tag": "Tournament",
+      "link": "https://discord.gg/..."   // optional
+    }
+  ],
+  "schedule": [
+    {
+      "id": "breaking-army",
+      "name": "Breaking Army & Showdown",
+      "category": "PvP",
+      "cadence": "weekly",           // or "daily"
+      "weekdays": ["wed", "sat"],    // names or 0-6 (0 = Sunday)
+      "time": "21:30",
+      "durationMinutes": 120,
+      "description": "..."
+    }
+  ],
+  "links": {
+    "discord": "https://discord.gg/QrnhSzcYkb",
+    "github": "https://github.com/GlennAzx/PURESUITS",
+    "support": ""                    // empty hides the Support button
+  }
+}
+```
+
+### Two things that will bite you
+
+**Caching.** JSON is uploaded with `Cache-Control: no-cache`, not the one-year
+immutable header used for images and video. An immutable header on a file that
+is rewritten in place would pin the old copy in every browser for a year.
+
+**CORS.** `fetch()` is cross-origin here (`puresuit.net` → `media.puresuit.net`),
+so the bucket needs a CORS policy or the request is blocked and the page
+silently falls back to the bundled defaults. The policy is checked in as
+`r2-cors.json`:
+
+```bash
+npx wrangler r2 bucket cors set puresuit-media --file r2-cors.json
+```
+
+Note the key format: Cloudflare wants lowercase keys nested in an `allowed`
+object. The S3-style `AllowedOrigins` spelling is rejected.
+
+### If the file breaks
+
+The page falls back to `DEFAULT_CONTENT` in `src/lib/siteContent.js` and logs a
+warning. A malformed JSON file cannot blank the schedule — but it does mean your
+edit is not live, so check the browser console.

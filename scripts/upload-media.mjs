@@ -33,6 +33,7 @@ const NPX = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 
 // A wrong Content-Type on a video breaks streaming and seeking in Safari.
 const TYPES = {
+  '.json': 'application/json',
   '.mp4': 'video/mp4',
   '.webm': 'video/webm',
   '.mov': 'video/quicktime',
@@ -47,6 +48,22 @@ const TYPES = {
 
 // One year, immutable. Safe because a changed asset gets a new filename.
 const CACHE = 'public, max-age=31536000, immutable';
+
+/**
+ * Editable content must NOT be cached like an asset.
+ *
+ * A JSON file is rewritten in place under the same key, so an immutable
+ * header would pin the old copy in every browser for a year and the whole
+ * point — edit without a deploy — would break. `no-cache` still lets
+ * Cloudflare store it, but forces a revalidation, so an edit is live on the
+ * next load and a 304 keeps the cost near zero.
+ */
+const CACHE_EDITABLE = 'no-cache';
+
+/** Files a human edits and re-uploads under the same name. */
+function isEditable(key) {
+  return /^content\//.test(key) || key.endsWith('.json');
+}
 
 function filesUnder(target) {
   if (statSync(target).isFile()) return [target];
@@ -104,7 +121,7 @@ for (const file of files) {
     'wrangler', 'r2', 'object', 'put', q(`${BUCKET}/${key}`),
     '--file', q(file),
     '--content-type', q(type),
-    '--cache-control', q(CACHE),
+    '--cache-control', q(isEditable(key) ? CACHE_EDITABLE : CACHE),
     // REQUIRED. Without --remote wrangler writes to a LOCAL simulated bucket
     // in .wrangler/state and still prints success, so the upload silently
     // never reaches R2.

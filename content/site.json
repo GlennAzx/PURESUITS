@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "_readme": "Edit this file and upload it to change events, the weekly schedule and links — no build, no deploy. Upload with: node scripts/upload-media.mjs ./content content",
+  "events": [],
+  "schedule": [
+    {
+      "id": "guild-party",
+      "name": "Guild Party",
+      "category": "Social",
+      "cadence": "daily",
+      "time": "21:00",
+      "durationMinutes": 15,
+      "description": "Daily guild gathering. Everyone logs in, shares tea, and banks the day's rewards together."
+    },
+    {
+      "id": "breaking-army",
+      "name": "Breaking Army & Showdown",
+      "category": "PvP",
+      "cadence": "weekly",
+      "weekdays": ["wed", "sat"],
+      "time": "21:30",
+      "durationMinutes": 120,
+      "description": "Boss clears and Guild Arena PvPs. Two runs every week, Wednesday and Saturday at 9:30pm."
+    },
+    {
+      "id": "heroes-realm",
+      "name": "Guild Heroes Realm / Normal Heroes Realm",
+      "category": "PvE",
+      "cadence": "weekly",
+      "weekdays": ["mon", "fri"],
+      "time": "21:30",
+      "durationMinutes": 90,
+      "description": "Weekly Heroes Realm clear on Monday, with a second run on Friday straight after Guild Party."
+    },
+    {
+      "id": "guild-vs-guild-league",
+      "name": "Guild vs Guild League",
+      "category": "PvP",
+      "cadence": "weekly",
+      "weekdays": ["sat", "sun"],
+      "time": "20:30",
+      "durationMinutes": 30,
+      "description": "Guild vs Guild - League Ranking."
+    },
+    {
+      "id": "guild-vs-guild",
+      "name": "Guild vs Guild",
+      "category": "PvP",
+      "cadence": "weekly",
+      "weekdays": ["sat", "sun"],
+      "time": "21:30",
+      "durationMinutes": 120,
+      "description": "Guild vs Guild - 4 runs total weekly."
+    }
+  ],
+  "links": {
+    "discord": "https://discord.gg/QrnhSzcYkb",
+    "github": "https://github.com/GlennAzx/PURESUITS",
+    "support": ""
+  }
+}
