@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, MapPin } from 'lucide-react';
 import { formatTime, zoneLabel } from '../lib/calendar';
 import useTimeMode from '../lib/useTimeMode';
 import { splitCountdown } from '../data/schedule';
@@ -95,11 +95,20 @@ function EventCard({ event, now }) {
         )}
 
         <div className="mt-2.5 flex items-center justify-between gap-3">
-          <span className="font-mono text-[10px] text-gray-600">
-            {formatTime(event.startsAt, timeMode)}{' '}
-            <span className="uppercase tracking-wider">
-              {zoneLabel(timeMode)}
+          <span className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 font-mono text-[10px] text-gray-600">
+            <span>
+              {formatTime(event.startsAt, timeMode)}{' '}
+              <span className="uppercase tracking-wider">
+                {zoneLabel(timeMode)}
+              </span>
             </span>
+            {/* Location is optional, so the row collapses cleanly when absent. */}
+            {event.location && (
+              <span className="flex min-w-0 items-center gap-1 normal-case tracking-normal text-gray-500">
+                <MapPin size={10} className="shrink-0 opacity-60" />
+                <span className="truncate">{event.location}</span>
+              </span>
+            )}
           </span>
 
           {event.link && (

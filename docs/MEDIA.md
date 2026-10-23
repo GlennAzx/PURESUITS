@@ -162,6 +162,7 @@ bucket is what visitors see — keep them in step by uploading after every edit.
       "date": "2026-11-15",          // guild time, UTC+8
       "time": "21:30",
       "durationMinutes": 120,
+      "location": "Guild Hall, East Wing",   // optional
       "tag": "Tournament",
       "link": "https://discord.gg/..."   // optional
     }
@@ -209,3 +210,62 @@ object. The S3-style `AllowedOrigins` spelling is rejected.
 The page falls back to `DEFAULT_CONTENT` in `src/lib/siteContent.js` and logs a
 warning. A malformed JSON file cannot blank the schedule — but it does mean your
 edit is not live, so check the browser console.
+
+
+## Add an event — step by step
+
+**1. Open `content/site.json` and add one object to the `events` array.**
+
+```json
+{
+  "id": "mahjong-night",
+  "title": "Mahjong Night",
+  "description": "Open tables, tiles on the felt. All ranks welcome.",
+  "date": "2026-11-14",
+  "time": "21:00",
+  "durationMinutes": 120,
+  "location": "Guild Hall, East Wing",
+  "tag": "Mahjong"
+}
+```
+
+**2. Upload it.**
+
+```bash
+node scripts/upload-media.mjs ./content content
+```
+
+**3. Reload the page.** No build, no deploy.
+
+### Field by field
+
+| Field | Required | Notes |
+|---|---|---|
+| `id` | yes | Any unique string. Never reuse one. |
+| `title` | yes | Shown as the card heading. |
+| `description` | no | One or two sentences. Long text wraps and pushes the card taller. |
+| `date` | yes | `YYYY-MM-DD`, **guild time (UTC+8)**. |
+| `time` | yes | `"21:30"` — 24-hour, **guild time (UTC+8)**. |
+| `durationMinutes` | yes | How long the card counts as live. `120` = 2 hours. |
+| `location` | no | Free text. A hall, `"in-game, Guild Hall"`, a Discord channel. Hidden when empty. |
+| `tag` | no | Small label, e.g. `"Mahjong"`, `"PvP"`, `"Tournament"`. Defaults to `"Event"`. |
+| `link` | no | Adds a "Details" link. Must include `https://`. |
+
+### Three rules that matter
+
+- **Times are guild time, not the visitor's.** Write what you mean in UTC+8; the
+  page converts for visitors who switch to "My time".
+- **Use a real comma-free date.** `2026-11-14`, not `14/11/2026`. A bad date is
+  dropped silently — the card simply does not appear.
+- **The card disappears on its own** once `time + durationMinutes` has passed.
+  Nothing to clean up.
+
+### Check it worked
+
+If the card does not appear, open the browser console. A malformed JSON file
+logs `[content] using bundled defaults` and the page keeps the old content. A
+quick syntax check before uploading:
+
+```bash
+node -e "JSON.parse(require('fs').readFileSync('content/site.json','utf8')); console.log('valid')"
+```

@@ -17,7 +17,10 @@
       "name": "Breaking Army & Showdown",
       "category": "PvP",
       "cadence": "weekly",
-      "weekdays": ["wed", "sat"],
+      "weekdays": [
+        "wed",
+        "sat"
+      ],
       "time": "21:30",
       "durationMinutes": 120,
       "description": "Boss clears and Guild Arena PvPs. Two runs every week, Wednesday and Saturday at 9:30pm."
@@ -27,7 +30,10 @@
       "name": "Guild Heroes Realm / Normal Heroes Realm",
       "category": "PvE",
       "cadence": "weekly",
-      "weekdays": ["mon", "fri"],
+      "weekdays": [
+        "mon",
+        "fri"
+      ],
       "time": "21:30",
       "durationMinutes": 90,
       "description": "Weekly Heroes Realm clear on Monday, with a second run on Friday straight after Guild Party."
@@ -37,7 +43,10 @@
       "name": "Guild vs Guild League",
       "category": "PvP",
       "cadence": "weekly",
-      "weekdays": ["sat", "sun"],
+      "weekdays": [
+        "sat",
+        "sun"
+      ],
       "time": "20:30",
       "durationMinutes": 30,
       "description": "Guild vs Guild - League Ranking."
@@ -47,7 +56,10 @@
       "name": "Guild vs Guild",
       "category": "PvP",
       "cadence": "weekly",
-      "weekdays": ["sat", "sun"],
+      "weekdays": [
+        "sat",
+        "sun"
+      ],
       "time": "21:30",
       "durationMinutes": 120,
       "description": "Guild vs Guild - 4 runs total weekly."
@@ -56,6 +68,6 @@
   "links": {
     "discord": "https://discord.gg/QrnhSzcYkb",
     "github": "https://github.com/GlennAzx/PURESUITS",
-    "support": ""
+    "support": "https://buy.stripe.com/6oU6oA4urfe2fxHb1a1RC03"
   }
 }
