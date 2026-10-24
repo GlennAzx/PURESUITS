@@ -52,7 +52,6 @@ export function media(path) {
 
 /**
  * Media keys used by the app.
- *
  * Keep every key here rather than inline in components: this list doubles as
  * the manifest of what the bucket must contain, and `scripts/upload-media.mjs`
  * reads the same paths.
@@ -65,3 +64,22 @@ export const MEDIA = {
   // file does NOT need a deploy — see docs/MEDIA.md.
   siteContent: 'content/site.json',
 };
+
+/**
+ * Turn a stored image reference into a usable src.
+ *
+ * Two kinds of reference live in the content file:
+ *   - a bare R2 key from an admin upload, e.g. "gallery/1699-ab12.jpg"
+ *   - a legacy path shipped in the repo, e.g. "/members/chel.png"
+ *
+ * Legacy values must pass through untouched: prefixing them with the bucket
+ * host would point at a file that only exists in the build. A bare key goes
+ * through media() so the bucket domain stays in one place.
+ */
+export function imageUrl(ref) {
+  if (!ref) return '';
+  if (/^(https?:)?\/\//i.test(ref) || ref.startsWith('/') || ref.startsWith('data:')) {
+    return ref;
+  }
+  return media(ref);
+}

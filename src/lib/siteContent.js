@@ -207,6 +207,13 @@ export function normaliseContent(raw) {
     schedule,
     events,
     links: { ...base.links, ...(raw.links || {}) },
+    // Passed through untouched. Unlike events and the schedule these need no
+    // shape conversion: the Worker already validated every entry on write, and
+    // the pages fall back to the bundled JSON when the key is absent. Dropping
+    // them here silently reverted every upload, because the app only ever saw
+    // schedule/events/links.
+    ...(Array.isArray(raw.gallery) ? { gallery: raw.gallery } : {}),
+    ...(Array.isArray(raw.members) ? { members: raw.members } : {}),
   };
 }
 

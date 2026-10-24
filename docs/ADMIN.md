@@ -9,11 +9,36 @@ The page is not linked from the navigation. It is reached by typing the URL.
 
 ## What you can do
 
+The page has two tabs: **Events** and **Images**.
+
+### Events tab
+
 | Action | How |
 |---|---|
 | Add | **New event**, fill the form, **Add event** |
 | Edit | Pencil icon on a row, change fields, **Save changes** |
 | Delete | Bin icon on a row, confirm |
+
+### Images tab
+
+Gallery screenshots and member portraits, both uploaded straight to R2.
+
+| Action | How |
+|---|---|
+| Add/replace a gallery image | **Upload** or **Replace** on a slot, pick a file |
+| Clear a gallery slot | **Clear** on a filled slot |
+| Set a member portrait | Search the name, **Upload** on that row |
+| Revert a portrait | Bin icon on a row that says "custom" |
+
+Changes are live on the next page load. Replacing an image writes a NEW file to
+the bucket instead of overwriting: images are served with a one-year immutable
+cache, so reusing a filename would leave the old picture in every browser with
+no way to purge it.
+
+Only members whose portrait was changed are stored. The other members keep the
+portrait shipped in the repo, so the saved list stays small.
+
+Limits: images up to 8 MB, formats jpg/png/webp/avif/gif.
 
 Delete asks for confirmation because it removes the event from the live site at
 once. There is no undo and no draft state.
@@ -76,3 +101,20 @@ the content file is public anyway.
 - **Events only.** The weekly schedule and the link URLs are still edited by
   uploading `content/site.json`. Extending the API to cover them is the same
   pattern — add a route and a field check in `worker/index.js`.
+
+
+## How image storage works
+
+```
+browser -> POST /api/upload?kind=gallery|members -> Worker -> R2 object
+        -> PUT /api/images -> content/site.json (stores the R2 KEY)
+```
+
+The content file stores a bare key such as `gallery/1792857612017-edd0f781.jpg`,
+not a full URL. The page turns a bare key into a URL with `imageUrl()` in
+`src/lib/media.js`, so the bucket domain lives in one place. Legacy paths that
+start with `/` (the portraits shipped in `public/members/`) pass through
+untouched and keep working.
+
+`siteContent.js` passes `gallery` and `members` through unchanged. They are not
+reshaped like events, because the Worker already validated them on write.

@@ -204,6 +204,7 @@ export default function App() {
       case 'members':
         return (
           <MembersPage
+            content={content}
             focusSlug={route.slug}
             focusSource={route.source}
             onOpenMember={(slug) => navigate('members', slug)}
@@ -215,7 +216,7 @@ export default function App() {
       case 'builds':
         return <BuildsPage />;
       case 'gallery':
-        return <GalleryPage />;
+        return <GalleryPage content={content} />;
       case 'admin':
         return <AdminPage />;
       case 'not-found':

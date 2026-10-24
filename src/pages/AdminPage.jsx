@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Trash2, Pencil, Plus, LogOut, Check, X } from 'lucide-react';
+import ImageManager from '../components/admin/ImageManager';
 
 /**
  * Admin page for editing events on the live site.
@@ -56,6 +57,7 @@ export default function AdminPage() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
 
+  const [tab, setTab] = useState('events');
   const [events, setEvents] = useState([]);
   const [editing, setEditing] = useState(null); // null | 'new' | event id
   const [form, setForm] = useState(EMPTY_FORM);
@@ -256,19 +258,21 @@ export default function AdminPage() {
     <div className="mx-auto max-w-3xl px-4 py-16">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-imperial-gold/25 pb-3">
         <div>
-          <h1 className="font-serif text-2xl font-bold text-ivory">Events admin</h1>
+          <h1 className="font-serif text-2xl font-bold text-ivory">Site admin</h1>
           <p className="mt-1 text-xs text-gray-400">
             Changes are live immediately. No build, no deploy.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={startNew}
-            className="inline-flex items-center gap-1.5 rounded-md border border-jade-accent/40 px-2.5 py-1.5 text-[10px] uppercase tracking-wider text-jade-accent transition-colors hover:border-jade-accent"
-          >
-            <Plus size={12} /> New event
-          </button>
+          {tab === 'events' && (
+            <button
+              type="button"
+              onClick={startNew}
+              className="inline-flex items-center gap-1.5 rounded-md border border-jade-accent/40 px-2.5 py-1.5 text-[10px] uppercase tracking-wider text-jade-accent transition-colors hover:border-jade-accent"
+            >
+              <Plus size={12} /> New event
+            </button>
+          )}
           <button
             type="button"
             onClick={signOut}
@@ -290,7 +294,36 @@ export default function AdminPage() {
         </p>
       )}
 
-      {editing && (
+      <div className="mb-6 flex gap-1.5 border-b border-imperial-gold/15 pb-3">
+        {[
+          ['events', 'Events'],
+          ['images', 'Images'],
+        ].map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => {
+              setTab(id);
+              setNotice('');
+              setError('');
+            }}
+            aria-pressed={tab === id}
+            className={`rounded-md px-3 py-1.5 text-[10px] uppercase tracking-wider transition-colors ${
+              tab === id
+                ? 'bg-imperial-gold/15 text-imperial-gold'
+                : 'text-gray-500 hover:text-ivory'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'images' && (
+        <ImageManager token={token} onNotice={setNotice} onError={setError} />
+      )}
+
+      {tab === 'events' && editing && (
         <form
           onSubmit={submitForm}
           className="mb-8 space-y-3 rounded-xl border border-imperial-gold/30 bg-ink-charcoal p-4"
@@ -398,7 +431,7 @@ export default function AdminPage() {
         </form>
       )}
 
-      {sorted.length === 0 ? (
+      {tab === 'events' && (sorted.length === 0 ? (
         <p className="rounded-xl border border-dashed border-imperial-gold/20 px-4 py-8 text-center text-[11.5px] text-ivory-shadow">
           No events yet. Use New event to add one.
         </p>
@@ -438,7 +471,7 @@ export default function AdminPage() {
             </li>
           ))}
         </ul>
-      )}
+      ))}
     </div>
   );
 }

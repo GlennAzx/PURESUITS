@@ -4,11 +4,20 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
 import { Images } from 'lucide-react';
 import galleryData from '../data/gallery.json';
+import { imageUrl } from '../lib/media';
 import { DEFAULT_CONTENT } from '../lib/siteContent';
 
-export default function GalleryPage() {
+/**
+ * @param {object} props
+ * @param {object} [props.content] - Site content, fetched once in App. When it
+ *   carries a gallery list it wins over the bundled JSON, so images added in
+ *   /admin appear without a rebuild. Falls back to the bundled slots when the
+ *   content file has never been edited.
+ */
+export default function GalleryPage({ content }) {
   const pageRef = useRef(null);
-  const filled = galleryData.filter((g) => g.image).length;
+  const items = content?.gallery?.length ? content.gallery : galleryData;
+  const filled = items.filter((g) => g.image).length;
 
   useGSAP(
     () => {
@@ -50,20 +59,20 @@ export default function GalleryPage() {
         <div className="inline-flex items-center gap-2 mt-5 px-3.5 py-1.5 rounded-full border border-imperial-gold/30 bg-ink-charcoal/70">
           <span className="w-1.5 h-1.5 rounded-full bg-jade-accent" />
           <span className="text-[11px] font-mono uppercase tracking-wider text-imperial-gold">
-            {galleryData.length} Slots
+            {items.length} Slots
           </span>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {galleryData.map((item) => (
+        {items.map((item) => (
           <figure
             key={item.id}
             className="gallery-slot group relative aspect-video rounded-xl overflow-hidden border border-imperial-gold/20 bg-ink-charcoal transition-[border-color] duration-200 ease-out-strong hover:border-imperial-gold/45"
           >
             {item.image ? (
               <img
-                src={item.image}
+                src={imageUrl(item.image)}
                 alt={item.title}
                 loading="lazy"
                 className="w-full h-full object-cover transition-transform duration-300 ease-out-strong group-hover:scale-[1.03]"

@@ -3,6 +3,7 @@ import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import MemberCard3D from '../components/MemberCard3D';
 import membersData from '../data/members.json';
+import { imageUrl } from '../lib/media';
 import { memberSlug } from '../lib/memberSlug';
 import { scrollToElement, scrollToTop } from '../lib/scroll';
 
@@ -16,11 +17,19 @@ function SectionHeading({ title }) {
   );
 }
 
+/**
+ * @param {object} props
+ * @param {object} [props.content] - Site content from App. Its `members` list
+ *   holds portrait overrides keyed by member id, so a portrait added in /admin
+ *   shows up without a rebuild. Members without an override keep the portrait
+ *   shipped in the repo.
+ */
 export default function MembersPage({
   focusSlug = null,
   focusSource = 'load',
   onOpenMember = null,
   onClearSlug = null,
+  content = null,
 }) {
   const pageRef = useRef(null);
   // Which tile is currently ringed. React owns this, not the DOM: an
@@ -29,15 +38,29 @@ export default function MembersPage({
   const [query, setQuery] = useState('');
 
   const { leadership, commanders, members, total } = useMemo(() => {
-    const byTier = (t) => membersData.filter((m) => m.tier === t);
+    // Overlay admin-uploaded portraits onto the bundled roster by id. The list
+    // in content only carries ids that were changed, so the untouched members
+    // cost nothing.
+    const overrides = new Map(
+      (content?.members || []).map((m) => [m.id, m.avatar])
+    );
+    const roster = membersData.map((m) => {
+      const override = overrides.get(m.id);
+      const ref = override !== undefined ? override : m.avatar;
+      // Resolve here so the card always receives something <img> can use: a
+      // bare R2 key would otherwise be requested relative to the page.
+      return { ...m, avatar: ref ? imageUrl(ref) : null };
+    });
+
+    const byTier = (t) => roster.filter((m) => m.tier === t);
     const lead = [...byTier('guild_leader'), ...byTier('deputy')];
     return {
       leadership: lead,
       commanders: byTier('commander'),
       members: byTier('member'),
-      total: membersData.length,
+      total: roster.length,
     };
-  }, []);
+  }, [content]);
 
   // Search. Matches name, role and tier, so typing "deputy" works as well as a
   // name. CJK names need no special handling — there is no case to fold.
