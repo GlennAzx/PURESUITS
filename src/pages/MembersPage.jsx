@@ -38,19 +38,18 @@ export default function MembersPage({
   const [query, setQuery] = useState('');
 
   const { leadership, commanders, members, total } = useMemo(() => {
-    // Overlay admin-uploaded portraits onto the bundled roster by id. The list
-    // in content only carries ids that were changed, so the untouched members
-    // cost nothing.
-    const overrides = new Map(
-      (content?.members || []).map((m) => [m.id, m.avatar])
-    );
-    const roster = membersData.map((m) => {
-      const override = overrides.get(m.id);
-      const ref = override !== undefined ? override : m.avatar;
+    // The roster itself now lives in the content file once an admin has edited
+    // it, so the page no longer depends on a rebuild to add or remove someone.
+    // Until then it falls back to the bundled list, which keeps the page
+    // working if the bucket is unreachable.
+    const source = content?.members?.length ? content.members : membersData;
+
+    const roster = source.map((m) => ({
+      ...m,
       // Resolve here so the card always receives something <img> can use: a
       // bare R2 key would otherwise be requested relative to the page.
-      return { ...m, avatar: ref ? imageUrl(ref) : null };
-    });
+      avatar: m.avatar ? imageUrl(m.avatar) : null,
+    }));
 
     const byTier = (t) => roster.filter((m) => m.tier === t);
     const lead = [...byTier('guild_leader'), ...byTier('deputy')];

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Trash2, Pencil, Plus, LogOut, Check, X } from 'lucide-react';
 import ImageManager from '../components/admin/ImageManager';
+import MemberManager from '../components/admin/MemberManager';
 
 /**
  * Admin page for editing events on the live site.
@@ -297,7 +298,8 @@ export default function AdminPage() {
       <div className="mb-6 flex gap-1.5 border-b border-imperial-gold/15 pb-3">
         {[
           ['events', 'Events'],
-          ['images', 'Images'],
+          ['members', 'Members'],
+          ['images', 'Gallery'],
         ].map(([id, label]) => (
           <button
             key={id}
@@ -318,6 +320,10 @@ export default function AdminPage() {
           </button>
         ))}
       </div>
+
+      {tab === 'members' && (
+        <MemberManager token={token} onNotice={setNotice} onError={setError} />
+      )}
 
       {tab === 'images' && (
         <ImageManager token={token} onNotice={setNotice} onError={setError} />

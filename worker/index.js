@@ -311,6 +311,81 @@ async function handleApi(request, env) {
     }
   }
 
+  // Save the full member roster. Separate from /api/images because this is the
+  // source of truth for who is in the guild, not just which portrait they use;
+  // a bad write here can empty the Members page, so it validates hard.
+  if (url.pathname === '/api/members' && request.method === 'PUT') {
+    if (!(await authorised(request, env))) {
+      return json({ error: 'invalid token' }, 401);
+    }
+
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return json({ error: 'body is not valid JSON' }, 400);
+    }
+
+    if (!Array.isArray(body.members)) {
+      return json({ error: 'body must contain a members array' }, 400);
+    }
+    if (body.members.length === 0) {
+      // An empty roster is almost certainly a mistake, and it would take the
+      // whole page down. Refuse it explicitly.
+      return json({ error: 'refusing to save an empty roster' }, 400);
+    }
+    if (body.members.length > 300) {
+      return json({ error: 'too many members (max 300)' }, 400);
+    }
+
+    const TIERS = ['guild_leader', 'deputy', 'commander', 'member'];
+    const seenIds = new Set();
+    const seenSlugs = new Set();
+    let members;
+    try {
+      members = body.members.map((raw, i) => {
+        if (!raw || typeof raw !== 'object') throw new Error(`member ${i} is not an object`);
+
+        const name = String(raw.name ?? '').trim().slice(0, 60);
+        if (!name) throw new Error(`member ${i}: name is required`);
+
+        const id = String(raw.id ?? '').trim().slice(0, 64);
+        if (!id) throw new Error(`member ${i}: id is required`);
+        if (seenIds.has(id)) throw new Error(`duplicate id "${id}"`);
+        seenIds.add(id);
+
+        // /members/<slug> resolves by name, so two members with the same name
+        // would fight over one URL. Catch it here rather than in production.
+        const slug = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+          .toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '') || id;
+        if (seenSlugs.has(slug)) throw new Error(`duplicate name slug "${slug}"`);
+        seenSlugs.add(slug);
+
+        const tier = String(raw.tier ?? 'member');
+        if (!TIERS.includes(tier)) throw new Error(`member ${i}: unknown tier "${tier}"`);
+
+        return {
+          id,
+          tier,
+          name,
+          role: String(raw.role ?? '').trim().slice(0, 40),
+          avatar: raw.avatar ? String(raw.avatar).slice(0, 300) : null,
+        };
+      });
+    } catch (err) {
+      return json({ error: err.message }, 400);
+    }
+
+    try {
+      const content = await readContent(env);
+      content.members = members;
+      await writeContent(env, content);
+      return json({ ok: true, members });
+    } catch (err) {
+      return json({ error: `could not save: ${err.message}` }, 500);
+    }
+  }
+
   return json({ error: 'not found' }, 404);
 }
 

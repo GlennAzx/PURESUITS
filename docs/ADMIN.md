@@ -9,7 +9,7 @@ The page is not linked from the navigation. It is reached by typing the URL.
 
 ## What you can do
 
-The page has two tabs: **Events** and **Images**.
+The page has three tabs: **Events**, **Members** and **Gallery**.
 
 ### Events tab
 
@@ -19,16 +19,34 @@ The page has two tabs: **Events** and **Images**.
 | Edit | Pencil icon on a row, change fields, **Save changes** |
 | Delete | Bin icon on a row, confirm |
 
-### Images tab
+### Members tab
 
-Gallery screenshots and member portraits, both uploaded straight to R2.
+The roster itself: add, edit and remove members, and set each portrait.
+
+| Action | How |
+|---|---|
+| Add | **New member**, fill name/role/tier, **Add member** |
+| Edit | Pencil on a row, change the fields, **Save changes** |
+| Remove | Bin icon, confirm — this is live immediately |
+| Set a portrait | Open a member, **Portrait**, pick a file |
+
+The roster moves out of the built bundle and into `content/site.json` the first
+time it is saved here. Until then the tab reads the bundled `members.json`, so it
+works on a site that has never been edited.
+
+Names must be unique. `/members/<slug>` is derived from the name, so two members
+with the same name would fight over one URL; the Worker rejects that and says
+which slug clashed. An empty roster is also rejected — it is almost always a
+mistake and it would take the whole Members page down.
+
+### Gallery tab
+
+Gallery screenshots, uploaded straight to R2.
 
 | Action | How |
 |---|---|
 | Add/replace a gallery image | **Upload** or **Replace** on a slot, pick a file |
 | Clear a gallery slot | **Clear** on a filled slot |
-| Set a member portrait | Search the name, **Upload** on that row |
-| Revert a portrait | Bin icon on a row that says "custom" |
 
 Changes are live on the next page load. Replacing an image writes a NEW file to
 the bucket instead of overwriting: images are served with a one-year immutable
@@ -118,3 +136,22 @@ untouched and keep working.
 
 `siteContent.js` passes `gallery` and `members` through unchanged. They are not
 reshaped like events, because the Worker already validated them on write.
+
+
+## The roster in R2
+
+`content/site.json` holds `members` as a full list once edited:
+
+```json
+{ "id": "m-47", "tier": "commander", "name": "Ophiron", "role": "Command", "avatar": null }
+```
+
+Valid tiers: `guild_leader`, `deputy`, `commander`, `member`. `avatar` is either
+an R2 key from an upload, a legacy `/members/*.png` path, or `null`.
+
+The Members page uses this list when it is present and falls back to the bundled
+`src/data/members.json` when it is not. That fallback is why the page still works
+if the bucket is unreachable.
+
+Slugs are derived from the name at request time (see `src/lib/memberSlug.js`), so
+adding a member needs no extra field. Renaming someone changes their URL.
