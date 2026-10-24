@@ -24,9 +24,40 @@ import { slugify } from '../lib/memberSlug';
  * There is no flip. It was removed on request; the tile is a static face.
  */
 
+// Four sizes, kept in the same 1.38 : 1 face ratio and 0.81 depth ratio as a
+// real Size-7 tile, so a small tile still reads as the same object seen closer
+// up rather than a different, flatter one.
+/**
+ * Fluid size for a tile that must fit N per row on a phone.
+ *
+ * The wrap around a tile is 1.16x the face width (see .member-tile-stage), so a
+ * plain `40vw` overflowed: the wrap was wider than the grid track and the two
+ * leader tiles overlapped by ~20px at 320-430px. The divisor below accounts for
+ * that 1.16 and for the page padding, pane padding and gap, so the track is
+ * always at least as wide as the wrap.
+ *
+ * @param {string} cap  Largest the face may get, e.g. '232px'.
+ * @param {number} perRow  Tiles per row at the narrowest breakpoint.
+ * @param {number} chrome Horizontal space the row cannot use, in px.
+ */
+function fluid(cap, perRow, chrome) {
+  const w = `min(${cap}, calc((100vw - ${chrome}px) / ${(perRow * 1.16).toFixed(2)}))`;
+  return {
+    w,
+    h: `calc(${w} * 1.3793)`,
+    d: `calc(${w} * 0.8103)`,
+  };
+}
+
 const DIMS = {
-  leader:   { w: 232, h: 320, d: 188 },
+  // Two leaders side by side even on a phone: 48px page gutters, 48px pane
+  // padding, 16px gap.
+  leader: fluid('232px', 2, 112),
   standard: { w: 208, h: 287, d: 175 },
+  // Commanders go two across on the narrowest screens.
+  command: fluid('152px', 2, 88),
+  // Members go three across even at 320px, which is the point of this tier.
+  member: fluid('104px', 3, 64),
 };
 
 export default function MemberCard3D({
@@ -61,8 +92,13 @@ export default function MemberCard3D({
 
   return (
     <a
-      className={`member-tile-wrap${variant === 'leader' ? ' member-tile-wrap--leader' : ''}${highlighted ? ' member-tile-wrap--focus' : ''}`}
-      style={{ '--mt-w': `${w}px`, '--mt-h': `${h}px`, '--mt-d': `${d}px` }}
+      className={`member-tile-wrap${variant !== 'standard' ? ` member-tile-wrap--${variant}` : ''}${highlighted ? ' member-tile-wrap--focus' : ''}`}
+      style={{
+        // Values are either numbers (px) or ready-made CSS expressions.
+        '--mt-w': typeof w === 'number' ? `${w}px` : w,
+        '--mt-h': typeof h === 'number' ? `${h}px` : h,
+        '--mt-d': typeof d === 'number' ? `${d}px` : d,
+      }}
       href={href}
       data-slug={slug}
       onClick={handleClick}

@@ -236,7 +236,10 @@ export default function MembersPage({
       <section className={`leadership-pane mb-16 ${shown.leadership.length === 0 ? 'hidden' : ''}`}>
         <div className="rounded-2xl border border-imperial-gold/25 bg-gradient-to-b from-ink-charcoal to-ink-black p-6 sm:p-8">
           <SectionHeading title="Leadership" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-16 justify-items-center">
+          {/* Guild leader and vice master sit as a PAIR at every width. On a
+              phone a single column stacked them, which read as one person
+              above another rather than two people leading together. */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-10 justify-items-center sm:gap-x-12 sm:gap-y-16">
             {shown.leadership.map((m, i) => (
               <MemberCard3D key={m.id} member={m} index={i} variant="leader" onOpen={onOpenMember} highlighted={ringSlug === memberSlug(m)} />
             ))}
@@ -248,9 +251,9 @@ export default function MembersPage({
       {shown.commanders.length > 0 && (
         <section className="mb-16">
           <SectionHeading title="Commanders" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-16 justify-items-center">
+          <div className="grid grid-cols-2 justify-items-center gap-x-5 gap-y-9 sm:grid-cols-3 sm:gap-x-8 lg:grid-cols-4">
             {shown.commanders.map((m, i) => (
-              <MemberCard3D key={m.id} member={m} index={i} onOpen={onOpenMember} highlighted={ringSlug === memberSlug(m)} />
+              <MemberCard3D key={m.id} member={m} index={i} variant="command" onOpen={onOpenMember} highlighted={ringSlug === memberSlug(m)} />
             ))}
           </div>
         </section>
@@ -260,9 +263,12 @@ export default function MembersPage({
       {shown.members.length > 0 && (
         <section>
           <SectionHeading title="Members" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-16 justify-items-center">
+          {/* The roster is 73 people. Large tiles there meant a very long
+              scroll of near-identical cards, so this tier is packed: many per
+              row, small gaps, enough separation to scan without reading. */}
+          <div className="grid grid-cols-3 justify-items-center gap-x-2.5 gap-y-6 sm:grid-cols-4 sm:gap-x-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8">
             {shown.members.map((m, i) => (
-              <MemberCard3D key={m.id} member={m} index={i} onOpen={onOpenMember} highlighted={ringSlug === memberSlug(m)} />
+              <MemberCard3D key={m.id} member={m} index={i} variant="member" onOpen={onOpenMember} highlighted={ringSlug === memberSlug(m)} />
             ))}
           </div>
         </section>

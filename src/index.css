@@ -706,8 +706,43 @@
   font-synthesis: none;
 }
 
+/* The nameplate is 2D text outside the 3D layer, so it does NOT scale with the
+   tile. Every tier therefore sizes its type as a ratio of --mt-w. Fixed px is
+   what made the two leader names collide into "淼琰MYCheliodas" on a 320px
+   phone: 28px type on a face that had shrunk to 96px. */
+.member-name {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
 .member-tile-wrap--leader .member-name {
-  font-size: 28px;
+  font-size: calc(var(--mt-w) * 0.12);
+}
+
+.member-tile-wrap--leader .member-role {
+  margin-top: calc(var(--mt-w) * 0.03);
+  font-size: calc(var(--mt-w) * 0.056);
+}
+
+.member-tile-wrap--command .member-name {
+  font-size: calc(var(--mt-w) * 0.105);
+}
+
+.member-tile-wrap--command .member-role {
+  margin-top: calc(var(--mt-w) * 0.03);
+  font-size: calc(var(--mt-w) * 0.06);
+  letter-spacing: 0.1em;
+}
+
+.member-tile-wrap--member .member-name {
+  font-size: calc(var(--mt-w) * 0.12);
+  letter-spacing: 0;
+}
+
+.member-tile-wrap--member .member-role {
+  margin-top: calc(var(--mt-w) * 0.03);
+  font-size: calc(var(--mt-w) * 0.072);
+  letter-spacing: 0.08em;
 }
 
 .member-role {
