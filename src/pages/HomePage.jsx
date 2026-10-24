@@ -159,7 +159,7 @@ export default function HomePage({ content }) {
             <h2 className="text-2xl font-serif font-bold text-ivory">
               Weekly Schedule
             </h2>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-400 mt-1">
               Recurring guild runs.{' '}
               {timeMode === 'sgt' ? 'All times UTC+8 (guild time)' : 'Times in your local zone'}
             </p>
@@ -167,7 +167,7 @@ export default function HomePage({ content }) {
 
           {/* Time zone toggle. One control, applies to every card, remembered. */}
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono text-gray-600 uppercase tracking-wider">
+            <span className="text-[10px] font-mono text-ivory-shadow uppercase tracking-wider">
               Countdowns update live
             </span>
             <div className="flex overflow-hidden rounded-md border border-imperial-gold/25">
@@ -178,7 +178,7 @@ export default function HomePage({ content }) {
                 className={`px-2.5 py-1 text-[10px] uppercase tracking-wider transition-colors ${
                   timeMode === 'sgt'
                     ? 'bg-imperial-gold/20 text-imperial-gold'
-                    : 'text-gray-500 hover:text-ivory'
+                    : 'text-gray-400 hover:text-ivory'
                 }`}
               >
                 UTC+8
@@ -190,7 +190,7 @@ export default function HomePage({ content }) {
                 className={`px-2.5 py-1 text-[10px] uppercase tracking-wider transition-colors ${
                   timeMode === 'local'
                     ? 'bg-imperial-gold/20 text-imperial-gold'
-                    : 'text-gray-500 hover:text-ivory'
+                    : 'text-gray-400 hover:text-ivory'
                 }`}
               >
                 My time
@@ -205,7 +205,7 @@ export default function HomePage({ content }) {
           <div className="events-carousel">
             {ongoing.length > 0 && (
               <div className="mb-3 flex items-center gap-2.5">
-                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-500">
+                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-gray-400">
                   Coming up
                 </span>
                 <span className="h-px flex-1 bg-gradient-to-r from-imperial-gold/20 to-transparent" />
@@ -244,7 +244,7 @@ export default function HomePage({ content }) {
                 href={links.github}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-md border border-imperial-gold/20 px-2.5 py-1.5 text-[10px] uppercase tracking-wider text-gray-500 transition-colors hover:border-imperial-gold/50 hover:text-imperial-gold"
+                className="inline-flex items-center gap-1.5 rounded-md border border-imperial-gold/20 px-2.5 py-1.5 text-[10px] uppercase tracking-wider text-gray-400 transition-colors hover:border-imperial-gold/50 hover:text-imperial-gold"
               >
                 <Github size={12} />
                 GitHub
@@ -264,7 +264,7 @@ export default function HomePage({ content }) {
             )}
           </div>
 
-          <p className="text-[11px] font-mono text-gray-600">
+          <p className="text-[11px] font-mono text-ivory-shadow">
             {links.discord.replace(/^https?:\/\//, '')}
           </p>
         </div>

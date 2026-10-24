@@ -253,6 +253,27 @@
   }
 }
 
+/* Hero wordmark: the eight serif capitals measure 373px at 60px type, so the
+   default size clips the first and last letter below a 390px viewport. The
+   clamp scales the type with the viewport and tightens the tracking; the wide
+   tracking and the tablet/desktop sizes are restored at their breakpoints. */
+.hero-title {
+  font-size: clamp(2.6rem, 15.5vw, 4.5rem);
+  letter-spacing: 0.03em;
+}
+
+@media (min-width: 640px) {
+  .hero-title {
+    letter-spacing: 0.08em;
+  }
+}
+
+@media (min-width: 768px) {
+  .hero-title {
+    font-size: 96px;
+  }
+}
+
 /* Hover gating — no hover on touch */
 @media (hover: none) {
   .hover-only {

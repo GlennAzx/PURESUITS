@@ -59,7 +59,7 @@ export default function CountdownCard({ event, now = Date.now() }) {
               Ongoing
             </span>
           ) : (
-            <span className="text-[10px] font-mono text-gray-500 uppercase tracking-wider">
+            <span className="text-[10px] font-mono text-gray-400 uppercase tracking-wider">
               {cadenceLabel(event)}
             </span>
           )}
@@ -97,20 +97,20 @@ export default function CountdownCard({ event, now = Date.now() }) {
               >
                 {String(u.value).padStart(2, '0')}
               </div>
-              <div className="text-[9px] text-gray-500 mt-1 tracking-widest">
+              <div className="text-[9px] text-gray-400 mt-1 tracking-widest">
                 {u.label}
               </div>
             </div>
           ))}
         </div>
 
-        <div className="text-[10px] font-mono text-gray-500 pt-2.5 border-t border-gray-800 flex items-center justify-between">
+        <div className="text-[10px] font-mono text-gray-400 pt-2.5 border-t border-gray-800 flex items-center justify-between">
           <span>{isOngoing ? 'Ends' : 'Next'}</span>
           <span className="flex items-baseline gap-1.5">
             <span className={isOngoing ? 'text-jade-accent' : 'text-imperial-gold'}>
               {formatTime(target, timeMode)}
             </span>
-            <span className="text-[9px] uppercase tracking-wider text-gray-600">
+            <span className="text-[9px] uppercase tracking-wider text-ivory-shadow">
               {zoneLabel(timeMode)}
             </span>
           </span>

@@ -36,7 +36,7 @@ export default function BuildsPage() {
           Martial Path Guides
         </h2>
         <p className="text-sm text-gray-400">
-          pew pew
+          Builds curated by our guild members
         </p>
       </div>
 

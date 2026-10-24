@@ -65,7 +65,7 @@ function EventCard({ event, now }) {
         >
           {String(day).padStart(2, '0')}
         </span>
-        <span className="mt-1 text-[9px] uppercase tracking-widest text-gray-500">
+        <span className="mt-1 text-[9px] uppercase tracking-widest text-gray-400">
           {month}
         </span>
       </div>
@@ -77,7 +77,7 @@ function EventCard({ event, now }) {
           </span>
           <span
             className={`text-[10px] font-mono uppercase tracking-wider ${
-              live ? 'text-jade-accent' : 'text-gray-500'
+              live ? 'text-jade-accent' : 'text-gray-400'
             }`}
           >
             {whenLabel(event, now)}
@@ -95,7 +95,7 @@ function EventCard({ event, now }) {
         )}
 
         <div className="mt-2.5 flex items-center justify-between gap-3">
-          <span className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 font-mono text-[10px] text-gray-600">
+          <span className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 font-mono text-[10px] text-ivory-shadow">
             <span>
               {formatTime(event.startsAt, timeMode)}{' '}
               <span className="uppercase tracking-wider">
@@ -104,7 +104,7 @@ function EventCard({ event, now }) {
             </span>
             {/* Location is optional, so the row collapses cleanly when absent. */}
             {event.location && (
-              <span className="flex min-w-0 items-center gap-1 normal-case tracking-normal text-gray-500">
+              <span className="flex min-w-0 items-center gap-1 normal-case tracking-normal text-gray-400">
                 <MapPin size={10} className="shrink-0 opacity-60" />
                 <span className="truncate">{event.location}</span>
               </span>
@@ -141,7 +141,7 @@ export default function EventsSection({ events, now }) {
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-imperial-gold/25 pb-3">
         <div>
           <h2 className="font-serif text-2xl font-bold text-ivory">Events</h2>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-gray-400">
             One-off nights and tournaments. Dates in guild time, UTC+8.
           </p>
         </div>
@@ -151,7 +151,7 @@ export default function EventsSection({ events, now }) {
           that one-off events exist and simply are not scheduled, and the
           editor can see where content goes. */}
       {events.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-imperial-gold/20 px-4 py-8 text-center text-[11.5px] text-gray-600">
+        <p className="rounded-xl border border-dashed border-imperial-gold/20 px-4 py-8 text-center text-[11.5px] text-ivory-shadow">
           No one-off events scheduled. Weekly runs are below.
         </p>
       ) : (

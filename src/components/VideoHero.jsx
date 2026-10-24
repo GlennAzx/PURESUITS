@@ -1,8 +1,16 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useCallback, useEffect } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
-import { Play, Pause, Volume2, VolumeX, Link2, X } from 'lucide-react';
+import {
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Link2,
+  X,
+  ChevronDown,
+} from 'lucide-react';
 import { media, MEDIA } from '../lib/media';
 
 // Resolved through media(), so the hero follows VITE_MEDIA_BASE: the R2 bucket
@@ -30,6 +38,16 @@ export default function VideoHero() {
   const [videoFailed, setVideoFailed] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   const [urlInput, setUrlInput] = useState('');
+  const [scrolled, setScrolled] = useState(false);
+
+  // The scroll cue fades once the hero starts to leave. Passive listener, removed
+  // on unmount, so a route change does not leave a stray handler on window.
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 80);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   const togglePlay = useCallback(() => {
     const v = videoRef.current;
@@ -230,8 +248,19 @@ export default function VideoHero() {
         )}
       </div>
 
+      {/* Scroll cue — fades out once the hero leaves. Decorative only. */}
+      <div
+        aria-hidden="true"
+        className={`pointer-events-none absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1 text-ivory/50 transition-opacity duration-[400ms] ease-out-strong ${
+          scrolled ? 'opacity-0' : 'opacity-100'
+        }`}
+      >
+        <ChevronDown size={20} className="motion-safe:animate-bounce" />
+        <span className="text-[10px] uppercase tracking-[0.3em]">Scroll</span>
+      </div>
+
       {videoFailed && (
-        <p className="absolute bottom-12 left-1/2 -translate-x-1/2 z-30 text-[11px] text-gray-500 font-mono">
+        <p className="absolute bottom-12 left-1/2 -translate-x-1/2 z-30 text-[11px] text-gray-400 font-mono">
           Video unavailable — using ambient fallback
         </p>
       )}

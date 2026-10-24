@@ -68,7 +68,7 @@ export default function GalleryPage() {
                 className="w-full h-full object-cover transition-transform duration-300 ease-out-strong group-hover:scale-[1.03]"
               />
             ) : (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-gray-600">
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-ivory-shadow">
                 <Images size={26} className="opacity-50" />
                 <span className="text-[10px] uppercase tracking-wider">
                   Empty slot
@@ -84,8 +84,8 @@ export default function GalleryPage() {
       </div>
 
       {filled === 0 && (
-        <p className="text-center text-[11px] text-gray-600 mt-8 font-mono">
-          Add image paths to src/data/gallery.json to fill these slots.
+        <p className="text-center text-[11px] text-ivory-shadow mt-8 font-mono">
+          Screenshots coming soon — share yours in Discord
         </p>
       )}
     </div>

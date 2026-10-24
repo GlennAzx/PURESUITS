@@ -74,7 +74,7 @@ export default function OngoingEventCard({ event, now }) {
 
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div>
-            <div className="text-[9.5px] uppercase tracking-[0.18em] text-gray-500 mb-1.5">
+            <div className="text-[9.5px] uppercase tracking-[0.18em] text-gray-400 mb-1.5">
               Time remaining
             </div>
             <div className="flex items-end gap-2" role="timer" aria-live="off">
@@ -83,7 +83,7 @@ export default function OngoingEventCard({ event, now }) {
                   <div className="font-mono text-2xl sm:text-3xl tabular-nums leading-none text-jade-accent">
                     {String(u.value).padStart(2, '0')}
                   </div>
-                  <div className="mt-1 text-[8.5px] uppercase tracking-widest text-gray-600">
+                  <div className="mt-1 text-[8.5px] uppercase tracking-widest text-ivory-shadow">
                     {u.label}
                   </div>
                 </div>
@@ -92,12 +92,12 @@ export default function OngoingEventCard({ event, now }) {
           </div>
 
           <div className="sm:text-right">
-            <div className="font-mono text-[11px] text-gray-500">
+            <div className="font-mono text-[11px] text-gray-400">
               Ends{' '}
               <span className="text-jade-accent">
                 {formatTime(end, timeMode)}
               </span>{' '}
-              <span className="text-[9px] uppercase tracking-wider text-gray-600">
+              <span className="text-[9px] uppercase tracking-wider text-ivory-shadow">
                 {zoneLabel(timeMode)}
               </span>
             </div>

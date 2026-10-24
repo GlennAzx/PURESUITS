@@ -37,11 +37,11 @@ function todayISO() {
 function Field({ label, hint, children }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[10px] uppercase tracking-[0.14em] text-gray-500">
+      <span className="mb-1 block text-[10px] uppercase tracking-[0.14em] text-gray-400">
         {label}
       </span>
       {children}
-      {hint && <span className="mt-1 block text-[10px] text-gray-600">{hint}</span>}
+      {hint && <span className="mt-1 block text-[10px] text-ivory-shadow">{hint}</span>}
     </label>
   );
 }
@@ -226,7 +226,7 @@ export default function AdminPage() {
     return (
       <div className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-6">
         <h1 className="mb-1 font-serif text-2xl font-bold text-ivory">Admin</h1>
-        <p className="mb-6 text-xs text-gray-500">
+        <p className="mb-6 text-xs text-gray-400">
           Paste the admin token to manage events on the live site.
         </p>
         <form onSubmit={unlock} className="space-y-3">
@@ -257,7 +257,7 @@ export default function AdminPage() {
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-imperial-gold/25 pb-3">
         <div>
           <h1 className="font-serif text-2xl font-bold text-ivory">Events admin</h1>
-          <p className="mt-1 text-xs text-gray-500">
+          <p className="mt-1 text-xs text-gray-400">
             Changes are live immediately. No build, no deploy.
           </p>
         </div>
@@ -272,7 +272,7 @@ export default function AdminPage() {
           <button
             type="button"
             onClick={signOut}
-            className="inline-flex items-center gap-1.5 rounded-md border border-imperial-gold/20 px-2.5 py-1.5 text-[10px] uppercase tracking-wider text-gray-500 transition-colors hover:border-imperial-gold/50 hover:text-imperial-gold"
+            className="inline-flex items-center gap-1.5 rounded-md border border-imperial-gold/20 px-2.5 py-1.5 text-[10px] uppercase tracking-wider text-gray-400 transition-colors hover:border-imperial-gold/50 hover:text-imperial-gold"
           >
             <LogOut size={12} /> Sign out
           </button>
@@ -390,7 +390,7 @@ export default function AdminPage() {
                 setEditing(null);
                 setForm(EMPTY_FORM);
               }}
-              className="rounded-md border border-imperial-gold/20 px-3 py-1.5 text-[10px] uppercase tracking-wider text-gray-500 transition-colors hover:border-imperial-gold/50 hover:text-imperial-gold"
+              className="rounded-md border border-imperial-gold/20 px-3 py-1.5 text-[10px] uppercase tracking-wider text-gray-400 transition-colors hover:border-imperial-gold/50 hover:text-imperial-gold"
             >
               Cancel
             </button>
@@ -399,7 +399,7 @@ export default function AdminPage() {
       )}
 
       {sorted.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-imperial-gold/20 px-4 py-8 text-center text-[11.5px] text-gray-600">
+        <p className="rounded-xl border border-dashed border-imperial-gold/20 px-4 py-8 text-center text-[11.5px] text-ivory-shadow">
           No events yet. Use New event to add one.
         </p>
       ) : (
@@ -411,7 +411,7 @@ export default function AdminPage() {
             >
               <div className="min-w-0">
                 <p className="truncate text-xs font-bold text-ivory">{ev.title}</p>
-                <p className="mt-0.5 truncate font-mono text-[10px] text-gray-500">
+                <p className="mt-0.5 truncate font-mono text-[10px] text-gray-400">
                   {ev.date} {ev.time} · {ev.durationMinutes}m
                   {ev.location ? ` · ${ev.location}` : ''}
                 </p>
@@ -421,7 +421,7 @@ export default function AdminPage() {
                   type="button"
                   onClick={() => startEdit(ev)}
                   aria-label={`Edit ${ev.title}`}
-                  className="rounded border border-imperial-gold/20 p-1.5 text-gray-500 transition-colors hover:border-imperial-gold/60 hover:text-imperial-gold"
+                  className="rounded border border-imperial-gold/20 p-1.5 text-gray-400 transition-colors hover:border-imperial-gold/60 hover:text-imperial-gold"
                 >
                   <Pencil size={12} />
                 </button>

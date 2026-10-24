@@ -104,6 +104,11 @@ export default function MahjongGuidePage() {
         </p>
       </div>
 
+      <div className="rounded-xl border border-dashed border-imperial-gold/25 p-4 text-center text-sm text-gray-400">
+        This guide is still being written. We are gathering information in-game
+        and will add the rest as we confirm it.
+      </div>
+
       <div className="space-y-6 text-gray-300 leading-relaxed text-sm">
         {SECTIONS.map((section, i) => (
           <section
