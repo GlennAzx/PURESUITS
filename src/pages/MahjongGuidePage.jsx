@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
+import { DEFAULT_CONTENT } from '../lib/siteContent';
 
 const SECTIONS = [
   {
@@ -104,9 +105,35 @@ export default function MahjongGuidePage() {
         </p>
       </div>
 
-      <div className="rounded-xl border border-dashed border-imperial-gold/25 p-4 text-center text-sm text-gray-400">
-        This guide is still being written. We are gathering information in-game
-        and will add the rest as we confirm it.
+      <div className="mj-notice rounded-xl border border-imperial-gold/25 bg-ink-charcoal/60 p-5 sm:p-6">
+        <div className="flex items-center gap-2">
+          <span
+            className="h-1.5 w-1.5 rounded-full bg-jade-accent"
+            aria-hidden="true"
+          />
+          <span className="text-[10px] uppercase tracking-[0.18em] text-jade-accent">
+            Work in progress
+          </span>
+        </div>
+
+        <p className="mt-3 text-sm leading-relaxed text-gray-400">
+          The rules below are correct and already in use. The remaining details
+          are being verified in-game, and will be added here as they are
+          confirmed.
+        </p>
+
+        <p className="mt-2 text-sm leading-relaxed text-gray-400">
+          Full builds are available in the{' '}
+          <a
+            href={DEFAULT_CONTENT.links.discord}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-imperial-gold underline decoration-imperial-gold/40 underline-offset-4 transition-colors duration-200 ease-out-strong hover:text-imperial-gold-bright hover:decoration-imperial-gold/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-imperial-gold/60 focus-visible:ring-offset-2 focus-visible:ring-offset-ink-charcoal"
+          >
+            guild Discord
+          </a>{' '}
+          in the meantime.
+        </p>
       </div>
 
       <div className="space-y-6 text-gray-300 leading-relaxed text-sm">

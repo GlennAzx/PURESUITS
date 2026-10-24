@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>PURESUIT — contrast comparison</title>
+<style>
+  :root{
+    --ink:#0b0c10;        /* page background */
+    --card:#14263a;       /* card surface (estimated from screenshots) */
+    --gold:#d4af37;
+    --ivory:#eef5fa;
+    --g400:#9ca3af;
+    --g500:#6b7280;
+    --g600:#4b5563;
+    --fix-a:#7d8694;      /* proposed "faint" */
+    --fix-b:#8b93a1;      /* proposed "muted" */
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#07080b;color:#cfd6de;font:14px/1.5 "Segoe UI",system-ui,sans-serif;padding:32px}
+  h1{font-size:20px;margin:0 0 4px;color:var(--ivory);font-weight:600}
+  .sub{color:#7d8694;font-size:12px;margin-bottom:26px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:30px}
+  .panel{background:var(--ink);border:1px solid #1e2a38;border-radius:10px;padding:16px}
+  .panel h2{font-size:12px;text-transform:uppercase;letter-spacing:.15em;margin:0 0 2px;color:var(--gold);font-weight:700}
+  .panel .verdict{font-size:11px;margin-bottom:14px;color:#7d8694}
+  .row{margin-bottom:14px}
+  .row .label{font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:#5b6472;margin-bottom:3px}
+  .small{font-size:11px}
+  .tiny{font-size:10px}
+  .ratio{font-family:ui-monospace,Consolas,monospace;font-size:10px;margin-top:3px}
+  .pass{color:#6fbf91}
+  .fail{color:#e0736b}
+  /* sample text colours */
+  .c-g600{color:var(--g600)} .c-g500{color:var(--g500)} .c-g400{color:var(--g400)}
+  .c-fixa{color:var(--fix-a)} .c-fixb{color:var(--fix-b)}
+  /* card-surface swatches */
+  .oncard{background:var(--card);border-radius:6px;padding:10px;margin-top:6px}
+  table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+  th,td{text-align:left;padding:7px 9px;border-bottom:1px solid #17222e}
+  th{font-size:9.5px;text-transform:uppercase;letter-spacing:.12em;color:#6f7a88;border-bottom:1px solid #22303f}
+  td{border-bottom:1px solid #17222e}
+  .mono{font-family:ui-monospace,Consolas,monospace}
+  .note{margin-top:26px;padding:14px 16px;border-left:2px solid var(--gold);background:#0d1218;font-size:12px;color:#9aa5b3}
+  .note b{color:var(--ivory)}
+</style>
+</head>
+<body>
+
+<h1>Contrast: current vs fixes</h1>
+<div class="sub">Measured against the site's own colours. WCAG AA needs 4.5:1 for normal text, 3:1 for large (18pt+) text.</div>
+
+<div class="grid">
+
+  <!-- CURRENT -->
+  <div class="panel">
+    <h2>Current</h2>
+    <div class="verdict">2 of 3 greys fail AA</div>
+
+    <div class="row">
+      <div class="label">gray-600 · #4b5563</div>
+      <div class="small c-g600">Screenshots coming soon</div>
+      <div class="tiny c-g600">Footer meta · timestamps</div>
+      <div class="ratio fail">on ink 2.59:1 · FAIL (even large)</div>
+      <div class="oncard"><div class="small c-g600">On card surface 2.03:1 · FAIL</div></div>
+    </div>
+
+    <div class="row">
+      <div class="label">gray-500 · #6b7280</div>
+      <div class="small c-g500">A chill Mahjong guild. Weekly runs, relaxed tables.</div>
+      <div class="ratio fail">on ink 4.04:1 · FAIL (body)</div>
+      <div class="oncard"><div class="small c-g500">On card surface 3.18:1 · FAIL</div></div>
+    </div>
+
+    <div class="row">
+      <div class="label">gray-400 · #9ca3af</div>
+      <div class="small c-g400">Body copy at 7.70:1</div>
+      <div class="ratio pass">on ink 7.70:1 · PASS</div>
+      <div class="oncard"><div class="small c-g400">On card 6.05:1 · PASS</div></div>
+    </div>
+  </div>
+
+  <!-- OPTION A -->
+  <div class="panel">
+    <h2>Option A — simplest</h2>
+    <div class="verdict">Collapse both into gray-400</div>
+
+    <div class="row">
+      <div class="label">all small text → #9ca3af</div>
+      <div class="small c-g400">Screenshots coming soon</div>
+      <div class="tiny c-g400">Footer meta · timestamps</div>
+      <div class="ratio pass">on ink 7.70:1 · PASS</div>
+      <div class="oncard"><div class="small c-g400">On card 6.05:1 · PASS</div></div>
+    </div>
+
+    <div class="note" style="margin-top:8px;padding:10px 12px;font-size:11px">
+      <b>Trade-off:</b> three tiers become one. Footers and timestamps stop
+      receding — everything competes equally. Zero design risk, loses depth.
+    </div>
+  </div>
+
+  <!-- OPTION B -->
+  <div class="panel">
+    <h2>Option B — tuned</h2>
+    <div class="verdict">Two new greys, keeps hierarchy</div>
+
+    <div class="row">
+      <div class="label">gray-500 → #8b93a1 “muted”</div>
+      <div class="small c-fixb">A chill Mahjong guild. Weekly runs, relaxed tables.</div>
+      <div class="ratio pass">on ink 6.32:1 · PASS</div>
+      <div class="oncard"><div class="small c-fixb">On card 4.96:1 · PASS</div></div>
+    </div>
+
+    <div class="row">
+      <div class="label">gray-600 → #7d8694 “faint”</div>
+      <div class="tiny c-fixa">Footer meta · timestamps</div>
+      <div class="ratio pass">on ink 5.31:1 · PASS</div>
+      <div class="oncard"><div class="small c-fixa">On card 4.17:1 · passes large only</div></div>
+    </div>
+
+    <div class="note" style="margin-top:8px;padding:10px 12px;font-size:11px">
+      <b>Trade-off:</b> both tiers pass on the page; the faint tier is slightly
+      under AA on card surfaces. Preserves the visual depth. Two new colour tokens.
+    </div>
+  </div>
+
+</div>
+
+<table>
+  <tr>
+    <th>Token</th><th>Now</th><th>On ink</th><th>On card</th><th>Option A</th><th>Option B</th><th>Uses</th>
+  </tr>
+  <tr><td class="mono">gray-400</td><td class="mono">#9ca3af</td><td class="pass">7.70</td><td class="pass">6.05</td><td>unchanged</td><td>unchanged</td><td>15</td></tr>
+  <tr><td class="mono">gray-500</td><td class="mono">#6b7280</td><td class="fail">4.04</td><td class="fail">3.18</td><td class="mono">→ #9ca3af</td><td class="mono">→ #8b93a1</td><td>22</td></tr>
+  <tr><td class="mono">gray-600</td><td class="mono">#4b5563</td><td class="fail">2.59</td><td class="fail">2.03</td><td class="mono">→ #9ca3af</td><td class="mono">→ #7d8694</td><td>11</td></tr>
+</table>
+
+<div class="note">
+  <b>Where this matters most:</b> the hero tagline, card timestamps, footer meta
+  and the “times in your local zone” line all sit in the failing tiers at 10–12px.
+  That is small text read on a phone, which is the worst case for contrast.
+</div>
+
+</body>
+</html>

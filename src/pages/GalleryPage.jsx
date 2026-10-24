@@ -4,6 +4,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
 import { Images } from 'lucide-react';
 import galleryData from '../data/gallery.json';
+import { DEFAULT_CONTENT } from '../lib/siteContent';
 
 export default function GalleryPage() {
   const pageRef = useRef(null);
@@ -84,9 +85,24 @@ export default function GalleryPage() {
       </div>
 
       {filled === 0 && (
-        <p className="text-center text-[11px] text-ivory-shadow mt-8 font-mono">
-          Screenshots coming soon — share yours in Discord
-        </p>
+        <div className="mt-10 text-center">
+          <p className="text-[11px] font-mono uppercase tracking-wider text-imperial-gold/80">
+            Screenshots coming soon
+          </p>
+          <p className="mt-2 text-sm text-gray-400">
+            We are still gathering the good ones. Got a run, a rally or a table
+            night worth keeping?{' '}
+            <a
+              href={DEFAULT_CONTENT.links.discord}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-imperial-gold underline decoration-imperial-gold/40 underline-offset-4 transition-colors hover:text-imperial-gold-bright hover:decoration-imperial-gold"
+            >
+              Share it in our Discord
+            </a>
+            .
+          </p>
+        </div>
       )}
     </div>
   );

@@ -117,7 +117,12 @@ export default function FannedMahjongNav({ activePage, setActivePage }) {
         }`}
       />
 
-      <aside className="fixed right-0 top-0 bottom-0 z-50 flex items-center justify-end pointer-events-none">
+      {/* On phones the handle drops to the bottom right: at its desktop position
+          (vertically centred) it is a 48px rail sitting on the last letter of
+          the PURESUIT wordmark at 320-430px. Moving the rail is a smaller
+          compromise than shrinking the hero type, and it costs nothing on
+          desktop where the wordmark is narrower than the viewport. */}
+      <aside className="fixed right-0 top-0 bottom-0 z-50 flex items-end justify-end pb-24 pointer-events-none sm:items-center sm:pb-0">
         <div ref={anchorRef} className="relative pointer-events-auto">
           <div
             ref={layerRef}
