@@ -28,7 +28,7 @@ The roster itself: add, edit and remove members, and set each portrait.
 | Add | **New member**, fill name/role/tier, **Add member** |
 | Edit | Pencil on a row, change the fields, **Save changes** |
 | Remove | Bin icon, confirm — this is live immediately |
-| Set a portrait | Open a member, **Portrait**, pick a file |
+| Set a portrait | Open a member, **Portrait**, pick a file, then crop |
 
 The roster moves out of the built bundle and into `content/site.json` the first
 time it is saved here. Until then the tab reads the bundled `members.json`, so it
@@ -155,3 +155,21 @@ if the bucket is unreachable.
 
 Slugs are derived from the name at request time (see `src/lib/memberSlug.js`), so
 adding a member needs no extra field. Renaming someone changes their URL.
+
+
+## Portrait cropping
+
+Picking a portrait opens a crop step. Drag the image to position it and use the
+slider to zoom. The frame is the tile window's real ratio, and the result is
+saved as a 480 x 696 JPEG.
+
+This matters because the tile window is 194 x 281 (ratio 0.6899). Before the
+crop step, uploads were stored untouched and the browser centred them with
+`object-fit: cover`, so an off-centre face lost the top of its head and the
+three shipped portraits were each losing about 18% of their width.
+
+The saved file is also much smaller. A 3000 x 2000 upload of 3.9 MB becomes a
+117 KB portrait, because the tiles never render wider than 232 px.
+
+Gallery uploads do not have a crop step. They are 16:9 slots and are still
+centre-cropped by CSS.

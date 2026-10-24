@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Upload, Trash2, Plus, Pencil, Check, X, Image as ImageIcon } from 'lucide-react';
 import bundledMembers from '../../data/members.json';
+import PortraitCropper from './PortraitCropper';
 import { imageUrl } from '../../lib/media';
 
 /**
@@ -34,6 +35,8 @@ export default function MemberManager({ token, onNotice, onError }) {
   const [draft, setDraft] = useState(EMPTY);
   const [busy, setBusy] = useState(false);
   const [query, setQuery] = useState('');
+  // The picked file waits here while the crop step is open.
+  const [crop, setCrop] = useState(null);
 
   useEffect(() => {
     let alive = true;
@@ -79,9 +82,9 @@ export default function MemberManager({ token, onNotice, onError }) {
     [token, onNotice, onError]
   );
 
-  const uploadPortrait = async (file, memberId) => {
+  const uploadPortrait = async (blob, memberId) => {
     const body = new FormData();
-    body.append('file', file);
+    body.append('file', blob, 'portrait.jpg');
     const res = await fetch('/api/upload?kind=members', {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
@@ -222,17 +225,10 @@ export default function MemberManager({ token, onNotice, onError }) {
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={async (e) => {
+                  onChange={(e) => {
                     const file = e.target.files?.[0];
-                    if (!file) return;
-                    try {
-                      setBusy(true);
-                      await uploadPortrait(file, form);
-                    } catch (err) {
-                      onError(err.message);
-                    } finally {
-                      setBusy(false);
-                    }
+                    e.target.value = '';
+                    if (file) setCrop({ file, memberId: form });
                   }}
                 />
               </label>
@@ -296,6 +292,24 @@ export default function MemberManager({ token, onNotice, onError }) {
 
       {filtered.length === 0 && (
         <p className="text-[11px] text-gray-500">No member matches that search.</p>
+      )}
+
+      {crop && (
+        <PortraitCropper
+          file={crop.file}
+          onCancel={() => setCrop(null)}
+          onDone={async (blob) => {
+            try {
+              setBusy(true);
+              await uploadPortrait(blob, crop.memberId);
+              setCrop(null);
+            } catch (err) {
+              onError(err.message);
+            } finally {
+              setBusy(false);
+            }
+          }}
+        />
       )}
     </div>
   );
