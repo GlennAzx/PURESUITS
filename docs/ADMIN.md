@@ -29,6 +29,7 @@ The roster itself: add, edit and remove members, and set each portrait.
 | Edit | Pencil on a row, change the fields, **Save changes** |
 | Remove | Bin icon, confirm — this is live immediately |
 | Set a portrait | Open a member, **Portrait**, pick a file, then crop |
+| Reorder | Drag the handle on the left of a row, then release |
 
 The roster moves out of the built bundle and into `content/site.json` the first
 time it is saved here. Until then the tab reads the bundled `members.json`, so it
@@ -173,3 +174,21 @@ The saved file is also much smaller. A 3000 x 2000 upload of 3.9 MB becomes a
 
 Gallery uploads do not have a crop step. They are 16:9 slots and are still
 centre-cropped by CSS.
+
+
+## Reordering the roster
+
+The roster is grouped the same way the Members page renders it: Leadership,
+Command, Members. Drag the handle on the left of a row to move that member up or
+down inside its group. The new order saves on release and is live on the next
+page load.
+
+A drag cannot cross a group. Which group a member belongs to is their tier, so
+promoting someone is the **Tier** field in the edit form, not a side effect of
+dropping them in another list.
+
+Reordering is off while the search box has text, because a filtered list has
+gaps and dropping into it would be ambiguous. Clear the search to drag.
+
+The drag uses pointer events, not HTML5 drag-and-drop. HTML5 drag does not fire
+on touch screens, so a phone could not reorder at all.

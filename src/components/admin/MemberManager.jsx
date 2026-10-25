@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Upload, Trash2, Plus, Pencil, Check, X, Image as ImageIcon } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Upload, Trash2, Plus, Pencil, GripVertical, Image as ImageIcon } from 'lucide-react';
 import bundledMembers from '../../data/members.json';
 import PortraitCropper from './PortraitCropper';
 import { imageUrl } from '../../lib/media';
@@ -29,6 +29,20 @@ const inputCls =
 
 const EMPTY = { id: '', name: '', role: '', tier: 'member', avatar: null };
 
+/**
+ * Display groups, in the order the Members page renders them. The roster array
+ * is stored in this same order, so a drag here is the order visitors see.
+ * A drag cannot cross a group: membership is a tier, and promoting someone is
+ * the Tier select, not a side effect of dropping them in another list.
+ */
+const GROUPS = [
+  { key: 'leadership', label: 'Leadership', tiers: ['guild_leader', 'deputy'] },
+  { key: 'command', label: 'Command', tiers: ['commander'] },
+  { key: 'members', label: 'Members', tiers: ['member'] },
+];
+
+const groupOf = (tier) => GROUPS.find((g) => g.tiers.includes(tier)) || GROUPS[2];
+
 export default function MemberManager({ token, onNotice, onError }) {
   const [roster, setRoster] = useState(null);
   const [form, setForm] = useState(null); // null | 'new' | id
@@ -37,6 +51,11 @@ export default function MemberManager({ token, onNotice, onError }) {
   const [query, setQuery] = useState('');
   // The picked file waits here while the crop step is open.
   const [crop, setCrop] = useState(null);
+  // Reorder state. The ref mirrors the roster so pointerup can save the array
+  // that the last drag produced, without waiting for React to flush.
+  const [dragging, setDragging] = useState(null);
+  const rosterRef = useRef(null);
+  const dragRef = useRef(null);
 
   useEffect(() => {
     let alive = true;
@@ -45,7 +64,9 @@ export default function MemberManager({ token, onNotice, onError }) {
         const res = await fetch('/api/content', { cache: 'no-store' });
         const data = await res.json();
         if (!alive) return;
-        setRoster(Array.isArray(data.members) && data.members.length ? data.members : bundledMembers);
+        const loaded = Array.isArray(data.members) && data.members.length ? data.members : bundledMembers;
+        rosterRef.current = loaded;
+        setRoster(loaded);
       } catch (err) {
         onError(`could not load the roster: ${err.message}`);
       }
@@ -70,6 +91,7 @@ export default function MemberManager({ token, onNotice, onError }) {
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || `save failed (${res.status})`);
+        rosterRef.current = data.members || next;
         setRoster(data.members || next);
         onNotice(message);
         setForm(null);
@@ -127,15 +149,83 @@ export default function MemberManager({ token, onNotice, onError }) {
     onError('');
   };
 
+  /**
+   * Move a member to another position inside its own group.
+   *
+   * The roster is rebuilt group by group so the stored array keeps the same
+   * order the Members page renders, which is what makes the drag stick.
+   */
+  const moveWithin = useCallback((groupKey, id, toIndex) => {
+    setRoster((prev) => {
+      if (!prev) return prev;
+      const { tiers } = GROUPS.find((g) => g.key === groupKey);
+      const rows = prev.filter((m) => tiers.includes(m.tier));
+      const from = rows.findIndex((m) => m.id === id);
+      if (from < 0 || toIndex < 0 || toIndex >= rows.length || from === toIndex) return prev;
+
+      const reordered = [...rows];
+      const [moved] = reordered.splice(from, 1);
+      reordered.splice(toIndex, 0, moved);
+
+      const rebuilt = GROUPS.flatMap((g) =>
+        g.key === groupKey ? reordered : prev.filter((m) => g.tiers.includes(m.tier))
+      );
+      rosterRef.current = rebuilt;
+      return rebuilt;
+    });
+  }, []);
+
+  /**
+   * Start a reorder drag.
+   *
+   * Listeners go on the window rather than the handle: pointer capture on the
+   * button did deliver the moves, but the pointerup was lost when the row moved
+   * under the cursor, so the new order was never saved. Window listeners do not
+   * depend on which element ends up under the pointer.
+   */
+  const startDrag = (e, groupKey, id) => {
+    if (query.trim()) return; // a filtered list cannot be dropped into meaningfully
+    e.preventDefault();
+    const list = e.currentTarget.closest('ul');
+    if (!list) return;
+
+    dragRef.current = { groupKey, id };
+    setDragging({ groupKey, id });
+
+    const onMove = (ev) => {
+      const rows = [...list.querySelectorAll('li[data-row]')];
+      const y = ev.clientY;
+      // The row under the pointer is the target. Reordering live keeps the DOM
+      // and the array in step, so no ghost element is needed.
+      const over = rows.findIndex((row) => {
+        const b = row.getBoundingClientRect();
+        return y >= b.top && y <= b.bottom;
+      });
+      if (over >= 0) moveWithin(groupKey, id, over);
+    };
+
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+      dragRef.current = null;
+      setDragging(null);
+      save(rosterRef.current, 'Order saved.');
+    };
+
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
+  };
+
   const filtered = useMemo(() => {
     if (!roster) return [];
     const q = query.trim().toLowerCase();
     const list = q
       ? roster.filter((m) => `${m.name} ${m.role || ''} ${m.tier}`.toLowerCase().includes(q))
       : roster;
-    // Leaders first, then the rest, so the common edits are at the top.
-    const rank = { guild_leader: 0, deputy: 1, commander: 2, member: 3 };
-    return [...list].sort((a, b) => (rank[a.tier] ?? 9) - (rank[b.tier] ?? 9));
+    // Stored order, not a sort: the drag sets it and the site follows it.
+    return list;
   }, [roster, query]);
 
   if (!roster) return <p className="text-xs text-gray-500">Loading roster…</p>;
@@ -244,51 +334,87 @@ export default function MemberManager({ token, onNotice, onError }) {
         onChange={(e) => setQuery(e.target.value)}
       />
 
-      <ul className="space-y-1.5">
-        {filtered.map((m) => (
-          <li
-            key={m.id}
-            className="flex items-center gap-3 rounded-lg border border-imperial-gold/15 bg-ink-charcoal px-2.5 py-2"
-          >
-            <div className="h-10 w-8 shrink-0 overflow-hidden rounded border border-imperial-gold/20 bg-ink-black/60">
-              {m.avatar ? (
-                <img src={imageUrl(m.avatar)} alt="" className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-gray-700">
-                  <ImageIcon size={11} />
-                </div>
-              )}
-            </div>
+      {query.trim() && (
+        <p className="text-[10.5px] text-gray-500">
+          Reordering is off while the search is filtered. Clear it to drag.
+        </p>
+      )}
 
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[11.5px] text-ivory">{m.name}</p>
-              <p className="truncate text-[9.5px] uppercase tracking-wider text-gray-600">
-                {m.role || TIERS.find(([v]) => v === m.tier)?.[1] || m.tier}
-              </p>
-            </div>
+      {GROUPS.map((group) => {
+        const rows = filtered.filter((m) => group.tiers.includes(m.tier));
+        if (rows.length === 0) return null;
+        return (
+          <section key={group.key} className="space-y-1.5">
+            <h3 className="flex items-baseline justify-between px-0.5 pt-1 text-[9.5px] uppercase tracking-[0.16em] text-imperial-gold/60">
+              <span>{group.label}</span>
+              <span className="text-gray-600">{rows.length}</span>
+            </h3>
 
-            <div className="flex shrink-0 items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => startEdit(m)}
-                aria-label={`Edit ${m.name}`}
-                className="rounded border border-imperial-gold/20 p-1.5 text-gray-500 transition-colors hover:border-imperial-gold/60 hover:text-imperial-gold"
-              >
-                <Pencil size={12} />
-              </button>
-              <button
-                type="button"
-                onClick={() => remove(m)}
-                disabled={busy}
-                aria-label={`Remove ${m.name}`}
-                className="rounded border border-red-500/25 p-1.5 text-red-400/70 transition-colors hover:border-red-500/60 hover:text-red-400 disabled:opacity-40"
-              >
-                <Trash2 size={12} />
-              </button>
-            </div>
-          </li>
-        ))}
-      </ul>
+            <ul className="space-y-1.5">
+              {rows.map((m) => (
+                <li
+                  key={m.id}
+                  data-row
+                  className={`flex items-center gap-2 rounded-lg border px-1.5 py-2 transition-colors ${
+                    dragging?.id === m.id
+                      ? 'border-jade-accent/60 bg-jade-accent/[0.07]'
+                      : 'border-imperial-gold/15 bg-ink-charcoal'
+                  }`}
+                >
+                  {/* Pointer events, not HTML5 drag: on a phone there is no
+                      dragstart, so a native draggable list would not move. */}
+                  <button
+                    type="button"
+                    aria-label={`Reorder ${m.name}`}
+                    onPointerDown={(e) => startDrag(e, group.key, m.id)}
+                    disabled={!!query.trim()}
+                    className="flex h-9 w-9 shrink-0 cursor-grab touch-none items-center justify-center rounded text-gray-600 transition-colors hover:text-imperial-gold disabled:cursor-not-allowed disabled:opacity-30"
+                  >
+                    <GripVertical size={13} />
+                  </button>
+
+                  <div className="h-10 w-8 shrink-0 overflow-hidden rounded border border-imperial-gold/20 bg-ink-black/60">
+                    {m.avatar ? (
+                      <img src={imageUrl(m.avatar)} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-gray-700">
+                        <ImageIcon size={11} />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[11.5px] text-ivory">{m.name}</p>
+                    <p className="truncate text-[9.5px] uppercase tracking-wider text-gray-600">
+                      {m.role || TIERS.find(([v]) => v === m.tier)?.[1] || m.tier}
+                    </p>
+                  </div>
+
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => startEdit(m)}
+                      aria-label={`Edit ${m.name}`}
+                      className="rounded border border-imperial-gold/20 p-1.5 text-gray-500 transition-colors hover:border-imperial-gold/60 hover:text-imperial-gold"
+                    >
+                      <Pencil size={12} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => remove(m)}
+                      disabled={busy}
+                      aria-label={`Remove ${m.name}`}
+                      className="rounded border border-red-500/25 p-1.5 text-red-400/70 transition-colors hover:border-red-500/60 hover:text-red-400 disabled:opacity-40"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })}
 
       {filtered.length === 0 && (
         <p className="text-[11px] text-gray-500">No member matches that search.</p>
