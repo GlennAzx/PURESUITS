@@ -221,3 +221,32 @@ on touch screens, so a phone could not reorder at all.
 Content saved before albums existed stored one `image` per slot. `toAlbums()` in
 `src/lib/gallery.js` reads such an entry as a single-photo album, and the Worker
 does the same on write, so an older content file keeps its pictures.
+
+
+## Several people using the panel
+
+Each save carries the revision it was built from. If someone else saved first,
+the Worker refuses the write and the panel shows a reload banner. Your typing is
+kept, but the change is not applied until you reload and redo it.
+
+The panel also checks for other people's saves: on a 20-second timer, on window
+focus, and when the tab becomes visible. A background tab costs nothing.
+
+There is no queue and no lock. Two admins editing different albums at the same
+moment will still collide, because the whole gallery is saved as one value. The
+loser is told, which is the part that matters.
+
+## Gallery photo limits
+
+Photos are compressed in the browser to a 1920 px long edge at JPEG q0.82 before
+upload. The admin shows a meter of photos used and bytes used.
+
+| Limit | Value |
+|---|---|
+| Photos | 800 |
+| Total bytes | 4 GB |
+| One upload | 8 MB |
+
+The Worker enforces these, not the browser, so the caps hold even if the page is
+bypassed. See `docs/LIMITS.md` for why these numbers and which free-tier limit
+arrives first.

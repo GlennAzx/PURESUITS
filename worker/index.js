@@ -65,12 +65,27 @@ async function authorised(request, env) {
 
 async function readContent(env) {
   const object = await env.MEDIA.get(CONTENT_KEY);
-  if (!object) return { events: [], schedule: [], links: {} };
+  if (!object) return { events: [], schedule: [], links: {}, rev: 0 };
   return JSON.parse(await object.text());
 }
 
+/**
+ * Write the content file and bump its revision.
+ *
+ * Two admins can have the page open at once. Each save replaces whole sections
+ * of this one file, so a save built from an older copy would silently undo the
+ * other person's work. `rev` is what lets a save say which version it was built
+ * from; see revCheck().
+ *
+ * @returns {Promise<object>} The stored object, with the new rev.
+ */
 async function writeContent(env, content) {
-  await env.MEDIA.put(CONTENT_KEY, JSON.stringify(content, null, 2), {
+  const next = {
+    ...content,
+    rev: Number(content.rev || 0) + 1,
+    updatedAt: new Date().toISOString(),
+  };
+  await env.MEDIA.put(CONTENT_KEY, JSON.stringify(next, null, 2), {
     httpMetadata: {
       contentType: 'application/json; charset=utf-8',
       // Same reasoning as the upload script: this key is rewritten in place,
@@ -78,7 +93,44 @@ async function writeContent(env, content) {
       cacheControl: 'no-cache',
     },
   });
+  return next;
 }
+
+/**
+ * Refuse a save built from an older copy of the content file.
+ *
+ * The header is `If-Match: <rev>`, the value the admin loaded. A mismatch means
+ * someone saved in between, so this save would undo their change. Returning 409
+ * with the current rev lets the panel say who changed what instead of quietly
+ * overwriting it.
+ *
+ * No header means no check, so an older admin build keeps working.
+ */
+function revCheck(request, content) {
+  const raw = request.headers.get('If-Match');
+  if (!raw) return null;
+
+  const current = Number(content.rev || 0);
+  const claimed = Number(String(raw).replace(/"/g, '').trim());
+  if (Number.isFinite(claimed) && claimed === current) return null;
+
+  return json(
+    {
+      error: 'stale',
+      message: 'Another admin saved a change first. Reload to see their version.',
+      rev: current,
+      updatedAt: content.updatedAt || null,
+    },
+    409
+  );
+}
+
+// Storage limits for gallery photos, sized against the R2 free tier: 10 GB
+// stored and 1M writes a month. 4 GB leaves room for the hero video, the BGM
+// and growth, and 800 photos at the ~400 KB the admin compresses to is about
+// 320 MB, so the byte cap is the one that can actually bite.
+const MAX_GALLERY_PHOTOS = 800;
+const MAX_GALLERY_BYTES = 4 * 1024 * 1024 * 1024;
 
 /** Shape-check one event. Returns a clean object or throws. */
 function validateEvent(raw, index) {
@@ -191,7 +243,9 @@ async function handleUpload(request, env, url) {
     },
   });
 
-  return json({ ok: true, key });
+  // `bytes` is the size the server actually stored, so the admin can show real
+  // usage without trusting a number sent by the browser.
+  return json({ ok: true, key, bytes: file.size });
 }
 
 async function handleApi(request, env) {
@@ -248,9 +302,11 @@ async function handleApi(request, env) {
     try {
       // Read-modify-write so the schedule and links in the same file survive.
       const content = await readContent(env);
+      const stale = revCheck(request, content);
+      if (stale) return stale;
       content.events = events;
-      await writeContent(env, content);
-      return json({ ok: true, events });
+      const saved = await writeContent(env, content);
+      return json({ ok: true, events, rev: saved.rev });
     } catch (err) {
       return json({ error: `could not save: ${err.message}` }, 500);
     }
@@ -278,7 +334,6 @@ async function handleApi(request, env) {
     };
 
     let gallery;
-    let members;
     try {
       gallery = clean(body.gallery, 'gallery', (item, i) => {
         if (!item || typeof item !== 'object') throw new Error(`gallery ${i} is not an object`);
@@ -302,6 +357,9 @@ async function handleApi(request, env) {
             id: String(p.id || `p-${i}-${j}`).slice(0, 64),
             image: String(p.image).slice(0, 300),
             caption: p.caption ? String(p.caption).slice(0, 160) : '',
+            // Stored size, used to enforce the gallery budget. Older entries
+            // have no figure; those count as 0 and are never rejected.
+            bytes: Number.isFinite(Number(p.bytes)) ? Math.max(0, Math.round(Number(p.bytes))) : 0,
           };
         });
 
@@ -311,23 +369,48 @@ async function handleApi(request, env) {
           photos,
         };
       });
-      members = clean(body.members, 'members', (item, i) => {
-        if (!item || typeof item !== 'object') throw new Error(`member ${i} is not an object`);
-        return {
-          id: String(item.id || `m-${i}`).slice(0, 64),
-          avatar: item.avatar ? String(item.avatar).slice(0, 300) : null,
-        };
-      });
     } catch (err) {
       return json({ error: err.message }, 400);
     }
 
+    // Budget check. Counting photos here and summing the sizes the server
+    // recorded keeps the gallery inside the R2 free tier whatever the client
+    // claims.
+    if (gallery !== undefined) {
+      const photos = gallery.reduce((n, a) => n + a.photos.length, 0);
+      if (photos > MAX_GALLERY_PHOTOS) {
+        return json(
+          { error: `gallery is full (${MAX_GALLERY_PHOTOS} photos max, ${photos} requested)` },
+          400
+        );
+      }
+      const bytes = gallery.reduce(
+        (n, a) => n + a.photos.reduce((m, p) => m + (p.bytes || 0), 0),
+        0
+      );
+      if (bytes > MAX_GALLERY_BYTES) {
+        return json(
+          {
+            error: `gallery is over its storage budget (${(bytes / 1024 ** 3).toFixed(2)} GB of ${(
+              MAX_GALLERY_BYTES / 1024 ** 3
+            ).toFixed(0)} GB). Delete some photos.`,
+          },
+          413
+        );
+      }
+    }
+
     try {
       const content = await readContent(env);
+      const stale = revCheck(request, content);
+      if (stale) return stale;
+
+      // Only the gallery. Member portraits moved to /api/members with the rest
+      // of the roster; accepting a member list here let a caller write a
+      // two-field stub over real names.
       if (gallery !== undefined) content.gallery = gallery;
-      if (members !== undefined) content.members = members;
-      await writeContent(env, content);
-      return json({ ok: true, gallery: content.gallery, members: content.members });
+      const saved = await writeContent(env, content);
+      return json({ ok: true, gallery: saved.gallery, rev: saved.rev });
     } catch (err) {
       return json({ error: `could not save: ${err.message}` }, 500);
     }
@@ -400,9 +483,11 @@ async function handleApi(request, env) {
 
     try {
       const content = await readContent(env);
+      const stale = revCheck(request, content);
+      if (stale) return stale;
       content.members = members;
-      await writeContent(env, content);
-      return json({ ok: true, members });
+      const saved = await writeContent(env, content);
+      return json({ ok: true, members, rev: saved.rev });
     } catch (err) {
       return json({ error: `could not save: ${err.message}` }, 500);
     }

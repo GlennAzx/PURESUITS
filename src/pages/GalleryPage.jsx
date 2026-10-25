@@ -2,7 +2,6 @@ import React, { useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
-import { Images } from 'lucide-react';
 import galleryData from '../data/gallery.json';
 import { imageUrl } from '../lib/media';
 import { DEFAULT_CONTENT } from '../lib/siteContent';
@@ -24,7 +23,16 @@ export default function GalleryPage({ content }) {
   const pageRef = useRef(null);
   const albums = toAlbums(content?.gallery?.length ? content.gallery : galleryData);
   const total = countPhotos(albums);
-  const albumCount = albums.filter((a) => a.photos.length > 0).length;
+
+  // Only albums that actually hold a photo are rendered. An empty album is an
+  // admin placeholder, not something to show a visitor, and rendering six empty
+  // sections beside a "coming soon" notice said the same thing twice.
+  const filled = albums.filter((a) => a.photos.length > 0);
+  const albumCount = filled.length;
+
+  // `content` is null until the first fetch resolves. Keeping the notice behind
+  // that stops it flashing on every visit before the real data arrives.
+  const empty = total === 0 && content !== null && content !== undefined;
 
   useGSAP(
     () => {
@@ -82,7 +90,7 @@ export default function GalleryPage({ content }) {
       </div>
 
       <div className="space-y-14">
-        {albums.map((album) => (
+        {filled.map((album) => (
           <section key={album.id} aria-labelledby={`album-${album.id}`}>
             <div className="gallery-album-head mb-4 flex items-baseline justify-between gap-4 border-b border-imperial-gold/15 pb-2">
               <h3
@@ -96,15 +104,7 @@ export default function GalleryPage({ content }) {
               </span>
             </div>
 
-            {album.photos.length === 0 ? (
-              <div className="flex items-center gap-2 rounded-lg border border-dashed border-imperial-gold/15 px-4 py-6 text-ivory-shadow">
-                <Images size={16} className="opacity-50" />
-                <span className="text-[11px] uppercase tracking-wider">
-                  No photos yet
-                </span>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {album.photos.map((photo) => (
                   <figure
                     key={photo.id}
@@ -131,13 +131,12 @@ export default function GalleryPage({ content }) {
                     )}
                   </figure>
                 ))}
-              </div>
-            )}
+            </div>
           </section>
         ))}
       </div>
 
-      {total === 0 && (
+      {empty && (
         <div className="mt-12 text-center">
           <p className="text-[11px] font-mono uppercase tracking-wider text-imperial-gold/80">
             Screenshots coming soon

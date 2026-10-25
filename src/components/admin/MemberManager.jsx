@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Upload, Trash2, Plus, Pencil, GripVertical, Image as ImageIcon } from 'lucide-react';
+import { Upload, Trash2, Plus, Pencil, GripVertical, Image as ImageIcon, RefreshCw, AlertTriangle } from 'lucide-react';
 import bundledMembers from '../../data/members.json';
 import PortraitCropper from './PortraitCropper';
+import { loadContent, saveSection, StaleError, useContentWatch } from '../../lib/adminContent';
 import { imageUrl } from '../../lib/media';
 
 /**
@@ -56,16 +57,19 @@ export default function MemberManager({ token, onNotice, onError }) {
   const [dragging, setDragging] = useState(null);
   const rosterRef = useRef(null);
   const dragRef = useRef(null);
+  const revRef = useRef(0);
+  const [stale, setStale] = useState(null);
 
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        const res = await fetch('/api/content', { cache: 'no-store' });
-        const data = await res.json();
+        const data = await loadContent();
         if (!alive) return;
-        const loaded = Array.isArray(data.members) && data.members.length ? data.members : bundledMembers;
+        const loaded =
+          Array.isArray(data.members) && data.members.length ? data.members : bundledMembers;
         rosterRef.current = loaded;
+        revRef.current = Number(data.rev || 0);
         setRoster(loaded);
       } catch (err) {
         onError(`could not load the roster: ${err.message}`);
@@ -76,27 +80,56 @@ export default function MemberManager({ token, onNotice, onError }) {
     };
   }, [onError]);
 
+  const reload = useCallback(async () => {
+    try {
+      const data = await loadContent();
+      const loaded =
+        Array.isArray(data.members) && data.members.length ? data.members : bundledMembers;
+      rosterRef.current = loaded;
+      revRef.current = Number(data.rev || 0);
+      setRoster(loaded);
+      setStale(null);
+      onNotice('Reloaded the latest version.');
+    } catch (err) {
+      onError(err.message);
+    }
+  }, [onNotice, onError]);
+
+  // Someone else's save shows up here before the next save would undo it.
+  useContentWatch({
+    revRef,
+    onNewer: (content) => {
+      if (Number(content.rev || 0) > revRef.current) {
+        setStale({
+          rev: Number(content.rev || 0),
+          updatedAt: content.updatedAt,
+          reason: 'changed',
+        });
+      }
+    },
+  });
+
   const save = useCallback(
     async (next, message) => {
       setBusy(true);
       onError('');
       try {
-        const res = await fetch('/api/members', {
-          method: 'PUT',
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ members: next }),
+        const data = await saveSection('/api/members', { members: next }, {
+          token,
+          rev: revRef.current,
         });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error || `save failed (${res.status})`);
+        revRef.current = Number(data.rev || revRef.current);
         rosterRef.current = data.members || next;
         setRoster(data.members || next);
+        setStale(null);
         onNotice(message);
         setForm(null);
       } catch (err) {
-        onError(err.message);
+        if (err instanceof StaleError) {
+          setStale({ rev: err.rev, updatedAt: err.updatedAt, reason: 'conflict' });
+        } else {
+          onError(err.message);
+        }
       } finally {
         setBusy(false);
       }
@@ -232,6 +265,24 @@ export default function MemberManager({ token, onNotice, onError }) {
 
   return (
     <div className="space-y-5">
+      {stale && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-imperial-gold/40 bg-imperial-gold/10 px-3 py-2">
+          <AlertTriangle size={13} className="shrink-0 text-imperial-gold" />
+          <p className="min-w-0 flex-1 text-[11px] text-imperial-gold/90">
+            {stale.reason === 'conflict'
+              ? 'Another admin saved first, so this change was not applied. Reload, then redo your edit.'
+              : 'Someone else changed the roster. Reload before editing.'}
+          </p>
+          <button
+            type="button"
+            onClick={reload}
+            className="inline-flex shrink-0 items-center gap-1 rounded border border-imperial-gold/50 px-2 py-1 text-[9.5px] uppercase tracking-wider text-imperial-gold transition-colors hover:border-imperial-gold"
+          >
+            <RefreshCw size={10} /> Reload
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-[11px] text-gray-500">
           {roster.length} members · changes are live on the next page load
