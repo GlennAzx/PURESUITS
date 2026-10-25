@@ -42,7 +42,22 @@ mistake and it would take the whole Members page down.
 
 ### Gallery tab
 
-Gallery screenshots, uploaded straight to R2.
+Albums. Each album is one section on the public Gallery page: an editable header
+plus as many photos as you like.
+
+| Action | How |
+|---|---|
+| Add an album | **New album**, then rename its header |
+| Rename a header | Type in the header field, click away to save |
+| Add photos | **Add photos** on an album — select one file or many |
+| Remove one photo | The ✕ on the thumbnail (appears on hover) |
+| Delete an album | The bin icon on the album row |
+
+Deleting an album removes the section from the site. The image files stay in R2;
+they are simply no longer referenced.
+
+Photos are stored as uploaded, with no resize or crop. The portrait crop step
+does not apply to gallery images.
 
 | Action | How |
 |---|---|
@@ -192,3 +207,17 @@ gaps and dropping into it would be ambiguous. Clear the search to drag.
 
 The drag uses pointer events, not HTML5 drag-and-drop. HTML5 drag does not fire
 on touch screens, so a phone could not reorder at all.
+
+
+## Gallery content shape
+
+```json
+"gallery": [
+  { "id": "g-01", "title": "Guild Group Photo",
+    "photos": [ { "id": "p-1", "image": "gallery/1792915537-8b2c58e1.jpg", "caption": "" } ] }
+]
+```
+
+Content saved before albums existed stored one `image` per slot. `toAlbums()` in
+`src/lib/gallery.js` reads such an entry as a single-photo album, and the Worker
+does the same on write, so an older content file keeps its pictures.

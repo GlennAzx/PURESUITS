@@ -282,11 +282,33 @@ async function handleApi(request, env) {
     try {
       gallery = clean(body.gallery, 'gallery', (item, i) => {
         if (!item || typeof item !== 'object') throw new Error(`gallery ${i} is not an object`);
+
+        // An album is a header plus a list of photos. Content saved before
+        // albums existed stored one image per slot, so an item with `image` and
+        // no `photos` is read as a single-photo album. Without this an older
+        // content file would lose every picture on the next save.
+        const rawPhotos = Array.isArray(item.photos)
+          ? item.photos
+          : item.image
+            ? [{ id: `${item.id || `g-${i}`}-p1`, image: item.image }]
+            : [];
+
+        if (rawPhotos.length > 100) throw new Error(`album ${i} has too many photos`);
+
+        const photos = rawPhotos.map((p, j) => {
+          if (!p || typeof p !== 'object') throw new Error(`album ${i} photo ${j} is not an object`);
+          if (!p.image) throw new Error(`album ${i} photo ${j} has no image`);
+          return {
+            id: String(p.id || `p-${i}-${j}`).slice(0, 64),
+            image: String(p.image).slice(0, 300),
+            caption: p.caption ? String(p.caption).slice(0, 160) : '',
+          };
+        });
+
         return {
           id: String(item.id || `g-${i}`).slice(0, 64),
           title: String(item.title || '').slice(0, 120),
-          // A bare R2 key, or null for an empty slot.
-          image: item.image ? String(item.image).slice(0, 300) : null,
+          photos,
         };
       });
       members = clean(body.members, 'members', (item, i) => {
