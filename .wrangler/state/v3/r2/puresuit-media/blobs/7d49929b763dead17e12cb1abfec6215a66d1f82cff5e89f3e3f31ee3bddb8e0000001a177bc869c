@@ -1,0 +1,66 @@
+{
+  "events": [],
+  "schedule": [],
+  "links": {},
+  "featured": {
+    "enabled": true,
+    "memberId": "m-07",
+    "name": "Cheliodas",
+    "role": "Vice Master",
+    "blurb": "Updated blurb from the local test run.",
+    "image": "/members/chel.png",
+    "weekOf": "2026-10-25"
+  },
+  "rev": 12,
+  "gallery": [
+    {
+      "id": "g-01",
+      "title": "Guild Nights",
+      "photos": [
+        {
+          "id": "p1",
+          "image": "gallery/1792915537144-8b2c58e1.jpg",
+          "caption": "",
+          "bytes": 300000
+        },
+        {
+          "id": "p2",
+          "image": "gallery/1792915537522-a7dc327e.jpg",
+          "caption": "",
+          "bytes": 300000
+        },
+        {
+          "id": "p3",
+          "image": "gallery/1792915538142-916a7aac.jpg",
+          "caption": "",
+          "bytes": 300000
+        },
+        {
+          "id": "p4",
+          "image": "gallery/1792857612017-edd0f781.jpg",
+          "caption": "",
+          "bytes": 300000
+        },
+        {
+          "id": "p5",
+          "image": "gallery/1792915537144-8b2c58e1.jpg",
+          "caption": "",
+          "bytes": 300000
+        }
+      ]
+    },
+    {
+      "id": "g-02",
+      "title": "Mahjong Night",
+      "photos": [
+        {
+          "id": "q1",
+          "image": "gallery/1792915537522-a7dc327e.jpg",
+          "caption": "",
+          "bytes": 300000
+        }
+      ]
+    }
+  ],
+  "updatedAt": "2026-10-26T10:23:26.363Z"
+}

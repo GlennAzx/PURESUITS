@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Trash2, Pencil, Plus, LogOut, Check, X } from 'lucide-react';
 import ImageManager from '../components/admin/ImageManager';
 import MemberManager from '../components/admin/MemberManager';
+import FeaturedManager from '../components/admin/FeaturedManager';
 
 /**
  * Admin page for editing events on the live site.
@@ -300,6 +301,7 @@ export default function AdminPage() {
           ['events', 'Events'],
           ['members', 'Members'],
           ['images', 'Gallery'],
+          ['home', 'Home'],
         ].map(([id, label]) => (
           <button
             key={id}
@@ -327,6 +329,10 @@ export default function AdminPage() {
 
       {tab === 'images' && (
         <ImageManager token={token} onNotice={setNotice} onError={setError} />
+      )}
+
+      {tab === 'home' && (
+        <FeaturedManager token={token} onNotice={setNotice} onError={setError} />
       )}
 
       {tab === 'events' && editing && (

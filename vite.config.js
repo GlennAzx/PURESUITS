@@ -12,7 +12,9 @@ export default defineConfig({
     // page looks broken during development. Point it at the deployed Worker.
     proxy: {
       '/api': {
-        target: 'https://puresuit.net',
+        // Override to run against a local Worker during testing:
+        //   HERMES_API_TARGET=http://localhost:8787 npm run dev
+        target: process.env.HERMES_API_TARGET || 'https://puresuit.net',
         changeOrigin: true,
       },
     },

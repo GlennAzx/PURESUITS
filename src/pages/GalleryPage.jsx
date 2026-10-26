@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
@@ -6,6 +6,9 @@ import galleryData from '../data/gallery.json';
 import { imageUrl } from '../lib/media';
 import { DEFAULT_CONTENT } from '../lib/siteContent';
 import { toAlbums, countPhotos } from '../lib/gallery';
+
+// How many photos an album shows before the "show more" tile.
+const PREVIEW_COUNT = 3;
 
 /**
  * Gallery, grouped into albums.
@@ -21,6 +24,8 @@ import { toAlbums, countPhotos } from '../lib/gallery';
  */
 export default function GalleryPage({ content }) {
   const pageRef = useRef(null);
+  // Album opened in the full viewer, or null.
+  const [viewer, setViewer] = useState(null);
   const albums = toAlbums(content?.gallery?.length ? content.gallery : galleryData);
   const total = countPhotos(albums);
 
@@ -33,6 +38,22 @@ export default function GalleryPage({ content }) {
   // `content` is null until the first fetch resolves. Keeping the notice behind
   // that stops it flashing on every visit before the real data arrives.
   const empty = total === 0 && content !== null && content !== undefined;
+
+  // Escape closes the viewer, and the page behind must not scroll while it is
+  // open or the album appears to move under the reader.
+  useEffect(() => {
+    if (!viewer) return undefined;
+    const onKey = (e) => {
+      if (e.key === 'Escape') setViewer(null);
+    };
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [viewer]);
 
   useGSAP(
     () => {
@@ -105,7 +126,7 @@ export default function GalleryPage({ content }) {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {album.photos.map((photo) => (
+                {album.photos.slice(0, PREVIEW_COUNT).map((photo) => (
                   <figure
                     key={photo.id}
                     className="gallery-photo group relative aspect-video overflow-hidden rounded-xl border border-imperial-gold/20 bg-ink-charcoal transition-[border-color] duration-200 ease-out-strong hover:border-imperial-gold/45"
@@ -132,6 +153,24 @@ export default function GalleryPage({ content }) {
                   </figure>
                 ))}
             </div>
+
+            {/* A strip under the row rather than a fourth tile: a tile would sit
+                alone on a second row and read as a photo. */}
+            {album.photos.length > PREVIEW_COUNT && (
+              <button
+                type="button"
+                onClick={() => setViewer(album)}
+                className="mt-4 flex w-full items-center justify-center gap-3 rounded-xl border border-imperial-gold/25 bg-ink-charcoal/40 px-4 py-3 backdrop-blur-sm transition-colors hover:border-imperial-gold/55 hover:bg-ink-charcoal/60"
+              >
+                <span className="text-[11px] font-mono uppercase tracking-[0.16em] text-imperial-gold">
+                  Show more
+                </span>
+                <span className="text-[10px] text-gray-400">
+                  {album.photos.length - PREVIEW_COUNT} more · view all{' '}
+                  {album.photos.length}
+                </span>
+              </button>
+            )}
           </section>
         ))}
       </div>
@@ -154,6 +193,70 @@ export default function GalleryPage({ content }) {
             </a>
             .
           </p>
+        </div>
+      )}
+
+      {viewer && (
+        <div
+          className="fixed inset-0 z-[70] bg-ink-black/92 backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${viewer.title} album`}
+          onClick={() => setViewer(null)}
+        >
+          <div
+            className="mx-auto flex h-full max-w-6xl flex-col px-4 py-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-baseline justify-between gap-4 border-b border-imperial-gold/20 pb-3">
+              <div className="min-w-0">
+                <h2 className="truncate font-serif text-xl font-bold text-ivory">
+                  {viewer.title}
+                </h2>
+                <p className="mt-0.5 text-[10px] font-mono uppercase tracking-[0.16em] text-imperial-gold/70">
+                  {viewer.photos.length} {viewer.photos.length === 1 ? 'photo' : 'photos'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setViewer(null)}
+                aria-label="Close album"
+                className="shrink-0 rounded border border-imperial-gold/25 px-2.5 py-1 text-[10px] uppercase tracking-wider text-gray-400 transition-colors hover:border-imperial-gold/60 hover:text-imperial-gold"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {viewer.photos.map((photo) => (
+                  <figure
+                    key={photo.id}
+                    className="overflow-hidden rounded-xl border border-imperial-gold/20 bg-ink-charcoal"
+                  >
+                    <a
+                      href={imageUrl(photo.image)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block aspect-video"
+                    >
+                      <img
+                        src={imageUrl(photo.image)}
+                        alt={photo.caption || viewer.title}
+                        loading="lazy"
+                        className="h-full w-full object-cover transition-transform duration-300 hover:scale-[1.02]"
+                      />
+                    </a>
+                    {photo.caption && (
+                      <figcaption className="px-3 py-2 text-[11px] text-gray-400">
+                        {photo.caption}
+                      </figcaption>
+                    )}
+                  </figure>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

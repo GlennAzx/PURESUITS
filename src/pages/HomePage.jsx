@@ -13,6 +13,7 @@ import { upcomingEvents } from '../lib/siteContent';
 import useSiteContent from '../lib/useSiteContent';
 import useNow from '../lib/useNow';
 import useTimeMode, { setTimeMode } from '../lib/useTimeMode';
+import KakiOfTheWeek from '../components/KakiOfTheWeek';
 
 
 
@@ -150,6 +151,8 @@ export default function HomePage({ content }) {
   return (
     <div>
       <VideoHero />
+
+      <KakiOfTheWeek featured={content.featured} />
 
       <EventsSection events={events} now={now} />
 

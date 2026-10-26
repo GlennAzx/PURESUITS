@@ -24,12 +24,61 @@ import { loadContent, saveSection, StaleError, useContentWatch } from '../../lib
 const MAX_PHOTOS = 800;
 const MAX_BYTES = 4 * 1024 * 1024 * 1024;
 
+/** Index of the tile under the pointer, or the nearest one if between tiles. */
+function indexAtPoint(tiles, x, y) {
+  for (let i = 0; i < tiles.length; i += 1) {
+    const r = tiles[i].getBoundingClientRect();
+    if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) return i;
+  }
+  let best = -1;
+  let bestDist = Infinity;
+  tiles.forEach((t, i) => {
+    const r = t.getBoundingClientRect();
+    const dx = r.left + r.width / 2 - x;
+    const dy = r.top + r.height / 2 - y;
+    const d = dx * dx + dy * dy;
+    if (d < bestDist) {
+      bestDist = d;
+      best = i;
+    }
+  });
+  return best;
+}
+
+/**
+ * Move the given photos as one block to sit before or after `anchorId`.
+ *
+ * The side matters: inserting "before the anchor" only, as the first version
+ * did, made a two-photo album impossible to reorder, because dropping A onto B
+ * always put A back before B.
+ *
+ * Relative order inside the block is preserved.
+ */
+function moveBlock(photos, movingIds, anchorId, after) {
+  const moving = new Set(movingIds);
+  const block = photos.filter((p) => moving.has(p.id));
+  const rest = photos.filter((p) => !moving.has(p.id));
+
+  const anchor = photos.find((p) => p.id === anchorId);
+  if (!anchor || moving.has(anchor.id)) return photos;
+
+  let at = rest.findIndex((p) => p.id === anchorId);
+  if (at < 0) at = rest.length;
+  else if (after) at += 1;
+
+  return [...rest.slice(0, at), ...block, ...rest.slice(at)];
+}
+
 export default function ImageManager({ token, onNotice, onError }) {
   const [albums, setAlbums] = useState(null);
   const [busyAlbum, setBusyAlbum] = useState(null);
   const [stale, setStale] = useState(null);
+  // Selection is scoped to one album: a delete or a move applies inside a
+  // single album, so mixing selections across albums would be meaningless.
+  const [selection, setSelection] = useState({ albumId: null, ids: new Set() });
   const albumsRef = useRef(null);
   const revRef = useRef(0);
+  const dragRef = useRef(null);
 
   const adopt = useCallback((content) => {
     const loaded = toAlbums(
@@ -153,11 +202,102 @@ export default function ImageManager({ token, onNotice, onError }) {
     }
   };
 
-  const removePhoto = (albumId, photoId) => {
-    const next = albumsRef.current.map((a) =>
-      a.id === albumId ? { ...a, photos: a.photos.filter((p) => p.id !== photoId) } : a
+  const clearSelection = () => setSelection({ albumId: null, ids: new Set() });
+
+  const toggleSelect = (albumId, photoId) => {
+    setSelection((prev) => {
+      const ids = prev.albumId === albumId ? new Set(prev.ids) : new Set();
+      if (ids.has(photoId)) ids.delete(photoId);
+      else ids.add(photoId);
+      return { albumId: ids.size ? albumId : null, ids };
+    });
+  };
+
+  const deletePhotos = (album, ids) => {
+    const count = ids.length;
+    const label = count === 1 ? 'this photo' : `these ${count} photos`;
+    if (!window.confirm(`Delete ${label} from "${album.title}"? This cannot be undone.`)) {
+      return undefined;
+    }
+    clearSelection();
+    const drop = new Set(ids);
+    return save(
+      albumsRef.current.map((a) =>
+        a.id === album.id ? { ...a, photos: a.photos.filter((p) => !drop.has(p.id)) } : a
+      ),
+      count === 1 ? 'Photo deleted.' : `${count} photos deleted.`
     );
-    return save(next, 'Photo removed.');
+  };
+
+  /**
+   * Reorder photos inside one album.
+   *
+   * A pointer drag rather than HTML5 dragstart, which never fires on a phone.
+   * When the grabbed photo is part of a multi-selection, the whole selection
+   * moves as one block and keeps its relative order.
+   */
+  const startPhotoDrag = (e, albumId, photoId) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    const grid = e.currentTarget.closest('[data-photo-grid]');
+    if (!grid) return;
+
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const album = albumsRef.current.find((a) => a.id === albumId);
+    const moving =
+      selection.albumId === albumId && selection.ids.has(photoId)
+        ? [...selection.ids]
+        : [photoId];
+
+    let dragging = false;
+
+    const onMove = (ev) => {
+      if (!dragging) {
+        // A few pixels of slop so a tap to select is not read as a drag.
+        if (Math.abs(ev.clientX - startX) + Math.abs(ev.clientY - startY) < 6) return;
+        dragging = true;
+      }
+
+      const tiles = [...grid.querySelectorAll('[data-photo]')];
+      const ids = tiles.map((t) => t.dataset.photo);
+      const hit = indexAtPoint(tiles, ev.clientX, ev.clientY);
+      if (hit < 0) return;
+
+      const targetId = ids[hit];
+      if (!targetId || moving.includes(targetId)) return;
+
+      // Which side of the tile the pointer is on decides where the block lands.
+      const r = tiles[hit].getBoundingClientRect();
+      const sameRow = Math.abs(ev.clientY - (r.top + r.height / 2)) <= r.height / 2;
+      const after = sameRow
+        ? ev.clientX > r.left + r.width / 2
+        : ev.clientY > r.top + r.height / 2;
+
+      const next = moveBlock(album.photos, moving, targetId, after);
+      const updated = albumsRef.current.map((a) =>
+        a.id === albumId ? { ...a, photos: next } : a
+      );
+      albumsRef.current = updated;
+      setAlbums(updated);
+    };
+
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      window.removeEventListener('pointercancel', onUp);
+      dragRef.current = null;
+
+      if (!dragging) {
+        toggleSelect(albumId, photoId);
+        return;
+      }
+      save(albumsRef.current, moving.length > 1 ? 'Photos reordered.' : 'Order saved.');
+    };
+
+    dragRef.current = { albumId, photoId };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    window.addEventListener('pointercancel', onUp);
   };
 
   const addAlbum = () =>
@@ -266,27 +406,75 @@ export default function ImageManager({ token, onNotice, onError }) {
             </button>
           </div>
 
-          <div className="mt-2.5 grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-5">
-            {album.photos.map((photo) => (
-              <div
-                key={photo.id}
-                className="group relative aspect-video overflow-hidden rounded border border-imperial-gold/20 bg-ink-black/60"
+          {/* Selection bar. Appears only with something picked, so the common
+              single-upload case stays uncluttered. */}
+          {selection.albumId === album.id && selection.ids.size > 0 && (
+            <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-jade-accent/30 bg-jade-accent/5 px-2 py-1.5">
+              <span className="text-[10px] uppercase tracking-wider text-jade-accent">
+                {selection.ids.size} selected
+              </span>
+              <button
+                type="button"
+                onClick={() => deletePhotos(album, [...selection.ids])}
+                className="rounded border border-red-500/40 px-2 py-1 text-[9.5px] uppercase tracking-wider text-red-400 transition-colors hover:border-red-500/70 hover:text-red-300"
               >
-                <img
-                  src={imageUrl(photo.image)}
-                  alt={photo.caption || album.title}
-                  className="h-full w-full object-cover"
-                />
-                <button
-                  type="button"
-                  onClick={() => removePhoto(album.id, photo.id)}
-                  aria-label={`Remove photo from ${album.title}`}
-                  className="absolute right-1 top-1 rounded bg-ink-black/80 p-1 text-red-400 opacity-0 transition-opacity hover:text-red-300 focus:opacity-100 group-hover:opacity-100"
+                Delete all
+              </button>
+              <button
+                type="button"
+                onClick={clearSelection}
+                className="text-[9.5px] uppercase tracking-wider text-gray-500 transition-colors hover:text-gray-300"
+              >
+                Clear
+              </button>
+            </div>
+          )}
+
+          <div
+            data-photo-grid={album.id}
+            className="mt-2.5 grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-5"
+          >
+            {album.photos.map((photo) => {
+              const picked = selection.albumId === album.id && selection.ids.has(photo.id);
+              return (
+                <div
+                  key={photo.id}
+                  data-photo={photo.id}
+                  onPointerDown={(e) => startPhotoDrag(e, album.id, photo.id)}
+                  className={`group relative aspect-video cursor-grab touch-none overflow-hidden rounded border bg-ink-black/60 transition-colors ${
+                    picked
+                      ? 'border-jade-accent ring-1 ring-jade-accent/60'
+                      : 'border-imperial-gold/20'
+                  }`}
                 >
-                  <X size={11} />
-                </button>
-              </div>
-            ))}
+                  <img
+                    src={imageUrl(photo.image)}
+                    alt={photo.caption || album.title}
+                    draggable={false}
+                    className="h-full w-full object-cover"
+                  />
+
+                  {picked && (
+                    <span className="pointer-events-none absolute left-1 top-1 rounded bg-jade-accent px-1 text-[9px] font-bold text-ink-black">
+                      ✓
+                    </span>
+                  )}
+
+                  <button
+                    type="button"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deletePhotos(album, [photo.id]);
+                    }}
+                    aria-label={`Delete photo from ${album.title}`}
+                    className="absolute right-1 top-1 rounded bg-ink-black/80 p-1 text-red-400 opacity-0 transition-opacity hover:text-red-300 focus:opacity-100 group-hover:opacity-100"
+                  >
+                    <X size={11} />
+                  </button>
+                </div>
+              );
+            })}
 
             <label className="flex aspect-video cursor-pointer flex-col items-center justify-center gap-1 rounded border border-dashed border-imperial-gold/30 text-gray-500 transition-colors hover:border-imperial-gold/60 hover:text-imperial-gold">
               {busyAlbum === album.id ? (

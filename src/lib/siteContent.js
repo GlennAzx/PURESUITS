@@ -214,6 +214,7 @@ export function normaliseContent(raw) {
     // schedule/events/links.
     ...(Array.isArray(raw.gallery) ? { gallery: raw.gallery } : {}),
     ...(Array.isArray(raw.members) ? { members: raw.members } : {}),
+    ...(raw.featured && typeof raw.featured === 'object' ? { featured: raw.featured } : {}),
   };
 }
 
@@ -227,7 +228,11 @@ export function normaliseContent(raw) {
  * @returns {Promise<object>} Normalised content. Never rejects.
  */
 export async function fetchContent() {
-  const url = media(MEDIA.siteContent);
+  // Production reads the bucket through the public media domain, which the CDN
+  // can cache. In development that would read the LIVE content file, so a local
+  // Worker (wrangler dev) would be tested against production data. Use the API
+  // route in dev instead: it hits whatever the dev proxy points at.
+  const url = import.meta.env.DEV ? '/api/content' : media(MEDIA.siteContent);
   try {
     const res = await fetch(url, { cache: 'no-cache' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);

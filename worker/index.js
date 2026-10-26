@@ -65,7 +65,7 @@ async function authorised(request, env) {
 
 async function readContent(env) {
   const object = await env.MEDIA.get(CONTENT_KEY);
-  if (!object) return { events: [], schedule: [], links: {}, rev: 0 };
+  if (!object) return { events: [], schedule: [], links: {}, featured: null, rev: 0 };
   return JSON.parse(await object.text());
 }
 
@@ -271,6 +271,53 @@ async function handleApi(request, env) {
     return (await authorised(request, env))
       ? json({ ok: true })
       : json({ error: 'invalid token' }, 401);
+  }
+
+  // Kaki of the Week: one featured member shown on the landing page. A single
+  // object rather than a list, because there is only ever one.
+  if (url.pathname === '/api/featured' && request.method === 'PUT') {
+    if (!(await authorised(request, env))) {
+      return json({ error: 'invalid token' }, 401);
+    }
+
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return json({ error: 'body is not valid JSON' }, 400);
+    }
+
+    const raw = body.featured;
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+      return json({ error: 'body must contain a featured object' }, 400);
+    }
+
+    const featured = {
+      enabled: Boolean(raw.enabled),
+      memberId: raw.memberId ? String(raw.memberId).slice(0, 64) : null,
+      name: String(raw.name ?? '').trim().slice(0, 60),
+      role: String(raw.role ?? '').trim().slice(0, 40),
+      blurb: String(raw.blurb ?? '').trim().slice(0, 400),
+      image: raw.image ? String(raw.image).slice(0, 300) : null,
+      weekOf: raw.weekOf ? String(raw.weekOf).slice(0, 10) : null,
+    };
+
+    // A featured card with no name is a blank space on the landing page. Refuse
+    // it while it is still an obvious mistake.
+    if (featured.enabled && !featured.name) {
+      return json({ error: 'a featured member needs a name' }, 400);
+    }
+
+    try {
+      const content = await readContent(env);
+      const stale = revCheck(request, content);
+      if (stale) return stale;
+      content.featured = featured;
+      const saved = await writeContent(env, content);
+      return json({ ok: true, featured: saved.featured, rev: saved.rev });
+    } catch (err) {
+      return json({ error: `could not save: ${err.message}` }, 500);
+    }
   }
 
   if (url.pathname === '/api/events' && request.method === 'PUT') {

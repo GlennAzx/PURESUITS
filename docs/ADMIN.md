@@ -52,6 +52,9 @@ plus as many photos as you like.
 | Add photos | **Add photos** on an album — select one file or many |
 | Remove one photo | The ✕ on the thumbnail (appears on hover) |
 | Delete an album | The bin icon on the album row |
+| Reorder photos | Drag a photo; drop on the left or right half to place it before or after |
+| Select photos | Click a photo (it gets a tick). Click again to clear |
+| Delete several | Select them, then **Delete all** in the bar that appears |
 
 Deleting an album removes the section from the site. The image files stay in R2;
 they are simply no longer referenced.
@@ -250,3 +253,19 @@ upload. The admin shows a meter of photos used and bytes used.
 The Worker enforces these, not the browser, so the caps hold even if the page is
 bypassed. See `docs/LIMITS.md` for why these numbers and which free-tier limit
 arrives first.
+
+
+## Kaki of the Week
+
+The **Home** tab edits the featured member card on the landing page. Pick someone
+from the roster and the name and role fill in; the blurb and photo are yours to
+write.
+
+Unticking **Show on the landing page** removes the whole section. A card with no
+name is refused, because it would be a blank frame.
+
+## Gallery viewing
+
+An album shows its first 3 photos on the Gallery page, then a **Show more** strip
+that opens the whole album in a scrollable viewer. Escape or a click outside
+closes it. Albums with 3 or fewer photos show no strip.
