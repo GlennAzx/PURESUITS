@@ -31,6 +31,11 @@ export function toAlbums(list) {
         .map((p, j) => ({
           id: p.id || `p-${i}-${j}`,
           image: p.image,
+          // Grids draw the thumbnail; the full image is opened only on click.
+          // Dropping this field here silently sent every grid back to the full
+          // file, which is exactly the cost thumbnails exist to avoid.
+          thumb: p.thumb || null,
+          bytes: Number(p.bytes) || 0,
           caption: p.caption || '',
         })),
     };

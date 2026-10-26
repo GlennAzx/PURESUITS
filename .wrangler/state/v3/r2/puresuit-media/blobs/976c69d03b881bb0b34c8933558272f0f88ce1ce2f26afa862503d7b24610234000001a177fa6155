@@ -1,0 +1,66 @@
+{
+  "events": [],
+  "schedule": [],
+  "links": {},
+  "featured": {
+    "enabled": true,
+    "memberId": "m-07",
+    "name": "Cheliodas",
+    "role": "Vice Master",
+    "blurb": "Updated blurb from the local test run.",
+    "image": "/members/chel.png",
+    "weekOf": "2026-10-25"
+  },
+  "rev": 17,
+  "gallery": [
+    {
+      "id": "g-01",
+      "title": "Guild Nights",
+      "photos": [
+        {
+          "id": "p-mvp5nojc-0",
+          "image": "gallery/1793014224894-54c84873.jpg",
+          "caption": "",
+          "thumb": "gallery/1793014226988-19ffaed2.jpg",
+          "bytes": 183784
+        },
+        {
+          "id": "p-mvp5nomj-1",
+          "image": "gallery/1793014231144-ce169321.jpg",
+          "caption": "",
+          "thumb": "gallery/1793014233207-6dc55c65.jpg",
+          "bytes": 185215
+        },
+        {
+          "id": "p-mvp5nopm-2",
+          "image": "gallery/1793014237344-84cc8b84.jpg",
+          "caption": "",
+          "thumb": "gallery/1793014239411-efece10e.jpg",
+          "bytes": 185058
+        },
+        {
+          "id": "p-mvp5nosb-3",
+          "image": "gallery/1793014243552-de06ebce.jpg",
+          "caption": "",
+          "thumb": "gallery/1793014245622-db5d5957.jpg",
+          "bytes": 182362
+        },
+        {
+          "id": "p-mvp5nov3-4",
+          "image": "gallery/1793014249721-de086c79.jpg",
+          "caption": "",
+          "thumb": "gallery/1793014251809-eba17eee.jpg",
+          "bytes": 184897
+        },
+        {
+          "id": "p-mvp5noxs-5",
+          "image": "gallery/1793014255950-48b1673f.jpg",
+          "caption": "",
+          "thumb": "gallery/1793014258025-d92f8704.jpg",
+          "bytes": 186113
+        }
+      ]
+    }
+  ],
+  "updatedAt": "2026-10-26T11:31:00.053Z"
+}

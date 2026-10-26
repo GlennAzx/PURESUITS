@@ -112,6 +112,9 @@
         font-family: ui-monospace, monospace;
       }
     </style>
+      <!-- Images live on the R2 custom domain. Resolving it during page load
+         saves a DNS + TLS round trip on the first photo the visitor opens. -->
+    <link rel="preconnect" href="https://media.puresuit.net" crossorigin />
   </head>
   <body>
     <!-- Boot fallback lives inside #root so it covers BOTH cases: JavaScript

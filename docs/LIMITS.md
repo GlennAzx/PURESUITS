@@ -39,7 +39,8 @@ allowance.
 
 | Guard | Value | Where |
 |---|---|---|
-| Client compression | 1920 px long edge, JPEG q0.82 | `src/lib/image.js` |
+| Client compression | 1440 px long edge, WebP q0.76 (JPEG fallback) | `src/lib/image.js` |
+| Thumbnails | 480 px long edge, WebP q0.72, one per photo | `src/lib/image.js` |
 | Per-file hard cap | 8 MB | `worker/index.js` |
 | Photo count cap | 800 | `worker/index.js` |
 | Total gallery bytes | 4 GB | `worker/index.js` |
@@ -49,8 +50,13 @@ at upload time, so a client cannot talk its way past them. The admin shows a
 meter with the same figures.
 
 Compression measured on a 3200x1800 upload: 5.64 MB in, 1.09 MB out at
-1920x1080, and that source was pure noise, which is the worst case for JPEG. A
-real screenshot does better.
+1920x1080 on the old settings. At 1440 / WebP the same frame is roughly 250 KB,
+and the 480 px thumbnail about 27 KB.
+
+Existing photos were migrated to 1440 with `scripts/backfill_thumbs.py --shrink`.
+Measured on the live gallery afterwards: 104 KB to load the page, 57 KB to open
+an album, 250 KB for the photo you click, and about 1 s cold / 250 ms warm to
+the sharp image. Serving 5 photos used to cost 6 MB.
 
 ## Known gap
 

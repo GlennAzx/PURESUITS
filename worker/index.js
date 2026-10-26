@@ -395,7 +395,7 @@ async function handleApi(request, env) {
             ? [{ id: `${item.id || `g-${i}`}-p1`, image: item.image }]
             : [];
 
-        if (rawPhotos.length > 100) throw new Error(`album ${i} has too many photos`);
+        if (rawPhotos.length > 300) throw new Error(`album ${i} has too many photos`);
 
         const photos = rawPhotos.map((p, j) => {
           if (!p || typeof p !== 'object') throw new Error(`album ${i} photo ${j} is not an object`);
@@ -404,6 +404,9 @@ async function handleApi(request, env) {
             id: String(p.id || `p-${i}-${j}`).slice(0, 64),
             image: String(p.image).slice(0, 300),
             caption: p.caption ? String(p.caption).slice(0, 160) : '',
+            // Small copy for grids. Absent on photos uploaded before thumbnails
+            // existed; the site falls back to the full image for those.
+            thumb: p.thumb ? String(p.thumb).slice(0, 300) : null,
             // Stored size, used to enforce the gallery budget. Older entries
             // have no figure; those count as 0 and are never rejected.
             bytes: Number.isFinite(Number(p.bytes)) ? Math.max(0, Math.round(Number(p.bytes))) : 0,
@@ -543,12 +546,43 @@ async function handleApi(request, env) {
   return json({ error: 'not found' }, 404);
 }
 
+/**
+ * Read-only media route.
+ *
+ * Production serves images from the media.puresuit.net custom domain, so this
+ * is only used in development, where a local `wrangler dev` has no such domain
+ * and `/media` is the only way for the page to load what it just uploaded.
+ */
+async function serveMedia(request, env, url) {
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    return new Response('method not allowed', { status: 405 });
+  }
+
+  const key = decodeURIComponent(url.pathname.slice('/media/'.length));
+  if (!key || key.includes('..')) return new Response('bad key', { status: 400 });
+
+  const object = await env.MEDIA.get(key);
+  if (!object) return new Response('not found', { status: 404 });
+
+  const headers = new Headers();
+  object.writeHttpMetadata(headers);
+  headers.set('etag', object.httpEtag);
+  // Same policy as an upload: a key is written once and never reused, so it is
+  // safe to cache for a year. Without this every local reload re-read the bucket.
+  headers.set('cache-control', 'public, max-age=31536000, immutable');
+  return new Response(object.body, { headers });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
     if (url.pathname.startsWith('/api/')) {
       return handleApi(request, env);
+    }
+
+    if (url.pathname.startsWith('/media/')) {
+      return serveMedia(request, env, url);
     }
 
     // Everything else is the static site.

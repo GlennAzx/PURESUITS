@@ -11,7 +11,10 @@
   "assets": {
     "directory": "./dist/",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*"]
+    // /media is the Worker's read-only bucket route. Production serves images
+    // from the media custom domain, so this only costs requests in development,
+    // where there is no custom domain to point at.
+    "run_worker_first": ["/api/*", "/media/*"]
   },
   // The bucket that holds content/site.json and all the media.
   "r2_buckets": [

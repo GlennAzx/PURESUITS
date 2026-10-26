@@ -3,7 +3,7 @@ import { Upload, Trash2, Plus, Image as ImageIcon, X, RefreshCw, AlertTriangle }
 import bundledGallery from '../../data/gallery.json';
 import { imageUrl } from '../../lib/media';
 import { toAlbums, countPhotos } from '../../lib/gallery';
-import { compressImage, formatBytes } from '../../lib/image';
+import { processImage, formatBytes } from '../../lib/image';
 import { loadContent, saveSection, StaleError, useContentWatch } from '../../lib/adminContent';
 
 /**
@@ -163,11 +163,9 @@ export default function ImageManager({ token, onNotice, onError }) {
     setBusyAlbum(albumId);
     onError('');
     try {
-      const added = [];
-      for (const file of files) {
-        const { blob, compressed } = await compressImage(file);
+      const put = async (blob, name) => {
         const form = new FormData();
-        form.append('file', blob, compressed ? 'photo.jpg' : file.name);
+        form.append('file', blob, name);
         const res = await fetch('/api/upload?kind=gallery', {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
@@ -175,11 +173,25 @@ export default function ImageManager({ token, onNotice, onError }) {
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.error || `upload failed (${res.status})`);
+        return data;
+      };
+
+      const added = [];
+      for (const file of files) {
+        // Two files per photo: the full one is only opened on click, the
+        // thumbnail is what every grid draws.
+        const { full, thumb, compressed } = await processImage(file);
+        // Name from the real blob type: the Worker takes the extension from the
+        // filename first, so calling a WebP "photo.jpg" stores it as a JPEG.
+        const ext = full.type === 'image/webp' ? 'webp' : 'jpg';
+        const fullRes = await put(full, compressed ? `photo.${ext}` : file.name);
+        const thumbRes = thumb === full ? null : await put(thumb, `thumb.${ext}`);
 
         added.push({
           id: `p-${Date.now().toString(36)}-${added.length}`,
-          image: data.key,
-          bytes: Number(data.bytes) || blob.size,
+          image: fullRes.key,
+          thumb: thumbRes?.key || null,
+          bytes: Number(fullRes.bytes) || full.size,
           caption: '',
         });
       }

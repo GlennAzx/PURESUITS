@@ -24,7 +24,12 @@
  * not a search and replace across components.
  */
 
-const RAW_BASE = import.meta.env.VITE_MEDIA_BASE ?? '';
+// In development the bucket has no custom domain, so media comes from the
+// Worker's /media route instead. That keeps a local run fully local: what the
+// local Worker uploaded is what the page loads.
+const RAW_BASE = import.meta.env.DEV
+  ? import.meta.env.VITE_MEDIA_BASE_DEV || '/media'
+  : import.meta.env.VITE_MEDIA_BASE ?? '';
 
 /** The configured base with any trailing slash removed. '' means same-origin. */
 export const MEDIA_BASE = RAW_BASE.replace(/\/+$/, '');
