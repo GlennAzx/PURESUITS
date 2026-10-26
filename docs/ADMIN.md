@@ -258,8 +258,13 @@ arrives first.
 ## Kaki of the Week
 
 The **Home** tab edits the featured member card on the landing page. Pick someone
-from the roster and the name and role fill in; the blurb and photo are yours to
-write.
+from the roster and the name and role fill in, and the photo box shows that
+member's tile portrait.
+
+The portrait is inherited, not copied: the card uses the member's picture until
+you upload one, and that upload applies to this card only. Switching member shows
+the new member's portrait again. **Use ... portrait instead** removes an upload
+and goes back to the roster picture.
 
 Unticking **Show on the landing page** removes the whole section. A card with no
 name is refused, because it would be a blank frame.

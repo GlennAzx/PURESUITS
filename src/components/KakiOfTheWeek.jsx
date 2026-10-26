@@ -1,6 +1,7 @@
 import React from 'react';
 import { User } from 'lucide-react';
 import { imageUrl } from '../lib/media';
+import bundledMembers from '../data/members.json';
 
 /**
  * Kaki of the Week: one featured member on the landing page.
@@ -11,12 +12,24 @@ import { imageUrl } from '../lib/media';
  * needs no deploy. When it is disabled or unnamed it renders nothing at all,
  * rather than an empty frame with a heading over it.
  *
- * @param {{featured?: {enabled: boolean, name: string, role?: string, blurb?: string, image?: string|null, weekOf?: string|null}}} props
+ * @param {object} props
+ * @param {object} [props.featured] The card itself.
+ * @param {Array} [props.members] Roster, used to borrow the member's tile
+ *   portrait when the card has no uploaded photo of its own.
  */
-export default function KakiOfTheWeek({ featured }) {
+export default function KakiOfTheWeek({ featured, members }) {
   if (!featured || !featured.enabled || !featured.name) return null;
 
-  const { name, role, blurb, image } = featured;
+  const { name, role, blurb } = featured;
+
+  // An uploaded photo wins; otherwise use the portrait from the linked member's
+  // tile, so picking someone in /admin shows them without a second upload.
+  // Same fallback the Members page uses: the roster in content when it has
+  // entries, the bundled list otherwise, so the card keeps its portrait on a
+  // site whose content file predates the roster.
+  const roster = Array.isArray(members) && members.length ? members : bundledMembers;
+  const linked = roster.find((m) => m.id === featured.memberId) || null;
+  const image = featured.image || linked?.avatar || null;
 
   return (
     <section className="max-w-6xl mx-auto px-4 lg:pr-24 pt-16">

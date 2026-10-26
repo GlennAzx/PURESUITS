@@ -42,7 +42,13 @@ export default function FeaturedManager({ token, onNotice, onError }) {
         setRoster(
           Array.isArray(content.members) && content.members.length ? content.members : bundledMembers
         );
-        setForm({ ...EMPTY, ...(content.featured || {}) });
+        const stored = { ...EMPTY, ...(content.featured || {}) };
+        // Cards saved before this split copied the roster portrait into `image`.
+        // Treat that as inherited, or the box would claim a custom photo that
+        // is really the member's own tile picture.
+        const owner = (content.members || bundledMembers).find((m) => m.id === stored.memberId);
+        if (stored.image && owner && stored.image === owner.avatar) stored.image = null;
+        setForm(stored);
       } catch (err) {
         onError(`could not load the featured member: ${err.message}`);
       }
@@ -51,6 +57,15 @@ export default function FeaturedManager({ token, onNotice, onError }) {
       alive = false;
     };
   }, [onError]);
+
+  // The portrait this member already has on their tile. It is shown in the
+  // photo box as an inherited preview, but is NOT copied into `image`: the
+  // roster portrait stays the roster's, and `image` means "a photo uploaded for
+  // this card only". That way picking a different member shows their tile
+  // portrait instead of silently carrying the previous crop across.
+  const linked = roster.find((m) => m.id === form?.memberId) || null;
+  const inheritedImage = linked?.avatar || null;
+  const previewImage = form?.image || inheritedImage;
 
   const pickMember = (id) => {
     if (!id) {
@@ -63,9 +78,9 @@ export default function FeaturedManager({ token, onNotice, onError }) {
       memberId: id,
       name: m?.name || f.name,
       role: m?.role || f.role,
-      // Keep an uploaded photo; only borrow the roster portrait when there is
-      // no custom one, so picking a member does not silently drop a crop.
-      image: f.image || m?.avatar || null,
+      // Drop a custom photo when the member changes, so the box shows the new
+      // member's tile portrait. Uploading after this wins.
+      image: null,
     }));
   };
 
@@ -226,14 +241,47 @@ export default function FeaturedManager({ token, onNotice, onError }) {
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <div className="h-16 w-11 overflow-hidden rounded border border-imperial-gold/25 bg-ink-black/60">
-          {form.image ? (
-            <img src={imageUrl(form.image)} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-gray-700">
-              <User size={14} />
-            </div>
-          )}
+        {/* Same 0.69 frame as the tile, so the preview matches what the card
+            will show. Inherited from the linked member unless a photo was
+            uploaded for this card. */}
+        <div className="flex items-center gap-2">
+          <div className="h-24 w-[66px] shrink-0 overflow-hidden rounded border border-imperial-gold/25 bg-ink-black/60">
+            {previewImage ? (
+              <img src={imageUrl(previewImage)} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-gray-700">
+                <User size={18} />
+              </div>
+            )}
+          </div>
+
+          <div className="text-[9.5px] leading-relaxed text-gray-500">
+            {form.image ? (
+              <>
+                <span className="text-imperial-gold/80">Custom photo</span>
+                <br />
+                Used on this card only.
+                <br />
+                <button
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, image: null }))}
+                  className="mt-1 underline decoration-gray-600 underline-offset-2 transition-colors hover:text-gray-300"
+                >
+                  Use {linked ? `${linked.name}'s` : 'member'} portrait instead
+                </button>
+              </>
+            ) : linked ? (
+              <>
+                <span className="text-jade-accent/80">From the roster</span>
+                <br />
+                {linked.name}&apos;s tile portrait.
+                <br />
+                Uploading replaces it here.
+              </>
+            ) : (
+              <>No member picked, so there is no portrait to inherit.</>
+            )}
+          </div>
         </div>
 
         <label className="inline-flex cursor-pointer items-center gap-1 rounded border border-imperial-gold/25 px-2 py-1 text-[9.5px] uppercase tracking-wider text-imperial-gold/80 transition-colors hover:border-imperial-gold/60 hover:text-imperial-gold">

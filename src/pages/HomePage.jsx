@@ -152,7 +152,7 @@ export default function HomePage({ content }) {
     <div>
       <VideoHero />
 
-      <KakiOfTheWeek featured={content.featured} />
+      <KakiOfTheWeek featured={content.featured} members={content.members} />
 
       <EventsSection events={events} now={now} />
 
