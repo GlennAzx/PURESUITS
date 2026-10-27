@@ -3,6 +3,7 @@ import { Trash2, Pencil, Plus, LogOut, Check, X } from 'lucide-react';
 import ImageManager from '../components/admin/ImageManager';
 import MemberManager from '../components/admin/MemberManager';
 import FeaturedManager from '../components/admin/FeaturedManager';
+import ScheduleManager from '../components/admin/ScheduleManager';
 
 /**
  * Admin page for editing events on the live site.
@@ -299,6 +300,7 @@ export default function AdminPage() {
       <div className="mb-6 flex gap-1.5 border-b border-imperial-gold/15 pb-3">
         {[
           ['events', 'Events'],
+          ['schedule', 'Schedule'],
           ['members', 'Members'],
           ['images', 'Gallery'],
           ['home', 'Home'],
@@ -322,6 +324,10 @@ export default function AdminPage() {
           </button>
         ))}
       </div>
+
+      {tab === 'schedule' && (
+        <ScheduleManager token={token} onNotice={setNotice} onError={setError} />
+      )}
 
       {tab === 'members' && (
         <MemberManager token={token} onNotice={setNotice} onError={setError} />

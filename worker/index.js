@@ -175,6 +175,88 @@ function validateEvent(raw, index) {
 }
 
 /**
+ * Shape-check one recurring schedule entry. Returns a clean object or throws.
+ *
+ * Stored in the same shape the site already reads: `time` as {h,m} and
+ * `weekdays` as numbers where 0 = Sunday, so old and new entries look alike in
+ * the JSON file.
+ */
+function validateScheduleEntry(raw, index) {
+  if (!raw || typeof raw !== 'object') throw new Error(`schedule ${index} is not an object`);
+
+  const str = (v, name, max = 400) => {
+    if (v === undefined || v === null) return '';
+    if (typeof v !== 'string') throw new Error(`schedule ${index}: ${name} must be text`);
+    if (v.length > max) throw new Error(`schedule ${index}: ${name} is too long`);
+    return v.trim();
+  };
+
+  const name = str(raw.name, 'name', 120);
+  if (!name) throw new Error(`schedule ${index}: name is required`);
+
+  // Accept "21:30" or {h,m}; always store {h,m}.
+  let h;
+  let m;
+  if (raw.time && typeof raw.time === 'object') {
+    h = Number(raw.time.h);
+    m = Number(raw.time.m);
+  } else {
+    const text = str(raw.time, 'time', 5);
+    if (!/^\d{1,2}:\d{2}$/.test(text)) throw new Error(`schedule ${index}: time must be HH:MM`);
+    [h, m] = text.split(':').map(Number);
+  }
+  if (!Number.isInteger(h) || h < 0 || h > 23) throw new Error(`schedule ${index}: hour must be 0-23`);
+  if (!Number.isInteger(m) || m < 0 || m > 59) throw new Error(`schedule ${index}: minute must be 0-59`);
+
+  const duration = raw.durationMinutes === undefined ? 60 : Number(raw.durationMinutes);
+  if (!Number.isFinite(duration) || duration < 0 || duration > 24 * 60) {
+    throw new Error(`schedule ${index}: durationMinutes must be between 0 and 1440`);
+  }
+
+  const cadence = raw.cadence === 'daily' ? 'daily' : 'weekly';
+
+  const weekdays = Array.isArray(raw.weekdays)
+    ? [...new Set(
+        raw.weekdays
+          .map((d) => Number(d))
+          .filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
+      )].sort((a, b) => a - b)
+    : [];
+
+  if (cadence === 'weekly' && weekdays.length === 0) {
+    throw new Error(`schedule ${index}: a weekly event needs at least one weekday`);
+  }
+
+  const entry = {
+    id: str(raw.id, 'id', 64) || `schedule-${index}`,
+    name,
+    category: str(raw.category, 'category', 40) || 'Event',
+    cadence,
+    time: { h, m },
+    weekdays: cadence === 'daily' ? [] : weekdays,
+    durationMinutes: Math.round(duration),
+    description: str(raw.description, 'description', 400),
+  };
+
+  // Per-day start times are an existing feature of the JSON. Carry them through
+  // rather than dropping them on the next save.
+  if (raw.timeByWeekday && typeof raw.timeByWeekday === 'object' && !Array.isArray(raw.timeByWeekday)) {
+    const byDay = {};
+    for (const [day, value] of Object.entries(raw.timeByWeekday)) {
+      const d = Number(day);
+      if (!Number.isInteger(d) || d < 0 || d > 6) continue;
+      const text = String(value);
+      if (!/^\d{1,2}:\d{2}$/.test(text)) continue;
+      const [hh, mm] = text.split(':').map(Number);
+      byDay[d] = { h: hh, m: mm };
+    }
+    if (Object.keys(byDay).length) entry.timeByWeekday = byDay;
+  }
+
+  return entry;
+}
+
+/**
  * Store an uploaded image and return its R2 key.
  *
  * The key, not a full URL, is what gets saved into content. The site turns a
@@ -354,6 +436,46 @@ async function handleApi(request, env) {
       content.events = events;
       const saved = await writeContent(env, content);
       return json({ ok: true, events, rev: saved.rev });
+    } catch (err) {
+      return json({ error: `could not save: ${err.message}` }, 500);
+    }
+  }
+
+  // Save the weekly schedule shown on the home page. Same read-modify-write as
+  // /api/events, so events and links in the same file survive.
+  if (url.pathname === '/api/schedule' && request.method === 'PUT') {
+    if (!(await authorised(request, env))) {
+      return json({ error: 'invalid token' }, 401);
+    }
+
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return json({ error: 'body is not valid JSON' }, 400);
+    }
+
+    if (!Array.isArray(body.schedule)) {
+      return json({ error: 'body must contain a schedule array' }, 400);
+    }
+    if (body.schedule.length > 40) {
+      return json({ error: 'too many schedule entries (max 40)' }, 400);
+    }
+
+    let schedule;
+    try {
+      schedule = body.schedule.map(validateScheduleEntry);
+    } catch (err) {
+      return json({ error: err.message }, 400);
+    }
+
+    try {
+      const content = await readContent(env);
+      const stale = revCheck(request, content);
+      if (stale) return stale;
+      content.schedule = schedule;
+      const saved = await writeContent(env, content);
+      return json({ ok: true, schedule: saved.schedule, rev: saved.rev });
     } catch (err) {
       return json({ error: `could not save: ${err.message}` }, 500);
     }
