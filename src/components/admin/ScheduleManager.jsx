@@ -225,7 +225,7 @@ export default function ScheduleManager({ token, onNotice, onError }) {
 
       {entries.length === 0 && (
         <p className="rounded-lg border border-imperial-gold/15 bg-ink-charcoal/60 px-3 py-6 text-center text-[11px] text-gray-500">
-          No scheduled events. The home page hides the block when this list is empty.
+          No scheduled events. The home page is showing an empty schedule until you add one.
         </p>
       )}
 
