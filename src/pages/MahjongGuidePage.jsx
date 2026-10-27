@@ -152,7 +152,7 @@ export default function MahjongGuidePage() {
 
         <div>
           <h4 className="mb-2 mt-5 text-[10px] uppercase tracking-[0.18em] text-jade-accent/90">
-            The three sets
+            The three kinds of set
           </h4>
           <ul className="space-y-2 text-sm text-gray-300">
             {SETS.map((set) => (
