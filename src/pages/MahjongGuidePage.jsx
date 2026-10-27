@@ -11,7 +11,7 @@ import {
   SCORING,
   END_OF_GAME,
 } from '../data/mahjongGuide';
-import MahjongTile, { TileRow, run, pong, kong, pair } from '../components/MahjongTile';
+import MahjongTile, { TileRow, run, pong, kong, pair } from '../components/GuideTile';
 import AnnotatedShot from '../components/AnnotatedShot';
 
 // Real screenshots for the beginner steps, with the important parts ringed.
