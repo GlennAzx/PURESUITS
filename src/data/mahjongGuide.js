@@ -27,7 +27,7 @@ export const SUITS = [
 ];
 
 export const SETS = [
-  { name: 'Chi', note: 'Three consecutive tiles in one suit, or three identical tiles.' },
+  { name: 'Chi', note: 'Three consecutive tiles in one suit.' },
   { name: 'Pong', note: 'Three of a kind.' },
   { name: 'Kong', note: 'Four of a kind.' },
 ];
@@ -121,7 +121,7 @@ export const SCORING = [
   {
     mult: 4,
     name: 'Terminal Hand',
-    desc: 'Every set and the pair include either a 1 or a 9 tile.',
+    desc: 'Every triplet and sequence must include a 1 or a 9 tile.',
     sets: [pong('characters',1),pong('characters',9),pong('bamboo',1),run('bamboo',7),pair('bamboo',9)],
     excludes: [],
   },
@@ -270,7 +270,7 @@ export const GLOSSARY = [
   },
   {
     term: 'Chi',
-    meaning: 'A set of three: three in a row in one suit, or three identical tiles.',
+    meaning: 'Three consecutive tiles in one suit.',
     tiles: [{ suit: 'bamboo', rank: 5 }, { suit: 'bamboo', rank: 6 }, { suit: 'bamboo', rank: 7 }],
   },
   {
