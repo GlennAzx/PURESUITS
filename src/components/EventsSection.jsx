@@ -200,10 +200,18 @@ function EventCard({ event, now, onOpen }) {
  * The expanded view of one event: the poster uncropped, and the whole
  * description in a scrollable panel.
  *
- * Rendered into document.body so no ancestor's overflow or opacity can clip it.
- * Follows the gallery viewer's rules: Escape closes, the page behind is locked,
- * and the inner panel scrolls on its own. data-lenis-prevent hands the wheel to
- * that panel, otherwise the smooth-scroll library drives the page instead.
+ * Rendered into .page-shell rather than document.body. .page-shell is an
+ * isolated stacking context (the page texture needs that), and the dice cursor
+ * lives inside it. A portal to body sits OUTSIDE that context, so it painted
+ * over the cursor whatever z-index either had: the cursor vanished behind the
+ * panel. Inside the shell the panel (z 75) and cursor (z 9999) compete on the
+ * same level, and the cursor wins.
+ *
+ * Still lifted out of the carousel, so its overflow and opacity cannot clip or
+ * dim the overlay. Follows the gallery viewer's rules: Escape closes, the page
+ * behind is locked, and the inner panel scrolls on its own. data-lenis-prevent
+ * hands the wheel to that panel, otherwise the smooth-scroll library drives the
+ * page instead.
  */
 function EventOverlay({ event, now, onClose }) {
   const [timeMode] = useTimeMode();
@@ -355,7 +363,8 @@ function EventOverlay({ event, now, onClose }) {
         </div>
       </div>
     </div>,
-    document.body
+    // Falls back to body only if the shell is missing (a test harness, say).
+    document.querySelector('.page-shell') || document.body
   );
 }
 
