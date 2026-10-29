@@ -271,7 +271,7 @@ function EventOverlay({ event, now, onClose }) {
       aria-label={event.title}
     >
       <div
-        className={`absolute inset-0 bg-ink-black/80 backdrop-blur-sm transition-opacity duration-200 motion-reduce:transition-none ${
+        className={`absolute inset-0 bg-ink-black/85 transition-opacity duration-200 motion-reduce:transition-none ${
           shown ? 'opacity-100' : 'opacity-0'
         }`}
         onClick={onClose}

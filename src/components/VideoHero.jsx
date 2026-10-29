@@ -31,6 +31,8 @@ export default function VideoHero() {
   const videoRef = useRef(null);
   const contentRef = useRef(null);
   const dialogRef = useRef(null);
+  // True when the reader paused with the button. Scrolling must not undo that.
+  const userPausedRef = useRef(false);
 
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
@@ -49,13 +51,48 @@ export default function VideoHero() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // Stop decoding the video the moment the reader scrolls away.
+  //
+  // It is a 1920x1280 file. Left running, the browser keeps decoding and
+  // compositing it under every other section, and that competes with the dice
+  // cursor, the overlay and the scroll itself for the same frame budget. The hero
+  // is graded to 60-80% black, so a frozen frame behind it is not noticeable.
+  //
+  // Hysteresis: pause past PAUSE_AT, resume only when back near the top, so a
+  // wobble around one pixel value cannot flap play/pause. A pause the reader
+  // chose with the button is never undone by scrolling back.
+  useEffect(() => {
+    const PAUSE_AT = 40;
+    const RESUME_AT = 10;
+    let pausedByScroll = false;
+
+    const onScroll = () => {
+      const v = videoRef.current;
+      if (!v) return;
+      const y = window.scrollY;
+
+      if (y > PAUSE_AT && !v.paused) {
+        pausedByScroll = true;
+        v.pause();
+      } else if (y <= RESUME_AT && pausedByScroll && !userPausedRef.current) {
+        pausedByScroll = false;
+        v.play().catch(() => {});
+      }
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   const togglePlay = useCallback(() => {
     const v = videoRef.current;
     if (!v) return;
     if (v.paused) {
+      userPausedRef.current = false;
       v.play().catch(() => setVideoFailed(true));
       setIsPlaying(true);
     } else {
+      userPausedRef.current = true;
       v.pause();
       setIsPlaying(false);
     }
