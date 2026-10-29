@@ -43,103 +43,132 @@ function EventCard({ event, now }) {
   const live = isEventLive(event, now);
   const { day, month } = dateParts(event.startsAt);
 
+  // A card with a banner takes the full width: poster left, text right. Cards
+  // without one keep the compact side-by-side layout, so a text-only event does
+  // not become a tall empty box.
+  const feature = Boolean(event.image);
+
   return (
     <article
       className={`event-listing group relative overflow-hidden rounded-xl border transition-colors duration-200 ${
+        feature ? 'sm:col-span-2' : ''
+      } ${
         live
           ? 'border-jade-accent/60 bg-ink-charcoal'
           : 'border-imperial-gold/25 bg-ink-charcoal hover:border-imperial-gold/55'
       }`}
     >
-      {/* Optional banner. It belongs to the event, so it leaves with the card
-          once the event is over and drops out of the list. */}
-      {event.image && (
-        <div className="relative aspect-[16/9] w-full overflow-hidden">
-          <img
-            src={imageUrl(event.image)}
-            alt=""
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-          />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink-charcoal via-ink-charcoal/30 to-transparent" />
-        </div>
-      )}
-
-      <div className="flex gap-4 p-4">
-      {/* Date badge. Kept narrow so the title gets the width. */}
-      <div
-        className={`flex w-14 shrink-0 flex-col items-center justify-center rounded-lg border py-2 ${
-          live
-            ? 'border-jade-accent/45 bg-jade-accent/10'
-            : 'border-imperial-gold/25 bg-ink-black/50'
-        }`}
-      >
-        <span
-          className={`font-mono text-xl leading-none tabular-nums ${
-            live ? 'text-jade-accent' : 'text-imperial-gold-bright'
-          }`}
-        >
-          {String(day).padStart(2, '0')}
-        </span>
-        <span className="mt-1 text-[9px] uppercase tracking-widest text-gray-400">
-          {month}
-        </span>
-      </div>
-
-      <div className="min-w-0 flex-1">
-        <div className="mb-1.5 flex flex-wrap items-center gap-2">
-          <span className="rounded border border-imperial-gold/30 bg-jade-deep px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-imperial-gold">
-            {event.tag}
-          </span>
-          <span
-            className={`text-[10px] font-mono uppercase tracking-wider ${
-              live ? 'text-jade-accent' : 'text-gray-400'
+      <div className={feature ? 'flex h-full flex-col sm:flex-row' : ''}>
+        {/* Optional banner. It belongs to the event, so it leaves with the card
+            once the event is over and drops out of the list. */}
+        {event.image && (
+          <div
+            className={`relative overflow-hidden ${
+              feature
+                ? 'aspect-[16/9] w-full sm:aspect-auto sm:min-h-[240px] sm:w-[54%] sm:shrink-0'
+                : 'aspect-[16/9] w-full'
             }`}
           >
-            {whenLabel(event, now)}
-          </span>
-        </div>
-
-        <h3 className="font-serif text-base font-bold leading-snug text-ivory">
-          {event.title}
-        </h3>
-
-        {event.description && (
-          <p className="mt-1.5 text-[11.5px] leading-relaxed text-gray-400">
-            {event.description}
-          </p>
+            <img
+              src={imageUrl(event.image)}
+              alt=""
+              loading="lazy"
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            />
+            <div
+              className={`pointer-events-none absolute inset-0 ${
+                feature
+                  ? 'bg-gradient-to-t from-ink-charcoal via-ink-charcoal/25 to-transparent sm:bg-gradient-to-l'
+                  : 'bg-gradient-to-t from-ink-charcoal via-ink-charcoal/30 to-transparent'
+              }`}
+            />
+          </div>
         )}
 
-        <div className="mt-2.5 flex items-center justify-between gap-3">
-          <span className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 font-mono text-[10px] text-ivory-shadow">
-            <span>
-              {formatTime(event.startsAt, timeMode)}{' '}
-              <span className="uppercase tracking-wider">
-                {zoneLabel(timeMode)}
-              </span>
-            </span>
-            {/* Location is optional, so the row collapses cleanly when absent. */}
-            {event.location && (
-              <span className="flex min-w-0 items-center gap-1 normal-case tracking-normal text-gray-400">
-                <MapPin size={10} className="shrink-0 opacity-60" />
-                <span className="truncate">{event.location}</span>
-              </span>
-            )}
+        <div className={feature ? 'flex flex-1 flex-col gap-3 p-5' : 'flex gap-4 p-4'}>
+        {/* Date badge. Kept narrow so the title gets the width. */}
+        <div
+          className={`flex w-14 shrink-0 flex-col items-center justify-center rounded-lg border py-2 ${
+            live
+              ? 'border-jade-accent/45 bg-jade-accent/10'
+              : 'border-imperial-gold/25 bg-ink-black/50'
+          }`}
+        >
+          <span
+            className={`font-mono text-xl leading-none tabular-nums ${
+              live ? 'text-jade-accent' : 'text-imperial-gold-bright'
+            }`}
+          >
+            {String(day).padStart(2, '0')}
           </span>
-
-          {event.link && (
-            <a
-              href={event.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-imperial-gold/80 transition-colors hover:text-imperial-gold"
-            >
-              Details
-              <ArrowUpRight size={11} className="opacity-60" />
-            </a>
-          )}
+          <span className="mt-1 text-[9px] uppercase tracking-widest text-gray-400">
+            {month}
+          </span>
         </div>
-      </div>
+
+        <div className={feature ? 'min-w-0' : 'min-w-0 flex-1'}>
+          <div className="mb-1.5 flex flex-wrap items-center gap-2">
+            <span className="rounded border border-imperial-gold/30 bg-jade-deep px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-imperial-gold">
+              {event.tag}
+            </span>
+            <span
+              className={`text-[10px] font-mono uppercase tracking-wider ${
+                live ? 'text-jade-accent' : 'text-gray-400'
+              }`}
+            >
+              {whenLabel(event, now)}
+            </span>
+          </div>
+
+          <h3
+            className={`font-serif font-bold leading-snug text-ivory ${
+              feature ? 'text-xl sm:text-2xl' : 'text-base'
+            }`}
+          >
+            {event.title}
+          </h3>
+
+          {event.description && (
+            <p
+              className={`mt-1.5 leading-relaxed text-gray-400 ${
+                feature ? 'max-w-xl text-[13px]' : 'text-[11.5px]'
+              }`}
+            >
+              {event.description}
+            </p>
+          )}
+
+          <div className="mt-2.5 flex items-center justify-between gap-3">
+            <span className="flex min-w-0 flex-wrap items-center gap-x-2.5 gap-y-1 font-mono text-[10px] text-ivory-shadow">
+              <span>
+                {formatTime(event.startsAt, timeMode)}{' '}
+                <span className="uppercase tracking-wider">
+                  {zoneLabel(timeMode)}
+                </span>
+              </span>
+              {/* Location is optional, so the row collapses cleanly when absent. */}
+              {event.location && (
+                <span className="flex min-w-0 items-center gap-1 normal-case tracking-normal text-gray-400">
+                  <MapPin size={10} className="shrink-0 opacity-60" />
+                  <span className="truncate">{event.location}</span>
+                </span>
+              )}
+            </span>
+
+            {event.link && (
+              <a
+                href={event.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-imperial-gold/80 transition-colors hover:text-imperial-gold"
+              >
+                Details
+                <ArrowUpRight size={11} className="opacity-60" />
+              </a>
+            )}
+          </div>
+        </div>
+        </div>
       </div>
     </article>
   );
