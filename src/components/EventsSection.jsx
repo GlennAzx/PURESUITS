@@ -1,5 +1,5 @@
-import React from 'react';
-import { ArrowUpRight, MapPin } from 'lucide-react';
+import React, { useCallback, useRef, useState } from 'react';
+import { ArrowUpRight, ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
 import { formatTime, zoneLabel } from '../lib/calendar';
 import useTimeMode from '../lib/useTimeMode';
 import { splitCountdown } from '../data/schedule';
@@ -50,15 +50,13 @@ function EventCard({ event, now }) {
 
   return (
     <article
-      className={`event-listing group relative overflow-hidden rounded-xl border transition-colors duration-200 ${
-        feature ? 'sm:col-span-2' : ''
-      } ${
+      className={`event-listing group relative h-full overflow-hidden rounded-xl border transition-colors duration-200 ${
         live
           ? 'border-jade-accent/60 bg-ink-charcoal'
           : 'border-imperial-gold/25 bg-ink-charcoal hover:border-imperial-gold/55'
       }`}
     >
-      <div className={feature ? 'flex h-full flex-col sm:flex-row' : ''}>
+      <div className={`flex h-full flex-col ${feature ? 'sm:flex-row' : ''}`}>
         {/* Optional banner. It belongs to the event, so it leaves with the card
             once the event is over and drops out of the list. */}
         {event.image && (
@@ -85,7 +83,7 @@ function EventCard({ event, now }) {
           </div>
         )}
 
-        <div className={feature ? 'flex flex-1 flex-col gap-3 p-5' : 'flex gap-4 p-4'}>
+        <div className={feature ? 'flex flex-1 flex-col justify-center gap-3 p-5' : 'flex h-full items-center gap-4 p-4'}>
         {/* Date badge. Kept narrow so the title gets the width. */}
         <div
           className={`flex w-14 shrink-0 flex-col items-center justify-center rounded-lg border py-2 ${
@@ -122,7 +120,7 @@ function EventCard({ event, now }) {
 
           <h3
             className={`font-serif font-bold leading-snug text-ivory ${
-              feature ? 'text-xl sm:text-2xl' : 'text-base'
+              feature ? 'text-xl sm:text-2xl' : 'text-base sm:text-lg'
             }`}
           >
             {event.title}
@@ -177,20 +175,70 @@ function EventCard({ event, now }) {
 /**
  * One-off events: tournaments, guild nights, milestones.
  *
- * Deliberately a plain grid, not a carousel. These are few and each one is
- * distinct, so scrolling them past the reader would hide exactly the thing
- * they need to plan around.
+ * Full-width cards, so they run as one horizontal strip: a card in view, the
+ * next one peeking in from the right. The peek is the "there is more" signal —
+ * no second row, and no guessing from a counter alone.
  */
 export default function EventsSection({ events, now }) {
+  const trackRef = useRef(null);
+  const [index, setIndex] = useState(0);
+  const count = events.length;
+  const many = count > 1;
+
+  /** Scroll one slide into view. Called by the arrows, the dots and a click. */
+  const goTo = useCallback(
+    (next) => {
+      const el = trackRef.current;
+      if (!el) return;
+      const i = Math.max(0, Math.min(count - 1, next));
+      const child = el.children[i];
+      if (!child) return;
+      el.scrollTo({ left: child.offsetLeft - el.offsetLeft, behavior: 'smooth' });
+      setIndex(i);
+    },
+    [count]
+  );
+
+  /** Keep the arrows in step with a manual swipe. */
+  const onScroll = useCallback(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    let best = 0;
+    let bestDistance = Infinity;
+    Array.from(el.children).forEach((child, i) => {
+      const d = Math.abs(child.offsetLeft - el.offsetLeft - el.scrollLeft);
+      if (d < bestDistance) {
+        bestDistance = d;
+        best = i;
+      }
+    });
+    setIndex(best);
+  }, []);
+
+  const onKeyDown = (e) => {
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      goTo(index + 1);
+    } else if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      goTo(index - 1);
+    }
+  };
+
   return (
     <section className="events-section max-w-6xl mx-auto px-4 lg:pr-24 pt-20">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3 border-b border-imperial-gold/25 pb-3">
         <div>
           <h2 className="font-serif text-2xl font-bold text-ivory">Events</h2>
           <p className="mt-1 text-xs text-gray-400">
-            One-off nights and tournaments. Dates in guild time, UTC+8.
+            One-off nights and tournaments, soonest first. Dates in guild time, UTC+8.
           </p>
         </div>
+        {many && (
+          <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-gray-500">
+            {index + 1} / {count}
+          </span>
+        )}
       </div>
 
       {/* An honest empty state beats hiding the section: the visitor learns
@@ -201,10 +249,73 @@ export default function EventsSection({ events, now }) {
           No one-off events scheduled. Weekly runs are below.
         </p>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {events.map((event) => (
-            <EventCard key={event.id} event={event} now={now} />
-          ))}
+        <div className="relative">
+          <div
+            ref={trackRef}
+            onScroll={onScroll}
+            onKeyDown={onKeyDown}
+            tabIndex={0}
+            role="group"
+            aria-label="Events, use the arrow keys to move between them"
+            className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-1 outline-none focus-visible:ring-1 focus-visible:ring-imperial-gold/40 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {events.map((event, i) => (
+              <div
+                key={event.id}
+                onClick={(e) => {
+                  if (e.target.closest('a')) return;
+                  if (i !== index) goTo(i);
+                }}
+                className={`flex shrink-0 snap-start transition-opacity duration-300 ${
+                  many ? 'w-full sm:w-[calc(100%-3.5rem)]' : 'w-full'
+                } ${i === index ? 'opacity-100' : 'cursor-pointer opacity-55 hover:opacity-85'}`}
+              >
+                <EventCard event={event} now={now} />
+              </div>
+            ))}
+          </div>
+
+          {many && (
+            <>
+              <button
+                type="button"
+                onClick={() => goTo(index - 1)}
+                disabled={index === 0}
+                aria-label="Previous event"
+                className="absolute -left-3 top-1/2 z-10 -translate-y-1/2 rounded-full border border-imperial-gold/40 bg-ink-black/85 p-2 text-imperial-gold backdrop-blur transition-colors hover:border-imperial-gold disabled:pointer-events-none disabled:opacity-25"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => goTo(index + 1)}
+                disabled={index === count - 1}
+                aria-label="Next event"
+                className="absolute right-10 top-1/2 z-10 -translate-y-1/2 rounded-full border border-imperial-gold/40 bg-ink-black/85 p-2 text-imperial-gold backdrop-blur transition-colors hover:border-imperial-gold disabled:pointer-events-none disabled:opacity-25 sm:right-2"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </>
+          )}
+
+          {many && (
+            <div className="mt-3 flex items-center gap-1.5">
+              {events.map((event, i) => (
+                <button
+                  key={event.id}
+                  type="button"
+                  onClick={() => goTo(i)}
+                  aria-label={`Show ${event.title}`}
+                  aria-current={i === index}
+                  className={`h-1.5 rounded-full transition-all ${
+                    i === index
+                      ? 'w-6 bg-imperial-gold'
+                      : 'w-1.5 bg-imperial-gold/30 hover:bg-imperial-gold/60'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </section>
