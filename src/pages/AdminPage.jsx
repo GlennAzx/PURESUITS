@@ -436,9 +436,13 @@ export default function AdminPage() {
               </Field>
             </div>
             <div className="sm:col-span-2">
-              <Field label="Description (optional)">
+              <Field
+                label="Description (optional)"
+                hint={`${form.description.length} / 2000. The card shows the first few lines; Read more opens all of it. Line breaks are kept.`}
+              >
                 <textarea
-                  rows={2}
+                  rows={6}
+                  maxLength={2000}
                   className={inputClass}
                   value={form.description}
                   onChange={(e) =>

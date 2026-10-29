@@ -164,7 +164,8 @@ function validateEvent(raw, index) {
   return {
     id: str(raw.id, 'id', 64) || `event-${Date.now()}-${index}`,
     title,
-    description: str(raw.description, 'description', 600),
+    // Long on purpose: the card shows a clamped teaser, the overlay shows all of it.
+    description: str(raw.description, 'description', 2000),
     date,
     time,
     durationMinutes: Math.round(duration),

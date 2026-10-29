@@ -1,5 +1,6 @@
-import React, { useCallback, useRef, useState } from 'react';
-import { ArrowUpRight, ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { ArrowUpRight, ChevronLeft, ChevronRight, MapPin, X } from 'lucide-react';
 import { formatTime, zoneLabel } from '../lib/calendar';
 import useTimeMode from '../lib/useTimeMode';
 import { splitCountdown } from '../data/schedule';
@@ -14,6 +15,14 @@ function dateParts(startsAt) {
     .toLocaleString('en-GB', { month: 'short', timeZone: 'UTC' })
     .toUpperCase();
   return { day, month };
+}
+
+/** 90 -> "1.5 hr", 45 -> "45 min". */
+function durationLabel(mins) {
+  if (!mins) return '';
+  if (mins < 60) return `${mins} min`;
+  const h = mins / 60;
+  return Number.isInteger(h) ? `${h} hr` : `${h.toFixed(1)} hr`;
 }
 
 /**
@@ -38,7 +47,7 @@ function whenLabel(event, now) {
  * date rather than a cadence, and the two read very differently: a weekly run
  * repeats forever, a one-off night does not.
  */
-function EventCard({ event, now }) {
+function EventCard({ event, now, onOpen }) {
   const [timeMode] = useTimeMode();
   const live = isEventLive(event, now);
   const { day, month } = dateParts(event.startsAt);
@@ -129,10 +138,12 @@ function EventCard({ event, now }) {
           {event.description && (
             <p
               className={`mt-1.5 leading-relaxed text-gray-400 ${
-                feature ? 'max-w-xl text-[13px]' : 'text-[11.5px]'
+                feature ? 'line-clamp-3 max-w-xl text-[13px]' : 'line-clamp-2 text-[11.5px]'
               }`}
             >
-              {event.description}
+              {/* Teaser only: line breaks collapse so a heading does not run into
+                  its text. The overlay keeps them. */}
+              {event.description.replace(/\s*\n+\s*/g, ' · ')}
             </p>
           )}
 
@@ -153,22 +164,198 @@ function EventCard({ event, now }) {
               )}
             </span>
 
-            {event.link && (
-              <a
-                href={event.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-imperial-gold/80 transition-colors hover:text-imperial-gold"
+            <span className="flex shrink-0 items-center gap-3">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onOpen();
+                }}
+                className="inline-flex items-center gap-0.5 text-[10px] uppercase tracking-wider text-imperial-gold transition-colors hover:text-imperial-gold-bright"
               >
-                Details
-                <ArrowUpRight size={11} className="opacity-60" />
-              </a>
-            )}
+                Read more
+                <ChevronRight size={11} className="transition-transform duration-200 group-hover:translate-x-0.5" />
+              </button>
+              {event.link && (
+                <a
+                  href={event.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider text-imperial-gold/80 transition-colors hover:text-imperial-gold"
+                >
+                  Details
+                  <ArrowUpRight size={11} className="opacity-60" />
+                </a>
+              )}
+            </span>
           </div>
         </div>
         </div>
       </div>
     </article>
+  );
+}
+
+/**
+ * The expanded view of one event: the poster uncropped, and the whole
+ * description in a scrollable panel.
+ *
+ * Rendered into document.body so no ancestor's overflow or opacity can clip it.
+ * Follows the gallery viewer's rules: Escape closes, the page behind is locked,
+ * and the inner panel scrolls on its own. data-lenis-prevent hands the wheel to
+ * that panel, otherwise the smooth-scroll library drives the page instead.
+ */
+function EventOverlay({ event, now, onClose }) {
+  const [timeMode] = useTimeMode();
+  const panelRef = useRef(null);
+  const closeRef = useRef(null);
+  const closeFn = useRef(onClose);
+  closeFn.current = onClose;
+  const [shown, setShown] = useState(false);
+
+  const live = isEventLive(event, now);
+  const { day, month } = dateParts(event.startsAt);
+  const length = durationLabel(event.durationMinutes);
+
+  useEffect(() => {
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const frame = requestAnimationFrame(() => setShown(true));
+    closeRef.current?.focus();
+
+    const onKey = (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeFn.current();
+        return;
+      }
+      if (e.key !== 'Tab' || !panelRef.current) return;
+
+      // Keep Tab inside the dialog. The page behind is not reachable while open.
+      const nodes = Array.from(
+        panelRef.current.querySelectorAll('a[href], button:not([disabled]), [tabindex="0"]')
+      );
+      if (nodes.length === 0) return;
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+      if (e.shiftKey && (document.activeElement === first || !panelRef.current.contains(document.activeElement))) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+
+    window.addEventListener('keydown', onKey);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = previous;
+    };
+  }, []);
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[75] flex items-center justify-center p-3 sm:p-6"
+      role="dialog"
+      aria-modal="true"
+      aria-label={event.title}
+    >
+      <div
+        className={`absolute inset-0 bg-ink-black/80 backdrop-blur-sm transition-opacity duration-200 motion-reduce:transition-none ${
+          shown ? 'opacity-100' : 'opacity-0'
+        }`}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      <div
+        ref={panelRef}
+        className={`relative flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border bg-ink-charcoal shadow-2xl transition duration-200 ease-out motion-reduce:transition-none ${
+          live ? 'border-jade-accent/60' : 'border-imperial-gold/35'
+        } ${shown ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0'}`}
+      >
+        <button
+          ref={closeRef}
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute right-3 top-3 z-10 rounded-full border border-imperial-gold/40 bg-ink-black/80 p-2 text-imperial-gold backdrop-blur transition-colors hover:border-imperial-gold"
+        >
+          <X size={16} />
+        </button>
+
+        <div
+          data-lenis-prevent
+          tabIndex={0}
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain outline-none focus-visible:ring-1 focus-visible:ring-imperial-gold/40"
+        >
+          {event.image && (
+            <img
+              src={imageUrl(event.image)}
+              alt=""
+              className="block max-h-[55vh] w-full bg-ink-black object-contain"
+            />
+          )}
+
+          <div className="p-5 sm:p-7">
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <span className="rounded border border-imperial-gold/30 bg-jade-deep px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-imperial-gold">
+                {event.tag}
+              </span>
+              <span
+                className={`font-mono text-[10px] uppercase tracking-wider ${
+                  live ? 'text-jade-accent' : 'text-gray-400'
+                }`}
+              >
+                {whenLabel(event, now)}
+              </span>
+            </div>
+
+            <h3 className="pr-10 font-serif text-2xl font-bold leading-snug text-ivory sm:text-3xl">
+              {event.title}
+            </h3>
+
+            <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] text-ivory-shadow">
+              <span>
+                {String(day).padStart(2, '0')} {month}
+              </span>
+              <span>
+                {formatTime(event.startsAt, timeMode)}{' '}
+                <span className="uppercase tracking-wider">{zoneLabel(timeMode)}</span>
+              </span>
+              {length && <span>{length}</span>}
+              {event.location && (
+                <span className="flex items-center gap-1 normal-case tracking-normal text-gray-400">
+                  <MapPin size={11} className="opacity-60" />
+                  {event.location}
+                </span>
+              )}
+            </p>
+
+            {event.description && (
+              <p className="mt-5 whitespace-pre-line text-sm leading-relaxed text-gray-300">
+                {event.description}
+              </p>
+            )}
+
+            {event.link && (
+              <a
+                href={event.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-6 inline-flex items-center gap-1.5 rounded-md border border-imperial-gold/40 px-3 py-2 text-[11px] uppercase tracking-wider text-imperial-gold transition-colors hover:border-imperial-gold hover:bg-imperial-gold/10"
+              >
+                Details
+                <ArrowUpRight size={12} className="opacity-70" />
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 }
 
@@ -181,9 +368,26 @@ function EventCard({ event, now }) {
  */
 export default function EventsSection({ events, now }) {
   const trackRef = useRef(null);
+  const lastFocus = useRef(null);
   const [index, setIndex] = useState(0);
+  const [openId, setOpenId] = useState(null);
   const count = events.length;
   const many = count > 1;
+
+  // Looked up by id each render, so the overlay stays current as the clock
+  // ticks, and closes by itself if the event ends or is deleted while open.
+  const openEvent = openId ? events.find((e) => e.id === openId) : null;
+
+  const openOverlay = useCallback((event) => {
+    lastFocus.current = document.activeElement;
+    setOpenId(event.id);
+  }, []);
+
+  const closeOverlay = useCallback(() => {
+    setOpenId(null);
+    // Hand focus back to what opened the overlay, without scrolling the page.
+    requestAnimationFrame(() => lastFocus.current?.focus?.({ preventScroll: true }));
+  }, []);
 
   /** Scroll one slide into view. Called by the arrows, the dots and a click. */
   const goTo = useCallback(
@@ -263,14 +467,17 @@ export default function EventsSection({ events, now }) {
               <div
                 key={event.id}
                 onClick={(e) => {
-                  if (e.target.closest('a')) return;
+                  if (e.target.closest('a, button')) return;
+                  // The peeking card brings itself into view; the card already in
+                  // view opens its full description.
                   if (i !== index) goTo(i);
+                  else openOverlay(event);
                 }}
-                className={`flex shrink-0 snap-start transition-opacity duration-300 ${
+                className={`flex shrink-0 snap-start cursor-pointer transition-opacity duration-300 ${
                   many ? 'w-full sm:w-[calc(100%-3.5rem)]' : 'w-full'
-                } ${i === index ? 'opacity-100' : 'cursor-pointer opacity-55 hover:opacity-85'}`}
+                } ${i === index ? 'opacity-100' : 'opacity-55 hover:opacity-85'}`}
               >
-                <EventCard event={event} now={now} />
+                <EventCard event={event} now={now} onOpen={() => openOverlay(event)} />
               </div>
             ))}
           </div>
@@ -318,6 +525,8 @@ export default function EventsSection({ events, now }) {
           )}
         </div>
       )}
+
+      {openEvent && <EventOverlay event={openEvent} now={now} onClose={closeOverlay} />}
     </section>
   );
 }
