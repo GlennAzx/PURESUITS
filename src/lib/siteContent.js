@@ -172,6 +172,8 @@ function normaliseEvent(raw, index) {
     title: raw.title || raw.name || 'Untitled event',
     description: raw.description || '',
     tag: raw.tag || 'Event',
+    // Optional banner key, shown on the card until the event ends.
+    image: raw.image || '',
     // Optional. Free text: a hall name, "in-game, Guild Hall", a Discord channel.
     location: raw.location || '',
     date: raw.date,

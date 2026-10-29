@@ -4,6 +4,7 @@ import { formatTime, zoneLabel } from '../lib/calendar';
 import useTimeMode from '../lib/useTimeMode';
 import { splitCountdown } from '../data/schedule';
 import { isEventLive } from '../lib/siteContent';
+import { imageUrl } from '../lib/media';
 
 /** "15 NOV" split into the two parts the badge shows. */
 function dateParts(startsAt) {
@@ -44,12 +45,27 @@ function EventCard({ event, now }) {
 
   return (
     <article
-      className={`event-listing group relative flex gap-4 overflow-hidden rounded-xl border p-4 transition-colors duration-200 ${
+      className={`event-listing group relative overflow-hidden rounded-xl border transition-colors duration-200 ${
         live
           ? 'border-jade-accent/60 bg-ink-charcoal'
           : 'border-imperial-gold/25 bg-ink-charcoal hover:border-imperial-gold/55'
       }`}
     >
+      {/* Optional banner. It belongs to the event, so it leaves with the card
+          once the event is over and drops out of the list. */}
+      {event.image && (
+        <div className="relative aspect-[16/9] w-full overflow-hidden">
+          <img
+            src={imageUrl(event.image)}
+            alt=""
+            loading="lazy"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink-charcoal via-ink-charcoal/30 to-transparent" />
+        </div>
+      )}
+
+      <div className="flex gap-4 p-4">
       {/* Date badge. Kept narrow so the title gets the width. */}
       <div
         className={`flex w-14 shrink-0 flex-col items-center justify-center rounded-lg border py-2 ${
@@ -123,6 +139,7 @@ function EventCard({ event, now }) {
             </a>
           )}
         </div>
+      </div>
       </div>
     </article>
   );

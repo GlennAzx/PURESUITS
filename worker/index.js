@@ -171,6 +171,8 @@ function validateEvent(raw, index) {
     location: str(raw.location, 'location', 160),
     tag: str(raw.tag, 'tag', 40) || 'Event',
     link: str(raw.link, 'link', 300),
+    // Optional banner. A bare R2 key; it disappears with the event card.
+    image: str(raw.image, 'image', 300),
   };
 }
 
@@ -292,8 +294,8 @@ async function handleUpload(request, env, url) {
   }
 
   const kind = url.searchParams.get('kind');
-  if (kind !== 'gallery' && kind !== 'members' && kind !== 'builds') {
-    return json({ error: 'kind must be gallery, members or builds' }, 400);
+  if (kind !== 'gallery' && kind !== 'members' && kind !== 'builds' && kind !== 'events') {
+    return json({ error: 'kind must be gallery, members, builds or events' }, 400);
   }
 
   let form;

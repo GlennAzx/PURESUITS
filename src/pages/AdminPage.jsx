@@ -1,9 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Trash2, Pencil, Plus, LogOut, Check, X } from 'lucide-react';
 import ImageManager from '../components/admin/ImageManager';
 import MemberManager from '../components/admin/MemberManager';
 import FeaturedManager from '../components/admin/FeaturedManager';
 import ScheduleManager from '../components/admin/ScheduleManager';
+import { compressImage } from '../lib/image';
+import { imageUrl } from '../lib/media';
 
 /**
  * Admin page for editing events on the live site.
@@ -29,6 +31,7 @@ const EMPTY_FORM = {
   tag: 'Event',
   description: '',
   link: '',
+  image: '',
 };
 
 /** Local date parts, so the default date is "today" for the editor. */
@@ -64,6 +67,8 @@ export default function AdminPage() {
   const [events, setEvents] = useState([]);
   const [editing, setEditing] = useState(null); // null | 'new' | event id
   const [form, setForm] = useState(EMPTY_FORM);
+  const [uploading, setUploading] = useState(false);
+  const imageInput = useRef(null);
 
   // Keep the admin page out of search results, and out of any crawler that
   // ignores robots.txt.
@@ -171,6 +176,32 @@ export default function AdminPage() {
     }
   };
 
+  /** Compress and upload one banner, then keep its R2 key on the form. */
+  const uploadBanner = async (file) => {
+    if (!file) return;
+    setUploading(true);
+    setError('');
+    setNotice('');
+    try {
+      const { blob } = await compressImage(file, { maxEdge: 1440, quality: 0.78 });
+      const body = new FormData();
+      body.append('file', new File([blob], 'banner.webp', { type: 'image/webp' }));
+      const res = await fetch('/api/upload?kind=events', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `upload failed (${res.status})`);
+      setForm((f) => ({ ...f, image: data.key }));
+      setNotice('Banner uploaded. Save the event to publish it.');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const submitForm = (e) => {
     e.preventDefault();
     if (!form.title.trim()) return setError('Title is required.');
@@ -210,6 +241,7 @@ export default function AdminPage() {
       tag: event.tag || 'Event',
       description: event.description || '',
       link: event.link || '',
+      image: event.image || '',
     });
     setError('');
     setNotice('');
@@ -423,6 +455,53 @@ export default function AdminPage() {
                   onChange={(e) => setForm({ ...form, link: e.target.value })}
                   placeholder="https://discord.gg/…"
                 />
+              </Field>
+            </div>
+            <div className="sm:col-span-2">
+              <Field
+                label="Banner image (optional)"
+                hint="Shown on the event card. It leaves with the event once the event is over."
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-16 w-28 shrink-0 overflow-hidden rounded-md border border-imperial-gold/25 bg-ink-black/50">
+                    {form.image ? (
+                      <img src={imageUrl(form.image)} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="flex h-full w-full items-center justify-center text-[9px] uppercase tracking-wider text-gray-600">
+                        None
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => imageInput.current?.click()}
+                      disabled={uploading || busy}
+                      className="rounded-md border border-imperial-gold/30 px-2.5 py-1.5 text-[10px] uppercase tracking-wider text-imperial-gold transition-colors hover:border-imperial-gold disabled:opacity-40"
+                    >
+                      {uploading ? 'Uploading…' : form.image ? 'Replace…' : 'Upload…'}
+                    </button>
+                    {form.image && (
+                      <button
+                        type="button"
+                        onClick={() => setForm({ ...form, image: '' })}
+                        className="rounded-md border border-imperial-gold/20 px-2.5 py-1.5 text-[10px] uppercase tracking-wider text-gray-400 transition-colors hover:border-imperial-gold/50 hover:text-imperial-gold"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    ref={imageInput}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      uploadBanner(e.target.files?.[0]);
+                      e.target.value = '';
+                    }}
+                  />
+                </div>
               </Field>
             </div>
           </div>
